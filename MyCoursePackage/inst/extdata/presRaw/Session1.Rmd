@@ -1,8 +1,8 @@
 ---
-title: "My Course Template, Session 1"
+title: "Epigenomics, Session 1"
 subtitle: " <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html> Bioinformatics Resource Center - Rockefeller University"
 author: 
-  - "http://rockefelleruniversity.github.io/RU_course_template/"
+  - "http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/"
   - "brc@rockefeller.edu"
 output: 
   xaringan::moon_reader:
@@ -31,7 +31,7 @@ knitr::opts_chunk$set(echo = TRUE, tidy = T)
 
 ```{r, results='asis',include=TRUE,echo=FALSE}
 if(params$isSlides != "yes"){
-  cat("# ???My Course name (session1)???
+  cat("# Epigenomics
 
 ---
 "    
@@ -132,7 +132,7 @@ setwd("/PathToMyDownload/RU_Course_template/r_course")
 if(params$isSlides == "yes"){
   cat("class: inverse, center, middle
 
-# Another section header
+# Epigenomic Approaches
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
@@ -140,7 +140,7 @@ if(params$isSlides == "yes"){
 "    
   )
 }else{
-  cat("# Another section header
+  cat("# Epigenomic Approaches
 
 ---
 "    
@@ -150,56 +150,402 @@ if(params$isSlides == "yes"){
 
 ```
 
-## Slide Structure
+## Epigenomic Approaches
 
-We use the a double has/pound for slides. This is important for hierarchy. If you use 1 it will work for the slides, but will mess up the single page version.
+There are a variety of genomics techniques to start to profile the epigenome of cells. 
+
+They fit a few different classes:
+
+TF-bound/Histone Modifications: Cut and Run, Cut and Tag, ChIP-seq
+
+Open Regions: ATAC-seq, MNase-seq and DNase-seq
+
+Genome organization - Hi-C, HiCAR, Capture-C
+
+---
+## TF-bound/Histone Modifications
+
+<div align="center">
+<img src="imgs/41596_2020_373_Fig1_HTML.png" alt="setup" height="400" width="600">
+</div>
+
+[(Oker, et al, 2020)](https://www.nature.com/articles/s41596-020-0373-x)
+
+---
+## TF-bound/Histone Modifications
+
+* ChIP-seq
+  - Strengths: Well established and validated across labs with robust antibody catalogs.
+  - Weakness: High background, large cell input, potential artifacts from crosslinking/sonication, longest workflow.
+
+* Cut & Run
+  - Strengths: High signal-to-noise ratio, low input required (100 to 100,000 cells/nuclei), good resolution (20-80bp), can be used with crosslinking for weak/transient interactions, fewer reads (3-8 million).
+  - Weakness: Sensitive to sample quality and nuclei preparation.
+
+* Cut & Tag
+	- Strengths: Highest signal-to-noise ratio, low input required (100 to 100,000 cells/nuclei), highest resolution (5-30bp), fewest reads (2 million).
+	-	Weakness: The Tn5 bias toward open chromatin possible and GC, can't be used with crosslinking so can be tricky with transient TFs.
 
 
-## Left/Right alignment
+---
+## Open Regions
 
-To show things side by side on a slide you can use pull left/right. t is important to keep the tab on the second square bracket. On single page it will just be one after the other:
+<div align="center">
+<img src="imgs/mnATAC.jpg" alt="offset" height="300" width="600">
+</div>
 
-.pull-left[
-This will be on left of slide
-  ] 
+* DNaseseq - Enzymatic digestion to extract signal from open chromatin around transcription factor binding sites.
+
+* MNaseseq - Enzymatic digestion to extract signal repesenting nucleosome positioning.
+
+* ATACseq - Uses transposases and offers a method to simultaneously extract signal from transcription factors binding sites and nucleosome positions from a single sample.
+
+---
+## ATACseq
+
+ATACseq (Assay for Transposase-Accessible Chromatin using sequencing) uses a transposase to efficiently fragment accessible DNA prior to sequencing. The result provides a method to map the accessible/open chromatin genome wide.
+
+In contrast to other techniques, ATACseq has several advantages including
+
+* Low input material required (> 10,000 cells)
+* Rapid experiment protocol (~ 4 hrs.)
+
+
+<div align="center">
+<img src="imgs/ATACseqP.jpeg" alt="offset" height="300" width="600">
+</div>
+
+---
+## An overlaping workflow
+
+Despite being different technologies that reveal differing biological phenomena the braod. strokes for analysis of all these techniques is the same:
+
+1) Fastq QC
+2) Alignment
+3) Peak calling
+4) Consensus Building
+5) Counting
+6) Differentials
+
+We will review analysis of these data types with a unified approach, but highlight key differences that need to be considered between technologies as we go. 
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Fastq QC
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Fastq QC
+
+---
+"    
+  )
   
-.pull-right[
-This will be on right
-
- ]
-
-
-## Data from external sources
-
-everything in the rmd is relative to the inst/extdata directory so you have some data to load in, just put it in the data directory, read it in along the path. 
-The structure is maintained for those attending the course and download the package using the instructions. The same rules are followed for imgs and scripts that you may call.
-```{r,echo=T}
-Table <- read.table("data/readThisTable.csv",sep=",",header=T)
+}
 
 ```
 
-## Big Processes
+## The data
 
-If what you want to do is super intense computationally you can use the eval=F arguments to prevent it being done during compilation.
+Our raw sequencing data will be in FASTQ format.
 
-```{r,echo=T, eval=F}
-#Intense computation
-myresult<-10^6 +1
+<div align="center">
+<img src="imgs/fq1.png" alt="igv" height="200" width="600">
+</div>
+
+---
+## The data
+
+For your own data you will typically receive a fastq from the genomics group you are working with. 
+
+For published data the fastq will be available on GEO/SRA or ENA. For example we will be working today with data from the Fuchs lab: [*The pioneer factor SOX9 competes for epigenetic factors to switch stem cell fates*](https://www.nature.com/articles/s41556-023-01184-y)
+
+
+You can download the fastq files (if you want) directly from ENA:
+
+1) [Cut and Run](https://www.ebi.ac.uk/ena/browser/view/PRJNA858098). 
+2) [ATAC](https://www.ebi.ac.uk/ena/browser/view/PRJNA858100). 
+
+
+We will work through how to run these early steps, but we will also provide intermediate files once we have completed some of the heavy processing as some of these steps will take too long to run in these sessions. 
+
+---
+## Why QC?
+
+At this time we will want to review the QC of our data. We can look for features like:
+
+* Lack of library complexity
+* Adapter contamination
+* Poor sequencing quality
+
+
+---
+## How to QC
+
+There are two main approaches:
+
+1) Import the fastq into R and directly check metrics.
+
+2) Use QC software like [fastp](https://github.com/OpenGene/fastp) or [FastQC](https://github.com/s-andrews/FastQC).
+
+---
+## Working with raw epigenomics data
+
+Once we have downloaded the raw FASTQ data we can use the [ShortRead package](https://bioconductor.org/packages/release/bioc/html/ShortRead.html) to review our sequence data quality.
+
+We have more detailed course material on how to work with raw sequencing data in the [**FASTQ in Bioconductor** session.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#1)
+
+First we load the [ShortRead library.](https://bioconductor.org/packages/release/bioc/html/ShortRead.html)
+
+
+```{r shortreada,include=FALSE}
+library(ShortRead)
 
 ```
 
-You can then just load in the result of the computation, and keep using the result after that. If you do want them to evaluate the intense computation, then you can hide this intermediate file that you are loading in with echo=F. 
+```{r shortread, warning=F, message=F}
+library(ShortRead)
+```
 
-```{r,echo=F, eval=T}
-load("data/myresult.RData")
+---
+## Working with raw data
+
+First we will review the raw sequencing reads using functions in the [ShortRead package.](https://bioconductor.org/packages/release/bioc/html/ShortRead.html). 
+
+We do not need to review all reads in the file to can gain an understanding of data quality. We can simply review a subsample of the reads and save ourselves some time and memory.
+
+Note when we subsample we retrieve random reads from across the entire FASTQ file. This is important as FASTQ files are often ordered by their position on the sequencer.
+
+---
+## Reading a subsample
+
+We can subsample from a FASTQ file using functions in **ShortRead** package.
+
+Here we use the [**FastqSampler** and **yield** function](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#41) to randomly sample a defined number of reads from a FASTQ file. Here we subsample 1 million reads. This should be enough to have an understanding of the quality of the data.
+
+```{r, echo=F,eval=F}
+fqSample <- FastqSampler("~/Downloads/SOX9CNR_D0_rep1_R1.fastq.gz",n=10^6)
+fastq <- yield(fqSample)
+
+writeFastq(fastq,file = "../data/SOX9CNR_D0_rep1_R1_subsample.fastq.gz",mode = "w")
 
 ```
 
---
-## Exercises
-The following few slides show you how to structure exercise slides.
+```{r eval=T, echo=F}
+fastq <- readFastq(dirPath = "data/sampled_ENCFF001NQP.fastq.gz")
+```
 
-We often have several exercise slides per session. So you can just copy and paste and change the directory to the appropriate name. All 3 file types are made from you single exercise Rmd. 
+```{r mycRep1Reads,echo=T,eval=F}
+fqSample <- FastqSampler("~/Downloads/SRR20110418_1.fastq.gz",n=10^6)
+fastq <- yield(fqSample)
+```
+
+---
+## Working with raw ChIPseq data
+
+The resulting object is a [ShortReadQ object](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#10) showing information on the number of cycles, base pairs in reads, and number of reads in memory.
+
+```{r mycRep1ReadsShortReadQ}
+fastq
+```
+
+---
+
+## Raw ChIPseq data QC
+
+If we wished, we can assess information from the FASTQ file using [accessor functions.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#15)
+
+* **sread()** - Retrieve sequence of reads.
+* **quality()** - Retrieve quality of reads as ASCII scores.
+* **id()** - Retrieve IDs of reads.
+
+```{r mycRep1ReadsAccessor}
+readSequences <- sread(fastq)
+readQuality <- quality(fastq)
+readIDs <- id(fastq)
+readSequences
+```
+
+---
+## Quality with raw ChIPseq data
+
+We can check some simple quality metrics for our subsampled FASTQ data.
+
+First, we can review the overall reads' quality scores.
+
+We use the [**alphabetScore()** function with our read's qualitys](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#28) to retrieve the sum quality for every read from our subsample.
+
+```{r mycRep1ReadsQScores}
+readQuality <- quality(fastq)
+readQualities <- alphabetScore(readQuality)
+readQualities[1:10]
+```
+
+---
+## Quality with raw ChIPseq data
+
+We can then produce a histogram of quality scores to get a better understanding of the distribution of scores.
+
+```{r mycRep1ReadsQScoresPlot}
+library(ggplot2)
+toPlot <- data.frame(ReadQ=readQualities)
+ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()
+```
+
+
+---
+
+## Base frequency with raw ChIPseq data
+
+We can review the occurrence of DNA bases within reads and well as the occurrence of DNA bases across sequencing cycles using the [**alphabetFrequency()**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#18) and [**alphabetByCycle()**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#30) functions respectively.
+
+Here we check the overall frequency of **A, G, C, T and N (unknown bases)** in our sequence reads.
+
+```{r mycRep1ReadsAlpFreq}
+readSequences <- sread(fastq)
+readSequences_AlpFreq <- alphabetFrequency(readSequences)
+readSequences_AlpFreq[1:3,]
+```
+
+
+---
+## Base frequency with raw ChIPseq data
+
+Once we have the frequency of DNA bases in our sequence reads we can retrieve the sum across all reads.
+
+```{r mycRep1ReadsAlpFreqSum}
+summed__AlpFreq  <- colSums(readSequences_AlpFreq)
+summed__AlpFreq[c("A","C","G","T","N")]
+```
+
+---
+
+## Assess by cycle with raw ChIPseq data
+
+We can review DNA base occurrence by cycle using the [**alphabetByCycle()** function.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#30)
+
+```{r mycRep1ReadsAlpByCycle}
+readSequences_AlpbyCycle <- alphabetByCycle(readSequences)
+readSequences_AlpbyCycle[1:4,1:10]
+```
+
+---
+
+## Assess by cycle with raw ChIPseq data
+
+We often plot this to visualise the base occurrence over cycles to observe any bias.
+First we arrange the base frequency into a data frame.
+
+```{r mycRep1ReadsAlpByCyclePlot}
+AFreq <- readSequences_AlpbyCycle["A",]
+CFreq <- readSequences_AlpbyCycle["C",]
+GFreq <- readSequences_AlpbyCycle["G",]
+TFreq <- readSequences_AlpbyCycle["T",]
+toPlot <- data.frame(Count=c(AFreq,CFreq,GFreq,TFreq),
+                     Cycle=rep(1:40,4),
+                     Base=rep(c("A","C","G","T"),each=40))
+
+```
+
+---
+
+## Assess by cycle with raw ChIPseq data
+
+Now we can plot the frequencies using ggplot2
+
+```{r mycRep1ReadsAlpByCyclePlot2,cache=TRUE,eval=FALSE,dependson="mycRep1ReadsAlpByCyclePlot",fig.height=4,fig.width=8}
+
+ggplot(toPlot, aes(y=Count,x=Cycle,colour=Base)) + geom_line() +
+  theme_bw()
+```
+
+```{r mycRep1ReadsAlpByCyclePlot3}
+
+ggplot(toPlot,aes(y=Count,x=Cycle,colour=Base)) + geom_line() + ylim(150000,400000) +
+  theme_bw()
+```
+
+---
+## Assess by cycle with raw ChIPseq data
+
+We can also assess mean read quality over cycles. This will allow us to identify whether there are any issues with quality dropping off over time.
+
+For this we use the [**as(*read_quality*,"matrix")**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#29) function first to translate our ASCII quality scores to numeric quality scores.
+
+```{r mycRep1ReadsQByCycle,cache=TRUE,dependson="mycRep1ReadsAlpFreq"}
+qualAsMatrix <- as(readQuality,"matrix")
+qualAsMatrix[1:2,]
+```
+
+---
+
+## Assess by cycle with raw ChIPseq data
+
+We can now [visualise qualities across cycles using a boxplot.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/exercises/answers/fastq_answers.html)
+
+```{r mycRep1ReadsQByCyclePlot,cache=TRUE,dependson="mycRep1ReadsQByCycle",fig.width=8,fig.height=4}
+boxplot(qualAsMatrix[1:1000,])
+```
+
+---
+
+## Assess by cycle with raw ChIPseq data
+
+In this case the distribution of reads quality scores and read qualities over time look okay. We will often want to access FASTQ samples together to see if any samples stick out by these metrics.
+
+Here we observed a second population of low quality scores so will remove some reads with low quality scores and high unknown bases.
+
+--- 
+## Fastp
+
+This is one of the most popular and respected QC tools around. 
+
+It does what many of the others do, but it is VERY fast. There is a wrapper in R (developed by our team) so we can run it form R with ease: [Rfastp](https://www.bioconductor.org/packages/release/bioc/html/Rfastp.html)
+
+There are many ways to customize including trimming options, barcodes and stringency. It will also handle the paired-end data simultaneously for us. 
+
+--- 
+## Rfastp
+
+To run rfastp we simply provide our two fastq files (or just one if we are running single end). We will also provide a name for the filtered Fastq file which is output. 
+
+
+```{R, eval=F}
+library(Rfastp)
+
+rfastp(read1="/Users/mattpaul/Downloads/SRR20110418_1.fastq.gz",
+       read2 = "/Users/mattpaul/Downloads/SRR20110418_2.fastq.gz",
+       outputFastq = "SOX9CNR_D0_rep1_filtered")
+```
+
+--- 
+## Rfastp QC results
+
+We can review the QC of our samples by checking out the the output *html* file. 
+
+You can also review the samples computationally using the *.json* file. 
+
+
+---
+## What to check?
+
+* Sequence over-representation (Kmer)
+* Adapter content
+* Duplicates
+
+Whenever considering QC we rarely rule samples out at this early stage. But we keep an eye out for consistency between samples and if any sample looks bad across multiple metrics. 
+
+--- 
+## Rfastp options
+
+We typically use the default settings, but there are lots of options to control rfastp. Specifically this could help more stringent filtering if you observe any QC problems i.e. minReadLength or qualityFilterPercent
 
 ---
 ## Time for an exercise!
@@ -211,22 +557,9 @@ We often have several exercise slides per session. So you can just copy and past
 
 Answers can be found [here](../../exercises/answers/MyExercise1_answers.html)
 
-R code for solutions can be found [here](../../exercises/answers/MyExercise1_answers.R)
-
-## Exercise again
-
-So we can have some more sections here describing some new important topic
-
-Then more exercises
 
 ---
-## Time for an exercise!
+## References
 
-??? exercise description here?? [here](../../exercises/exercises/MyExercise2_exercises.html)
 
----
-## Answers to exercise
 
-Answers can be found [here](../../exercises/answers/MyExercise2_answers.html)
-
-R code for solutions can be found [here](../../exercises/answers/MyExercise2_answers.R)
