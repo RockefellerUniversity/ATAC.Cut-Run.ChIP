@@ -1,0 +1,1008 @@
+---
+title: "CUT&RUN In Bioconductor (part2) <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html>"
+author: "Rockefeller University, Bioinformatics Resource Centre"
+date: "http://rockefelleruniversity.github.io/RU_CUT&RUN/"
+output: 
+  xaringan::moon_reader:
+    css: ["default", "metropolisCustom.css", "metropolis-fontsCustom.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+  html_document:
+    toc: true # table of content true
+    toc_float: yes
+    depth: 3  # upto three depths of headings (specified by #, ## and ###)
+    number_sections: false  ## if you want number sections at each table header
+    theme: united  # many options for theme, this one is my favorite.
+    highlight: tango  # specifies the syntax highlighting style
+params:
+  isSlides: "no" 
+---
+
+```{r,include=FALSE}
+suppressPackageStartupMessages(require(knitr))
+knitr::opts_chunk$set(echo = TRUE, tidy = T) # delete cache before any merging 
+
+```
+
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides != "yes"){
+  cat("# CUT&RUN (part 2)
+
+---
+"    
+  )
+  
+}
+
+```
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Aligning data
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Aligning data
+
+---
+"    
+  )
+  
+}
+
+```
+
+
+## Aligning CUT&RUN and ATACseq reads
+
+Following assessment of read quality and any read filtering we applied, we will want to align our reads to the genome so as to identify any genomic locations showing enrichment for aligned reads above background.
+
+Since CUT&RUN and ATACseq reads will align continuously against our reference genome we can use [our genomic aligners we have seen in previous sessions.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignmentInBioconductor.html#7) The resulting BAM file will contain aligned sequence reads for use in further analysis.
+
+<div align="center">
+<img src="imgs/sam2.png" alt="igv" height="200" width="600">
+</div>
+
+---
+## Creating a reference genome
+
+First we need to retrieve the sequence information for the genome of interest in [FASTA format](https://rockefelleruniversity.github.io/Genomic_Data/presentations/slides/GenomicsData.html#9)
+
+We can use the [BSgenome libraries to retrieve the full sequence information.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/SequencesInBioconductor.html#4)
+
+For the mouse mm10 genome we load the package **BSgenome.Mmusculus.UCSC.mm10**.
+
+```{r fa1q, include=FALSE}
+library(BSgenome.Mmusculus.UCSC.mm10)
+```
+
+```{r fa1, echo=TRUE}
+library(BSgenome.Mmusculus.UCSC.mm10)
+BSgenome.Mmusculus.UCSC.mm10
+```
+
+---
+## Creating a reference genome
+
+We will only use the major chromosomes for our analysis so we may exclude random and unplaced contigs.
+Here we cycle through the major chromosomes and create a [**DNAStringSet** object from the retrieved sequences](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/SequencesInBioconductor.html#17).
+
+```{r fa2,cache=FALSE,echo=TRUE}
+mainChromosomes <- paste0("chr",c(1:19,"X","Y","M"))
+mainChrSeq <- lapply(mainChromosomes,
+                     function(x)BSgenome.Mmusculus.UCSC.mm10[[x]])
+names(mainChrSeq) <- mainChromosomes
+mainChrSeqSet <- DNAStringSet(mainChrSeq)
+mainChrSeqSet
+```
+
+---
+# Creating a reference genome
+
+Now we have a **DNAStringSet** object we can use the [**writeXStringSet** to create our FASTA file of sequences to align to.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/SequencesInBioconductor.html#22)
+
+```{r fa3, echo=TRUE,eval=FALSE}
+writeXStringSet(mainChrSeqSet,
+                "BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa")
+```
+
+
+---
+## Creating an Rsubread index 
+
+We will be aligning using the **subjunc** algorithm from the folks behind subread. We can therefore use the **Rsubread** package. Before we attempt to align our FASTQ files, we will need to first build an index from our reference genome using the **buildindex()** function.
+
+The [**buildindex()** function simply takes the parameters of our desired index name and the FASTA file to build index from.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignmentInBioconductor.html#14)
+
+REMEMBER: Building an index is memory intensive and by default is set to 8GB. This may be too large for your laptop or Desktop. 
+
+Luckily we did this for RNAseq, so hopefully you will already have a built index. 
+```{r, echo=TRUE,eval=FALSE}
+library(Rsubread)
+buildindex("mm10_mainchrs","BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa", 
+           memory=8000,
+           indexSplit=TRUE)
+
+```
+
+```{r, echo=F,eval=FALSE}
+
+chr18Seq <- BSgenome.Mmusculus.UCSC.mm10[["chr18"]]
+names(chr18Seq) <- "chr18"
+chr18SeqSet <- DNAStringSet(chr18Seq)
+writeXStringSet(chr18SeqSet,
+                "BSgenome.Mmusculus.UCSC.mm10.chr18.fa")
+buildindex("mm10_chr18","BSgenome.Mmusculus.UCSC.mm10.chr18.fa", 
+           memory=8000,
+           indexSplit=TRUE)
+```
+
+
+---
+## Aligning Sequence Reads
+
+Now we have an index, we can align our ATACseq reads.
+
+CUT&RUN data is typically paired-end sequencing, so it will most often comes as two files typically with *_1* and *_2* or *_R1* and *_R2* in the file name to denote which number in pair, a file is.  
+
+We have our two fastq files that have been filtered for QC metrics. 
+
+```{r}
+read1 <- "SOX9CNR_W6_rep1_QC_R1.fastq.gz"
+read2 <- "SOX9CNR_W6_rep1_QC_R2.fastq.gz"
+```
+
+---
+## Aligning Sequence Reads
+
+Our two matched paired-end read files will (most often) contain the same number of reads and the reads will be ordered the same in both files. 
+
+The read names will match across files for paired reads with the exception of a 1 or 2 in name to signify if the read was first or second in a pair.
+
+```{r,eval=FALSE,include=FALSE, echo=FALSE, message = F}
+require(ShortRead)
+read1 <- readFastq("~/Desktop/BRC/training/ATAC.Cut-Run.ChIP/pipeline_files/CnR/SOX9CNR_W6_rep1_allFiles/FQ_QC/SOX9CNR_W6_rep1_QC_R1.fastq.gz")
+read2 <- readFastq("~/Desktop/BRC/training/ATAC.Cut-Run.ChIP/pipeline_files/CnR/SOX9CNR_W6_rep1_allFiles/FQ_QC/SOX9CNR_W6_rep1_QC_R2.fastq.gz")
+writeFastq(read1[1:1000,],"data/SOX9CNR_W6_rep1_QC_R1.fastq.gz")
+writeFastq(read2[1:1000,],"data/SOX9CNR_W6_rep1_QC_R2.fastq.gz")
+# id(read2[1:1000,])
+# myRes <- bamQC("~/Downloads/Sorted_ATAC_50K_2.bam")
+```
+
+```{r,eval=TRUE, message = F}
+require(ShortRead)
+read1 <- readFastq("data/SOX9CNR_W6_rep1_QC_R1.fastq.gz")
+read2 <- readFastq("data/SOX9CNR_W6_rep1_QC_R2.fastq.gz")
+id(read1)[1:2]
+id(read2)[1:2]
+```
+
+---
+## Rsubread alignment of CUT&RUN
+
+We can align our raw sequence data in FASTQ format to the new FASTA file of our mm10 genome sequence using the **Rsubread** package. Specifically we will be using the **align** function as this utilizes the subread genomic alignment algorithm. 
+
+The [**align()** function accepts arguments for the index to align to, the FASTQ to align, the name of output BAM, the mode of alignment (rna or dna) and the phredOffset.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignmentInBioconductor.html#15)
+
+First we will go through alignment of the CUT&RUN.
+
+```{r, echo=F,eval=TRUE}
+library(Rsubread)
+```
+
+```{r align, echo=TRUE,eval=F}
+
+myMapped <- align("mm10_mainchrs", 
+                  readfile1 = "data/SOX9CNR_W6_rep1_QC_R1.fastq.gz", 
+                  readfile2 = "data/SOX9CNR_W6_rep1_QC_R2.fastq.gz", 
+                  type = "dna", 
+                  output_file = "SOX9CNR_W6_rep1.bam", 
+                  nthreads = 4, 
+                  minFragLength = 0, maxFragLength = 2000)
+
+```
+
+
+---
+
+## Sort and index CUT&RUN reads
+
+As before, we sort and index our files using the [**Rsamtools** packages **sortBam()** and **indexBam()** functions respectively.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignedDataInBioconductor.html#10)
+
+The resulting sorted and indexed BAM file is now ready for use in external programs such as IGV as well as for further downstream analysis in R.
+
+```{r sortindex, echo=TRUE,eval=FALSE, message=FALSE}
+library(Rsamtools)
+
+sortBam("SOX9CNR_W6_rep1.bam", "SOX9CNR_W6_rep1_sorted")
+indexBam("SOX9CNR_W6_rep1_sorted")
+```
+
+
+---
+## Create a bigWig
+
+We can also create a bigWig from our sorted, indexed BAM file to allow us to quickly review our data in IGV.
+
+First we use the [**coverage()** function to create an **RLElist object** containing our coverage scores.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/Summarising_Scores_In_Bioconductor.html#13)
+
+```{r coverage, echo=TRUE,eval=FALSE}
+forBigWig <- coverage(sortedBam)
+forBigWig
+```
+
+---
+
+## Create a bigWig
+
+We can now export our [**RLElist object** as a bigWig using the **rtracklayer** package's **export.bw()** function.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/GenomicScores_In_Bioconductor.html#40)
+
+```{r bw, echo=TRUE,eval=FALSE, message=FALSE}
+library(rtracklayer)
+export.bw(forBigWig,con="SOX9CNR_W6_rep1.bw")
+```
+
+
+---
+## Create a bigWig
+
+We may wish to normalize our coverage to allow us to compare enrichment across samples.
+
+We can use the [**weight** parameter in the **coverage()**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/Summarising_Scores_In_Bioconductor.html#20) to scale our reads to the number of mapped reads multiplied by a million (reads per million).
+
+```{r weightedCover, echo=TRUE,eval=FALSE}
+forBigWig <- coverage(sortedBam,
+                      weight = (10^6)/TotalMapped)
+forBigWig
+export.bw(forBigWig,con="SOX9CNR_W6_rep1_weighted.bw")
+```
+
+---
+# BAM and bigWig
+
+![](imgs/chipBw.png)
+---
+
+## ATACseq alignment
+
+MENTION SOMETHING ABOUT HOW ITS THE SAME???
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Post alignment processing - CUT&RUN
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Post alignment processing - CUT&RUN
+
+---
+"    
+  )
+  
+}
+
+```
+
+## Peak calling with MACS and SEACR - CUT&RUN
+
+To identify regions of SOX9 transcription factor binding we can use a **peak caller**.
+
+Although many peak callers are available in R and beyond, one the most popular and widely used peak caller remains **MACS**. Another peak caller, **SEACR**, was developed specificlly for CUT&RUN. We will use both.
+
+---
+
+
+## Consider an appropriate input
+
+While we don't have one in this test data set, inputs are sometimes used in peak calling. They are theoretically less critical compared to ChIPseq due to lower background signal, but this is not always the case. 
+
+* Input samples in CUT&RUN are typically made from IgG pulldowns
+
+* Allows for control of artefact regions which occur across samples.
+
+For example: When using tumour samples for CUT&RUN, it might be important to have matched input samples. 
+Differing conditions of same tissue may share common input.
+
+---
+
+## Install software with conda and Herper
+
+We will install a version of MACS that is not available in R. It is possible to install it on Mac and Linux using the [Anaconda](https://anaconda.org/bioconda/MACS3) package repository (unfortunately there is not a Windows implementation). Anaconda is a huge collection of version controlled packages that can be installed through the conda package management system. With conda it is easy to create and manage environments that have a variety of different packages in them. 
+
+We can interact with the anaconda package system using the R package [Herper](https://bioconductor.org/packages/release/bioc/html/Herper.html). This was created by us here at the BRC and is part of Bioconductor.
+
+```{r, eval=F}
+BiocManager::install("Herper")
+library(Herper)
+
+```
+
+
+---
+
+## Install software with conda and Herper
+
+First, we will use Herper to install MACS with the *install_CondaTools* function. We just need to tell *install_CondaTools* what tool/s you want and the name of the environment you want to build. 
+
+We will install MACS (version 3), in addition to samtools and bedtools, which will be used to prepare our bam files for use by MACS and SEACR.
+
+```{r makeCondaEnv, echo=T, eval=F}
+macs_paths <- install_CondaTools(tools= c("macs3", "samtools", "bedtools"), env="CnR_analysis")
+macs_paths
+```
+
+```{r, eval=F, echo=F}
+tempdir2 <- function() {
+    tempDir <- tempdir()
+    if(dir.exists(tempDir)){
+      tempDir <- file.path(tempDir,"rr")
+    }
+    tempDir <- gsub("\\", "/", tempDir, fixed = TRUE)
+    tempDir
+}
+
+myMiniconda <- file.path(tempdir2(), "Test")
+install_CondaTools(tools=c("macs3", "samtools", "bedtools"), env="CnR_analysis", pathToMiniConda = myMiniconda)
+
+```
+
+Behind the scenes, Herper will install the most minimal version of conda (called miniconda), and then will create a new environment into which MACS, bedtools, and samtools will be installed. When you run the function it prints out where MACS is installed. There are additional arguments to control where miniconda is installed using *pathToMiniConda* and also update an existing environment with *updateEnv*. 
+
+---
+
+## Install software with conda and Herper
+
+After the software are installed, we can then use them using the `with_CondaEnv` function from Herper paired with the `system` function that allows us to run terminal commands from R.
+
+```{r testCondaEnv, echo=T, eval=F}
+Herper::with_CondaEnv("CnR_analysis",
+                      system("samtools sort -h"))
+```
+
+---
+
+## Proper pairs - CUT&RUN
+
+With our aligned paired-end data we can assess other QC metrics, like alignment quality and fragment length. We read our newly aligned data using the GenomicAlignments package. 
+
+Here we only want reads which are properly paired so we will use the **ScanBamParam()** and **scanBamFlag()** functions to control what will be read into R.
+
+We set the **scanBamFlag()** function parameters **isProperPair** to TRUE so as to only read in reads paired in alignment within our preset max fragment length (2000bpp)
+
+```{r processData_readingInDatad, echo=TRUE,eval=TRUE,cache=FALSE}
+library(GenomicAlignments)
+flags=scanBamFlag(isProperPair = TRUE)
+
+```
+
+---
+## Proper pairs - CUT&RUN
+
+We can now use these flags with the **ScanBamParam()** function to read in only properly paired reads. 
+
+We additionally specify information to be read into R using the **what** parameter. Importantly we specify the insert size information - **isize**.
+To reduce memory footprint we read only information from chromosome 18 by specifying a GRanges object to **which** parameter.
+
+
+```{r processData_readingInDatas, echo=TRUE,eval=TRUE,cache=FALSE}
+myParam=ScanBamParam(flag=flags,
+                   what=c("qname","mapq","isize", "flag"))
+myParam
+
+```
+
+
+---
+
+## Proper pairs - CUT&RUN
+
+Now we have set up the **ScanBamParam** object, we can use the **readGAlignmentPairs()** function to read in our paired-end CUT&RUN data using the **readGAlignments()** function.
+
+In the *data* folder is a BAM file contianing the reads from only chromsome 18 that we will read into R. 
+
+The resulting object is a **GAlignmentPairs** object.
+
+
+```{r processData_readingInDataa, echo=TRUE,eval=T}
+sortedBAM <- "data/SOX9CNR_W6_rep1_chr18_sorted.bam"
+cnrReads <- readGAlignmentPairs(sortedBAM,
+                                 param=myParam)
+class(cnrReads)
+
+```
+
+
+---
+## GAlignmentPairs - CUT&RUN
+
+The **GAlignmentPairs** object contains information on our paired reads. 
+
+It stores information on each read in a pair in parallel **GAlignments** objects.
+
+```{r processData_readingInData, echo=TRUE,eval=TRUE,cache=FALSE}
+cnrReads[1:2,]
+```
+
+---
+## GAlignmentPairs - CUT&RUN
+
+We access the **GAlignments** objects using the **first()** and **second()** accessor functions to gain information on the first or second read respectively.
+
+```{r processData_readingInData2, echo=TRUE,eval=TRUE,cache=FALSE}
+read1 <- GenomicAlignments::first(cnrReads)
+read2 <- GenomicAlignments::second(cnrReads)
+read2[1,]
+```
+---
+## Retrieve MapQ scores - CUT&RUN
+
+One of the first we can do is obtain the distribution of MapQ scores for our read1 and read2. We can access this for each read using **mcols()** function to access the mapq slot of the GAalignments object for each read.
+
+```{r processData_readingInData3, echo=TRUE,eval=TRUE,cache=FALSE}
+read1MapQ <- mcols(read1)$mapq
+read2MapQ <- mcols(read2)$mapq
+read1MapQ[1:5]
+```
+
+---
+## MapQ score frequencies - CUT&RUN
+
+We can then use the **table()** function to summarize the frequency of scores for each read in pair.
+
+```{r processData_readingInData4, echo=TRUE,eval=TRUE,cache=FALSE}
+read1MapQFreqs <- table(read1MapQ)
+read2MapQFreqs <- table(read2MapQ)
+read1MapQFreqs
+read2MapQFreqs
+```
+
+---
+## Plot MapQ scores - CUT&RUN
+
+Finally we can plot the distributions of MapQ for each read in pair using ggplot2.
+
+```{r processData_readingInData5,fig.width=9,fig.height=4,  echo=TRUE,eval=TRUE,cache=FALSE}
+library(ggplot2)
+toPlot <- data.frame(MapQ=c(names(read1MapQFreqs),names(read2MapQFreqs)),
+           Frequency=c(read1MapQFreqs,read2MapQFreqs),
+           Read=c(rep("Read1",length(read1MapQFreqs)),rep("Read2",length(read2MapQFreqs))))
+toPlot$MapQ <- factor(toPlot$MapQ,levels = unique(sort(as.numeric(toPlot$MapQ))))
+ggplot(toPlot,aes(x=MapQ,y=Frequency,fill=MapQ))+geom_bar(stat="identity")+facet_grid(~Read)
+```
+
+---
+
+## Retrieving insert sizes - CUT&RUN
+
+Now we have reads in the paired aligned data into R, we can retrieve the insert sizes from the **elementMetadata()** attached to **GAlignments** objects of each read pair.
+
+Since properly paired reads will have the same insert size length we extract insert sizes from read1.
+
+
+```{r processData_extractingRead1, echo=FALSE,eval=TRUE,cache=FALSE}
+insertSizes <- abs(mcols(read1)$isize)
+head(insertSizes)
+```
+---
+## Plotting insert sizes - CUT&RUN
+
+CUT&RUN should represent a mix of fragment lengths depending on the target. A TF will generally only be in nucleosome free regions and will have small fragments, while a histone mark might have longer fragments.
+
+We can use the **table()** function to retrieve a vector of the occurrence of each fragment length.
+
+```{r processData_plottingFrffagmentLengths, echo=TRUE,eval=TRUE,cache=FALSE}
+
+fragLenSizes <- table(insertSizes)
+fragLenSizes[1:5]
+
+```
+
+---
+## Plotting insert sizes - CUT&RUN
+
+Now we can use the newly acquired insert lengths for chromosome 18 to plot the distribution of all fragment lengths.
+
+
+```{r processData_plottingFrdagmentLengths, echo=TRUE,eval=TRUE,cache=FALSE}
+library(ggplot2)
+toPlot <- data.frame(InsertSize=as.numeric(names(fragLenSizes)),
+                            Count=as.numeric(fragLenSizes))
+fragLenPlot <- ggplot(toPlot,aes(x=InsertSize,y=Count))+geom_line()
+
+```
+
+---
+## Plotting insert sizes - CUT&RUN
+
+
+```{r processData_plottfingFragmentLengths2, echo=TRUE,eval=TRUE,cache=FALSE}
+
+fragLenPlot+theme_bw()
+
+```
+
+
+---
+## Plotting insert sizes - CUT&RUN
+
+We can now annotate our nucleosome free (< 120bp) regions. 
+
+Sometimes for a TF, subsetting the BAM file to only those reads <120bp is done to focus on the reads in open chromatin regions. 
+
+```{r processData_plottingFragmentLengths24, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4}
+fragLenPlot+ 
+  geom_vline(xintercept = c(120),colour="darkgreen")+theme_bw()
+
+```
+
+---
+## Filter reads - CUT&RUN
+
+We will filter out fragments where either read has a MAPQ of 0 and reads shorter than 1000bp.
+
+Note: For TF CUT&RUN where we expect binding in nucleosome free regions, sometimes it is common to only take reads shorter than 120bp. 
+
+```{r processData_createOpenRegionBAM, echo=TRUE,eval=TRUE,cache=FALSE}
+cnrReads_filter <- cnrReads[insertSizes < 1000 & (!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0)]
+
+```
+
+---
+## Remove blacklist - CUT&RUN
+
+ChIPseq and CUT&RUN will often show the presence of common artifacts, such as ultra-high signal regions. Such regions can confound peak calling, fragment length estimation and QC metrics. Anshul Kundaje created the DAC blacklist as a reference to help deal with these regions. 
+
+We will use this reference to remove these reads from the BAM file.
+
+<div align="center">
+<img src="imgs/blacklist.png" alt="offset" height="500" width="400">
+</div>
+
+---
+## Remove blacklist regions - CUT&RUN
+
+You can find a Blacklist for most genomes at the [Boyle lab Github page](https://github.com/Boyle-Lab/Blacklist/tree/master/lists). The most recent version (V2) for mm10 is avaialble in the *data* folder of this course. 
+
+We read it into R as a GRanges object using the `import` function from rtracklayer. 
+
+```{r, readinBL, echo=T, eval=F}
+library(rtracklayer)
+blacklist <- "data/mm10-blacklist.v2.bed"
+bl_regions <- rtracklayer::import(blacklist)
+bl_regions
+```
+
+---
+## Remove blacklist regions - CUT&RUN
+
+The `granges` function finds the range spanning the whole fragment (5' read 1 to 3' read 2) when given a GAlignmentPairs object. 
+
+We then identify the fragments from this GRanges object that overlap the blacklist regions. 
+```{r  removeBl, echo=T, eval=F}
+
+fragment_spans <- granges(cnrReads_filter)
+bl_remove <- overlapsAny(fragment_spans, bl_regions)
+table(bl_remove)
+
+```
+
+---
+## Write out filtered BAM file - CUT&RUN
+
+This logical vector is then used to filter out these fragments that overlap blacklist. 
+
+It is helpful to include the names for each read in the BAM file for the peak callers, so we unlist the GAlignmentPairs object so each read now has its own row, and then the names are set from the metadata of the object. 
+
+Lastly, the BAM file is written to file. 
+
+```{r writeFilteredBAM, echo=T, eval=F}
+cnrReads_filter_noBL <- cnrReads_filter[!bl_remove]
+cnrReads_unlist <- unlist(cnrReads_filter_noBL)
+names(cnrReads_unlist) <- mcols(cnrReads_unlist)$qname
+
+filter_bam <- gsub("sorted.bam","filter.bam", basename(sortedBam))
+rtracklayer::export(cnrReads_unlist, filter_bam,format = "bam")
+
+```
+
+---
+
+## Prepare BAM for peak calling - CUT&RUN
+
+The `samtools fixmate` function is helpful to clean up paired end BAM files. It will repair some of the metadata in the BAM file, which can be especially helpful when doing filtering and reading/writing of paired-end data in R. 
+
+Below we use Herper to call samtools. You'll notice a few extra tricks in the `with_CondaEnv` function call. We can use brackets {} to run multiple lines of code, and we also utilize the `tempfile` function to create a temporary path. These files will be deleted with the R session ends. 
+
+```{r fixmate, echo=T, eval=F}
+
+forPeak_bam <- gsub("_filter.bam", "_forPeak.bam", filter_bam)
+Herper::with_CondaEnv("CnR_analysis",
+                      {
+                        tempBam <- paste0(tempfile(), ".bam")
+                        system(paste("samtools sort", "-n", "-o", tempBam, filter_bam, sep = " "))
+                        system(paste("samtools fixmate", "-m", tempBam, forPeak_bam, sep = " "))
+                      })
+
+```
+
+---
+
+## Prepare BAM for peak calling - CUT&RUN
+
+The peak caller MACS requires the file to be sorted by coordinate. This can be done in R with the `sortBam` function. 
+
+Note: This could also be done using samtools on the command line using Herper as shown in the previous slide when we sorted by name in order to use fixmate. 
+```{r bamPrepMacs, echo=T, eval=F}
+
+forMacs_bam <- gsub("_forPeak.bam", "_macs.bam", forPeak_bam)
+sortBam(forPeak_bam, gsub(".bam", "", forMacs_bam))
+indexBam(forMacs_bam)
+
+```
+
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Peak calling - CUT&RUN
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Peak calling - CUT&RUN
+
+---
+"    
+  )
+  
+}
+
+```
+
+
+## CUT&RUN peak calling with MACS
+
+To run MACS to we simply need to supply:
+
+* A BAM file to find enriched regions in. (specified after **-t**)
+* A Name for peak calls (specified after **–name**).
+* An output folder to write peaks into (specified after **–outdir**).
+* Optionally, but often recommended, we can identify a control to compare to (specified after **–c**).
+
+
+---
+## CUT&RUN peak calling with MACS
+
+If we have sequenced paired-end data then we do know the fragment lengths and can provide BAM files to MACS which have been prefiltered to properly paired
+
+We have to simply tell MACS that the data is paired using the format argument. This is important as MACS will guess it is single-end BAM by default.
+
+```
+MACS callpeak -t pairedEnd.bam -f BAMPE 
+               --outdir path/to/output/
+               --name pairedEndPeakName
+```
+
+```{r callMacs, echo=TRUE,eval=F, warning=F}
+peaks_name <- gsub("_macs.bam", "", basename(forMacs_bam))
+with_CondaEnv("CnR_analysis",
+                      system2(command="macs3",args =c("callpeak",
+                      "-t", forMacs_bam,
+                      "--format", "BAMPE",
+                      "--outdir", ".",
+                      "--name", peaks_name)))
+
+```
+
+---
+## CUT&RUN peak calling with MACS
+
+Following peak calling we would get 3 files.
+
+* Name.narrowPeak -- Narrow peak format suitable for IGV and further analysis
+
+* Name_peaks.xls -- Peak table suitable for review in excel.(not actually a xls but a tsv)
+
+* summits.bed -- Summit positions for peaks useful for finding motifs and plotting
+
+---
+
+## CUT&RUN peak calling with SEACR
+
+[SEACR](https://epigeneticsandchromatin.biomedcentral.com/articles/10.1186/s13072-019-0287-4) is a peak calling algorithm that was written by same lab that developed CUT&RUN (Henikoff). It is meant to deal with the lower read depths and sparser background signal from CUT&RUN.  
+
+SEACR requires a bedgraph file, which like a BAM file contains information about genomic CUT&RUN signal. In the following slides we will make a paired end bed file, filter it and then write out as a bedgraph.
+
+SEACR is built for paired end datam and first we make a bedpe file using the function `bamtobed` from bedtools. We can use our conda environment we made previously to do this.
+
+```{r makeBedpe, echo=TRUE,eval=F, warning=F}
+# use the BAM with blacklist reads removed (from MACS section)
+bedpe <- gsub("\\.bam", "\\.bed", forPeak_bam)
+with_CondaEnv("CnR_analysis",
+                system(paste("bedtools bamtobed -bedpe -i", forPeak_bam, ">", bedpe, sep = " "))
+)
+
+```
+
+
+---
+
+
+## CUT&RUN peak calling with SEACR
+
+Lastly we  make a bedgraph file with the `genomecov` function from bedtools.  
+
+First we need to extract the chromosome lengths form the fasta file
+
+```{r echo=F,eval=F, include = F, warning=F}
+library(dplyr)
+library(tibble)
+
+indexFa("BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa")
+seqlengths(Rsamtools::FaFile("BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa")) %>%
+  as.data.frame() %>%
+  rownames_to_column() %>%
+  write.table(file = "chrom.lengths.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+```
+
+```{r makeBedgraph, echo=F,eval=F, warning=F}
+
+bedgraph <- gsub("\\.bed", "\\.bedgraph", bedpe)
+with_CondaEnv("CnR_analysis",
+                system(paste("bedtools genomecov -bg -i", bedpe, "-g", "data/chrom.lengths.txt", ">", bedgraph, sep = " "))
+)
+```
+
+---
+
+## CUT&RUN peak calling with SEACR
+
+Now we have the file required to run SEACR. But we need the SEACR executable script to call peaks
+
+We can download this from the Github page for SEACR. After it's downloaded the permissions might need to be changed to run the script.
+
+```{r getSEACR, echo=T,eval=F, warning=F}
+download.file("https://github.com/FredHutch/SEACR/archive/refs/tags/v1.4-beta.2.zip", destfile = "~/Downloads/SEACR_v1.4.zip")
+unzip("~/Downloads/SEACR_v1.4.zip", exdir = "~/Downloads/SEACR_v1.4" )
+seacr_path <- "~/Downloads/SEACR_v1.4/SEACR-1.4-beta.2/SEACR_1.4.sh"
+system(paste(seacr_path, "-h"))
+```
+
+---
+
+## CUT&RUN peak calling with SEACR
+
+The permissions can be changed by running the `chmod` function. Here we make it accessible to anyone, but this can be fine-tuned depending on your system. 
+
+```{r SEACRpermissions, echo=T,eval=F, warning=F}
+system(paste("chmod 777", seacr_path))
+system(paste(seacr_path, "-h"))
+```
+
+---
+
+## CUT&RUN peak calling with SEACR
+
+Now we can call peaks with the bedgraph file we generated and the SEACR.sh script.
+
+Here we set a few key arguments for peaks calling:
+* -b: the path to the bedgraph file
+* -c: either a path to a control file (eg IgG) or a number between 0 and 1. If its a number, then this fraction will control the top peaks returned based on the signal in the peak 
+  + below we will only return the top 1% of peaks
+* -n: 'norm' if using control, 'non' if not
+* -m: 'relaxed' or 'stringent' mode
+
+```{r runSEACR, echo=T,eval=F, warning=F}
+seacr_prefix <- gsub("\\.bedgraph", "_top01", bedgraph)
+
+system(paste(seacr_path, "-b", bedgraph, "-c 0.01", "-n non", "-m  stringent", "-o", seacr_prefix))
+```
+
+---
+## CUT&RUN peak calling with SEACR
+
+Following peak calling we get one file.
+
+* <prefix>.stringent.bed -- a bed file with columns showing signal information that is suitable for IGV and further analysis
+
+---
+
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Post alignment processing and peak calling - ATACseq
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Post alignment processing and peak calling - ATACseq
+
+---
+"    
+  )
+  
+}
+
+```
+
+
+## Proper pairs - ATACseq
+
+ATACseq processing and peak calling is very similar to CUT&RUN, with minor differences. We will quickly go through the same workflow for ATACseq. 
+
+```{r, echo=TRUE,eval=TRUE,cache=FALSE}
+
+flags=scanBamFlag(isProperPair = TRUE)
+myParam=ScanBamParam(flag=flags,
+                   what=c("qname","mapq","isize", "flag"))
+
+sortedBAM_atac <- "data/W6_ATAC_rep1_chr18_sorted.bam"
+atacReads <- readGAlignmentPairs(sortedBAM_atac,
+                                 param=myParam)
+head(atacReads, 2)
+```
+
+---
+## Plotting insert sizes - ATACseq
+
+ATACseq should represent a mix of fragment lengths corresponding to nucleosome free, mononucleosome and polynucleosome fractions. This is different from TF CUT&RUN where we expect almost exclusively short fragements.
+
+We can use the **table()** function to retrieve a vector of the occurrence of each fragment length.
+
+```{r processData_plottingFrffagmentLengths_atac, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4}
+atacReads_read1 <- GenomicAlignments::first(atacReads)
+insertSizes_atac <- abs(elementMetadata(atacReads_read1)$isize)
+fragLenSizes_atac <- table(insertSizes_atac)
+
+toPlot_atac <- data.frame(InsertSize=as.numeric(names(fragLenSizes_atac)),
+                            Count=as.numeric(fragLenSizes_atac))
+fragLenPlot_atac <- ggplot(toPlot_atac,aes(x=InsertSize,y=Count))+geom_line() +theme_bw()
+```
+
+---
+## Plotting insert sizes - ATACseq
+
+The nucleosome pattern becomes much more clear when we apply a log2 transformation to the counts. 
+
+A good quality ATACseq experiment typically shows this nucleosome patterning.
+
+```{r processData_plottingFragmentLengths3_atac, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4}
+
+fragLenPlot_atac + scale_y_continuous(trans='log2')
+```
+
+---
+## Plotting insert sizes - ATACseq
+
+
+We can now annotate our nucleosome free (< 100bp), mononucleosome (180bp-247bp) and dinucleosome (315-437) as in the Greenleaf study.
+
+```{r processData_plottingFragmentLengths24_atac, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4}
+fragLenPlot_atac+ scale_y_continuous(trans='log2')+
+  geom_vline(xintercept = c(180,247),colour="red")+
+  geom_vline(xintercept = c(315,437),colour="darkblue")+
+  geom_vline(xintercept = c(100),colour="darkgreen")+theme_bw()
+
+```
+
+---
+## Filter reads by MAPQ - ATACseq
+
+We will filter out fragments where either read has a MAPQ of 0. For CUT&RUN we also filtered out longer fragments, we will not do that here to get a full picture of the chromatin structure.
+
+It is also common to only use nucleosome free regions (e.g. < 120bp) to focus on TF binding sites. In this case, the larger fragments can be filtered as was done in the CUT&RUN section.
+
+```{r processData_createOpenRegionBAM_atac, echo=TRUE,eval=TRUE,cache=FALSE}
+atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
+
+```
+
+---
+## Remove blacklist regions - ATACseq
+
+The `granges` function finds the range spanning the whole fragment (5' read 1 to 3' read 2) when given a GAlignmentPairs object. 
+
+We then identify the fragments from this GRanges object that overlap the blacklist regions. 
+```{r  removeBl_atac, echo=T, eval=F}
+# the 'bl_regions' GRanges object was generated in CUT&RUN section
+fragment_spans_atac <- granges(atacReads_filter)
+bl_remove_atac <- overlapsAny(fragment_spans_atac, bl_regions)
+table(bl_remove_atac)
+
+```
+
+---
+## Write out filtered BAM file - ATACseq
+
+This logical vector is then used to filter out these fragments that overlap blacklist. 
+
+It is helpful to include the names for each read in the BAM file for the peak callers, so we unlist the GAlignmentPairs object so each read now has its own row, and then the names are set from the metadata of the object. 
+
+Lastly, the BAM file is written to file. 
+
+```{r writeFilteredBAM_atac, echo=T, eval=F}
+atacReads_filter_noBL <- atacReads_filter[!bl_remove]
+atacReads_unlist <- unlist(atacReads_filter_noBL)
+names(atacReads_unlist) <- mcols(atacReads_unlist)$qname
+
+filter_bam_atac <- gsub("sorted.bam","filter.bam", basename(sortedBAM_atac))
+rtracklayer::export(atacReads_unlist, filter_bam_atac,format = "bam")
+
+```
+
+---
+## Prepare BAM for peak calling - ATACseq
+
+Similar to CUT&RUN, the BAM file needs to be cleaned up and prepared for MACS3. Here we do this using Herper and the command line version of samtools to sort by name, fix the metadata with fixmate, and lastly sort by coordinate. 
+
+```{r fixmate_atac, echo=T, eval=F}
+
+forPeak_bam_atac <- gsub("_filter.bam", "_macs.bam", filter_bam_atac)
+Herper::with_CondaEnv("CnR_analysis",
+                      {
+                        tempBam <- paste0(tempfile(), ".bam")
+                        tempBam2 <- paste0(tempfile(), ".bam")
+                        system(paste("samtools sort", "-n", "-o", tempBam, filter_bam_atac, sep = " "))
+                        system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
+                        system(paste("samtools sort", "-n", "-o", forPeak_bam_atac, tempBam2, sep = " "))
+                      })
+
+```
+
+---
+## ATACseq peak calling with MACS
+
+Then we call peaks with MACS3 using the BAMPE setting. 
+
+While its not common to perform ATAC-seq using single end sequencing, there are some specific strategies to call peaks for single end data. In this case, see our [extended ATACseq course](https://rockefelleruniversity.github.io/RU_ATACseq/presentations/slides/RU_ATAC_part2.html#26).
+```{r callMacs_atac, echo=TRUE,eval=F, warning=F}
+peaks_name_atac <- gsub("_macs.bam", "", basename(forPeak_bam_atac))
+with_CondaEnv("CnR_analysis",
+                      system2(command="macs3",args =c("callpeak",
+                      "-t", forPeak_bam_atac,
+                      "--format", "BAMPE",
+                      "--outdir", ".",
+                      "--name", peaks_name_atac)))
+
+```
+
+---
+
+## Time for an exercise!
+
+Exercise on CUT&RUN data can be found [here](../../exercises/exercises/CUT&RUN_part1_exercise.html)
+
+---
+## Answers to exercise
+
+Answers can be found [here](../../exercises/answers/CUT&RUN_part1_answers.html)
+
+R code for solutions can be found [here](../../exercises/answers/CUT&RUN_part1_answers.R)
+
+
