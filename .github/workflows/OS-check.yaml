@@ -149,7 +149,7 @@ jobs:
       - name: CompileCourse
         run: |
           require(compileCourses)
-          compileCourses::compileSingleCourseMaterial(repo="RockefellerUniversity",subdir="ATAC.Cut-Run.ChIP",branch="master")
+          compileCourses::compileSingleCourseMaterial(repo="RockefellerUniversity",subdir="ATACCutRunChIP",branch="master")
         shell: Rscript {0}
 
       - name: Upload check results
