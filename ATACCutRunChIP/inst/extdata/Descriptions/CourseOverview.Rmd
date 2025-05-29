@@ -1,0 +1,26 @@
+## Course Overview
+<br>
+
+### Course Integrity
+**This course is compiled automatically on _`r Sys.Date()`_ **
+<br>
+[![compilation-check](https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/compilation-check.yml/badge.svg)](https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/compilation-check.yml)
+
+
+
+**The course is tested and available on MacOS, Windows and Ubuntu Linux for `r R.Version()$version.string`**
+<br>
+[![OS-check](https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/OS-check.yaml/badge.svg)](https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/OS-check.yaml)
+
+<br>
+<br>
+
+### Overview
+This course consists of 6 sections, walking participants through the basic concepts in analyzing epigenomic data: Sequencing QC, Alignment, Peak Calling, Technique Specific QC, Differentials, Annotation and Motif Analysis. 
+
+Each section is presented as HTMl presentations or single page document. Exercises and answer sheets are included after all subsections to practice techniques and provide future reference examples
+
+Course material and exercises are available to view as rendered HTML at https://rockefelleruniversity.github.io/RU_Course_template/.  
+
+All material is available to download under GPL v2 license.
+

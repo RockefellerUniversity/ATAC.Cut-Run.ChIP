@@ -1,0 +1,9 @@
+<br>
+
+#### **Epigenomics , Session 3**
+
+This section focuses on technique-specific QC
+
+* Cut&Run and ChIP QC with the ChIPQC package
+* ATAC QC with the ATACseqQC package
+

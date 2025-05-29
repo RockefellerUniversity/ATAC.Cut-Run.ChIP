@@ -1,0 +1,9 @@
+<br>
+
+#### **Epigenomics , Session 2**
+
+This section focuses on alignment and peak calling
+
+* How to build a reference genome index
+* Running alignment
+* Peak calling with MACS and SEACR
