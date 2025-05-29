@@ -223,9 +223,10 @@ Despite being different technologies that reveal differing biological phenomena 
 1) Fastq QC
 2) Alignment
 3) Peak calling
-4) Consensus Building
-5) Counting
-6) Differentials
+4) Technique QC
+5) Consensus Building
+6) Counting
+7) Differentials
 
 We will review analysis of these data types with a unified approach, but highlight key differences that need to be considered between technologies as we go. 
 
