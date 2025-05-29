@@ -4,8 +4,7 @@ Title: Epigenomics
 Version: 1.0
 Author: Matt Paul, Doug Barrows and Thomas Carroll.
 Maintainer: Thomas Carroll <tc.infomatics@gmail>
-Description: This package contains the teahicng material for reviewing 
-epigenomic analyses like ATAC, Cut & Run etc.
+Description: This package contains the teaching material for reviewing epigenomic analyses like ATAC, Cut & Run etc.
 License: What license is it under?
 LazyData: TRUE
 biocViews: Training
