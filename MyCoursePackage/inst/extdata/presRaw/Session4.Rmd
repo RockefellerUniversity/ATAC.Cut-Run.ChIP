@@ -1,0 +1,701 @@
+---
+title: "Epigenomics, Session 4"
+subtitle: " <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html> Bioinformatics Resource Center - Rockefeller University"
+author: 
+  - "http://rockefelleruniversity.github.io/RU_course_template/"
+  - "brc@rockefeller.edu"
+output: 
+  xaringan::moon_reader:
+    css: ["default.css", "metropolisCustom.css", "metropolis-fontsCustom.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      titleSlideClass: [middle, inverse]
+  html_document:
+    toc: true # table of content true
+    toc_float: yes
+    depth: 3  # upto three depths of headings (specified by #, ## and ###)
+    number_sections: false  ## if you want number sections at each table header
+    theme: united  # many options for theme, this one is my favorite.
+    highlight: tango  # specifies the syntax highlighting style
+params:
+  isSlides: "no"
+---
+
+```{r setup, include=FALSE}
+suppressPackageStartupMessages(require(knitr))
+knitr::opts_chunk$set(echo = TRUE, tidy = T)
+```
+
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides != "yes"){
+  cat("# Epigenomics (part 4)
+
+---
+"    
+  )
+  
+}
+
+```
+
+
+##  Recap
+
+?? can add a recap to link to keypoints in first session??
+Session 1 covered introduction to R data types and import/export of data.
+
+- [Background to R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#background-to-r)
+- [Data types in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#data_types_in_r)
+- [Reading and writing in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#reading-and-writing-data-in-r)
+
+1) Fastq QC
+2) Alignment
+3) Peak calling
+4) Technique QC
+5) Consensus Building
+6) Counting
+7) Differentials
+
+Consensus and counts and differentials (Tom)
+
+----
+## TF binding and epigenetic states
+
+A common goal in Cut&Run or ATACseq is to characterize genome wide transcription factor binding sites or epigenetic states. 
+
+The presence of transcription factor binding sites and epigenetics events is often further analyzed in the context of their putative targets genes to characterize the transcription factor's and epigenetic event's function and/or biological role.
+
+<div align="center">
+<img src="imgs/singlemap.png" alt="igv screenshot" height="300" width="600">
+</div>
+
+---
+## TF binding and epigenetic states
+
+Combined with replicates we can then statistically test for and identify changes in epigenetic events between conditions and/or cell lines.
+
+<div align="center">
+<img src="imgs/multiplesamples.png" alt="Multiple Samples" height="300" width="600">
+</div>
+
+
+---
+## Our Data
+
+We have been working to process and a characterize developmental changes in the context of the TF Sox9 using data from the Fuchs lab: [*The pioneer factor SOX9 competes for epigenetic factors to switch stem cell fates*](https://www.nature.com/articles/s41556-023-01184-y)
+
+In this session we will look at how we can define a high confidence/reproducible set of Sox9 peaks in the at Day 0 and Week 6 of development as well as identify unique or common peaks between the time points. 
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Consensus Peaks
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Consensus Peaks
+
+---
+"    
+  )
+  
+}
+
+```
+
+
+## Reading in a set of peaks
+
+First we need to read our peak calls from MACS2 into R. This procedure would also work with other peak callers like SEACR and it is also the same process for ATAC.
+
+The Sox9 peak calls we will review are within the data directory under peaks, so here we list all files matching our expected file pattern using the **dir() function.** 
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+peakFiles <- dir("data/peaks",pattern="narrowPeak",
+                 full.names = TRUE)
+peakFiles
+
+```
+
+
+---
+## Reading in a set of peaks
+
+Our MACS peaks are narrowPeak. These are similar to a bed file as they contain information about chromosome and position of the peaks. There is also additional columns containing peak IDs, scores and statistical p/qvalues.
+
+![](imgs/narrowpeak.png)
+
+
+---
+## Reading in a set of peaks
+
+We can import these files (and other bioinformatic formats like bed files), using the *rtracklayer* package.
+
+```{r,eval=T,echo=T, warning=FALSE}
+library(rtracklayer)
+macsPeaks_list <- lapply(peakFiles, import)
+length(macsPeaks_list)
+```
+
+---
+## Reading in a set of peaks
+
+rtracklayer imports peaks into a **GRanges** object. This is a specialist Bioconductor format designed to store any kind of positional data. 
+
+```{r}
+macsPeaks_list[[1]]
+
+```
+
+---
+## Reading in a set of peaks
+
+We can convert our list of **GRanges** objects to a **GRangesList** using the **GRangesList()** function.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+macsPeaks_GRL <- GRangesList(macsPeaks_list)
+names(macsPeaks_GRL) <- c("D0_rep1","D0_rep2","W6_rep1","W6_rep2")
+class(macsPeaks_GRL)
+names(macsPeaks_GRL)
+```
+
+---
+## GRangesList objects
+
+The GRangesList object can behave just as our standard lists. Here we use the **lengths()** function to a get the number of peaks in each replicate.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+lengths(macsPeaks_GRL)
+```
+
+---
+## GRangesList objects
+
+A major advantage of **GRangesList** objects is that we can apply many of the **GRanges** accessor and operator functions directly to our **GRangesList**. 
+
+This means there is no need to lapply and convert back to **GRangesList** if we wish to alter our **GRanges** by a common method.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+macsPeaks_GRLCentred <- resize(macsPeaks_GRL,10,fix="center")
+width(macsPeaks_GRLCentred)
+```
+
+---
+## GRangesList objects
+
+We can also extract the peak calls for specific groups easily i.e. D0.
+
+```{r,eval=T,echo=T, warning=FALSE}
+D0_rep1_Peaks <- macsPeaks_GRL$D0_rep1
+D0_rep2_Peaks <- macsPeaks_GRL$D0_rep2
+length(D0_rep1_Peaks)
+length(D0_rep2_Peaks)
+```
+
+---
+
+## Finding unique peaks
+
+We can extract peak calls unique to replicate 1 or 2 using the **%over%** operator. Once isolated it is easy to export these peaks to a bed file which we can visualize in [IGV](https://rockefelleruniversity.github.io/IGV_course/). 
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+D0_rep1_unique.Peaks <- D0_rep1_Peaks[!D0_rep1_Peaks %over% D0_rep2_Peaks]
+D0_rep2_unique.Peaks <- D0_rep2_Peaks[!D0_rep2_Peaks %over% D0_rep1_Peaks]
+length(D0_rep1_unique.Peaks)
+length(D0_rep2_unique.Peaks)
+export.bed(D0_rep1_unique.Peaks,"D0_rep1_Unique.bed")
+export.bed(D0_rep2_unique.Peaks,"D0_rep2_Unique.bed")
+```
+
+---
+## Finding unique peaks
+
+![](imgs/uniquePeaks.png)
+
+
+---
+
+## Finding common peaks
+
+Similarly we can extract peak calls common to replicate 1 or 2.
+
+The numbers in common however differ. This is because 2 peak calls in one sample can overlap 1 peak call in the other replicate.
+
+```{r,eval=T,echo=T, warning=FALSE}
+
+D0_rep1_common.Peaks <- D0_rep1_Peaks[D0_rep1_Peaks %over% D0_rep2_Peaks]
+D0_rep2_common.Peaks <- D0_rep2_Peaks[D0_rep2_Peaks %over% D0_rep1_Peaks]
+length(D0_rep1_common.Peaks)
+length(D0_rep2_common.Peaks)
+export.bed(D0_rep1_common.Peaks,"D0_rep1_Common.bed")
+export.bed(D0_rep2_common.Peaks,"D0_rep2_Common.bed")
+
+
+```
+
+---
+## Finding common peaks
+![](imgs/commonPeaks.png)
+
+---
+## Finding common peaks
+Despite overlapping these peaks are not identical. To determine quantitative differences we need to determine a common consensus peak across several samples. 
+![](imgs/differentpeaks.png)
+
+---
+## Define a consensus, redundant set
+
+To address this problem, a common operation in peak set analysis is to define a non-redundant set of peaks across all samples.
+
+To do this we first pool all our peaks across all replicates, here D0 and W6, into one set of redundant overlapping peaks.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+allPeaksSet_Overlapping <- unlist(macsPeaks_GRL)
+allPeaksSet_Overlapping
+```
+
+---
+## Define a consensus, nonredundant set
+
+We can then use the **reduce()** function to collapse our peaks into nonredundant, distinct peaks representing peaks present in any sample.
+
+```{r,eval=T,echo=T, warning=FALSE}
+allPeaksSet_nR <- reduce(allPeaksSet_Overlapping)
+allPeaksSet_nR
+export.bed(allPeaksSet_nR,"allPeaksSet_nR.bed")
+```
+
+---
+## Define a consensus, nonredundant set
+![](imgs/nrp.png)
+
+
+---
+## Defining a common set of peaks
+
+With our newly defined nonredundant peak set we can now identify from this set which peaks were present in both our replicates using the **%over%** operator and a logical expression.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+commonPeaks <- allPeaksSet_nR[allPeaksSet_nR %over% D0_rep1_Peaks &
+                               allPeaksSet_nR %over% D0_rep2_Peaks]
+commonPeaks
+export.bed(commonPeaks,"D0_commonPeaks.bed")
+
+```
+
+---
+## Defining a common set of peaks
+![](imgs/commonPR.png)
+
+---
+## Complex overlaps
+
+When working with larger numbers of peaks we will often define a logical matrix describing in which samples our nonredundant peaks were present.
+
+First then we use a loop to generate a logical vector for the occurrence of nonredundant peaks in each sample.
+
+```{r,eval=T,echo=T,warning=FALSE}
+overlap <- list()
+for(i in 1:length(macsPeaks_GRL)){
+  overlap[[i]] <- allPeaksSet_nR %over% macsPeaks_GRL[[i]]
+}
+overlap[[1]][1:2]
+```
+
+---
+## Complex overlaps
+
+We can now use to **do.call** and **cbind** function to column bind our list of overlaps into our matrix of peak occurrence.
+
+```{r,eval=T,echo=T, warning=FALSE}
+overlapMatrix <- do.call(cbind,overlap)
+colnames(overlapMatrix) <- names(macsPeaks_GRL)
+overlapMatrix[1:3,]
+```
+
+---
+## Complex overlaps
+
+We can add the matrix back into the metadata columns of our **GRanges()** of nonredundant peaks using the **mcols()** accessor.
+
+Now we have our nonredundant peaks and the occurence of these peaks in every sample we can easily identify peaks unique or common to replicates and conditions/cell lines.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+mcols(allPeaksSet_nR) <- overlapMatrix
+allPeaksSet_nR[1:3,]
+```
+
+---
+## Complex overlaps
+
+The **limma** package is commonly used in the analysis of RNAseq and microarray data and contains many useful helpful functions.
+
+One very useful function is the **vennDiagram** function which allows us to plot overlaps from a logical matrix, just like the one we created.
+
+
+```{r,eval=T,echo=T, warning=FALSE,fig.height=5,fig.width=5}
+library(limma)
+vennDiagram(mcols(allPeaksSet_nR))
+```
+
+---
+## Complex overlaps
+
+The **limma** package's **vennCounts** function allows us to retrieve the counts displayed in the Venn diagram as a data.frame.
+
+```{r,eval=T,echo=T, warning=FALSE}
+vennCounts(mcols(allPeaksSet_nR))
+```
+
+---
+## High confidence peaks
+
+With our nonredundant set of peaks and our matrix of peak occurrence, we can define replicated peaks within conditions.
+
+Here we define the peaks which occur in both the D0 replicates.
+
+Since logical matrix is equivalent to a 1 or 0  matrix (1 = TRUE and 0 = FALSE), we can use the rowSums function to extract peaks in at least 2 of the D0 replicates.
+
+```{r,eval=T,echo=T,warning=FALSE}
+D0_HC_Peaks <- allPeaksSet_nR[rowSums(as.data.frame(mcols(allPeaksSet_nR)[,c("D0_rep1","D0_rep2")])) >= 2]
+
+tail(D0_HC_Peaks)
+```
+
+
+---
+## High confidence unique peaks
+
+Similarly we can define peaks which are replicated in one group, but not the other i.e. D0 but absent in W6 samples.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+D0_HC_UniquePeaks <- allPeaksSet_nR[
+  rowSums(as.data.frame(
+    mcols(allPeaksSet_nR)[,c("D0_rep1","D0_rep2")])) >= 2 &
+  rowSums(as.data.frame(
+    mcols(allPeaksSet_nR)[,c("W6_rep1","W6_rep2")])) == 0  
+  ]
+export.bed(D0_HC_UniquePeaks,"D0_HC_UniquePeaks.bed")
+D0_HC_UniquePeaks[1:5,]
+```
+
+---
+## High confidence unique peaks
+![](imgs/D0_unique.png)
+
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Differential Peaks
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Differential Peaks
+
+---
+"    
+  )
+  
+}
+
+```
+
+## Finding differential regions
+
+Identifying peaks specific to cell lines or conditions does not capture the full range of changes in epigenetic events. Though it is a useful descriptor it is reliant completely on the discrete classification of peak callers. 
+
+To identify quantitative differences in epigenetic events we can compare the changes in fragment abundance from IP samples across our nonredundant set of peaks.
+
+![](imgs/quant.png)
+
+---
+## Finding differential regions
+
+We first must establish a set of regions within which to quantify fragments. We have already spent time looking at how to extract non-redundant or high confidence peaks. 
+
+An established technique is to produce a set of non-redundant peaks which occur in the **majority** of at least one experimental condition under evaluation i.e. high confident peaks from each group. If you only have duplicates it must be present in both.  
+
+Here we identify peaks which occurred in both replicates in either D0 or W6 developmental time points.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+HC_Peaks <- allPeaksSet_nR[
+  rowSums(as.data.frame(
+    mcols(allPeaksSet_nR)[,c("D0_rep1","D0_rep2")])) >= 2 |
+  rowSums(as.data.frame(
+    mcols(allPeaksSet_nR)[,c("W6_rep1","W6_rep2")])) >= 2  
+  ]
+export.bed(HC_Peaks,"HC_Peaks.bed")
+HC_Peaks
+```
+
+---
+## Finding differential regions
+![](imgs/HC_peaks.png)
+
+---
+## Counting regions
+
+Now we know the regions of the genome that are relevant i.e our HC peaks, we can then work on counting how many fragments overlap these regions. 
+
+To do this we will need to use our BAM files again. As mentioned before these files are big and counting can take from a few minutes to many hours depending on the number samples, peaks and read depth.
+
+The next few slides will show you how to run counting, but we will also provide you with the count matrix after so you do not have to run the counting yourself for this training.
+
+---
+## Counting regions
+
+We will count from our aligned BAM files to quantify IP fragments.
+
+We can use the **BamFileList()** function to specify which BAMs to count and importantly, to control memory we specify the number of reads to be held in memory at one time using the **yield()** parameter.
+
+```{r,eval=F, echo=F, warning=FALSE}
+
+library(Rsamtools)
+
+datasets <- rbind(
+c("SOX9CNR_D0_rep1",	"YHBLDAMZIWFJXNRSVKOT"),
+c("SOX9CNR_D0_rep2",	"ZYCLMWGQSVOHTNAIFPDX"),
+  c("SOX9CNR_W6_rep1",	"LIQKNMDFWPVBJSTHOEYG"),
+    c("SOX9CNR_W6_rep2",	"TWHECASNYQDIKUOXPVGB"))
+
+bams <- sapply(1:4, function(x){
+
+path <- dir(file.path("/rugpfs/fs0/brc/scratch/brc_pipeline/analysis/testBRC_Shiny/",datasets[x,2],"workflow_data","BAM"), pattern=".bam$", full.names=T)
+
+return(path)
+})
+
+bamFL <- BamFileList(bams,yieldSize = 5000000)
+bamFL
+```
+
+```{r,eval=F, echo=T, warning=FALSE}
+
+library(Rsamtools)
+
+bams <- c("SOX9CNR_D0_rep1.fastq.gz",
+          "SOX9CNR_D0_rep2.fastq.gz",
+          "SOX9CNR_W6_rep1.fastq.gz",
+          "SOX9CNR_W6_rep2.fastq.gz")
+
+bamFL <- BamFileList(bams,yieldSize = 5000000)
+bamFL
+```
+
+---
+## Counting regions
+
+We can count the number of fragments overlapping our peaks using the **summarizeOverlaps** function. Since Cut&Run and/or ATAC is strandless, we set the **ignore.strand** parameter to **TRUE**.
+
+The returned object is a **RangedSummarizedExperiment** containing our GRanges of HC peaks and the counts in these regions for our BAM files.
+
+
+```{r,eval=F, echo=F, warning=FALSE}
+HC_Peaks <- rtracklayer::import("HC_Peaks.bed")
+library(GenomicAlignments)
+MyCounts <- summarizeOverlaps(HC_Peaks,
+                              reads = bamFL,
+                              ignore.strand = TRUE)
+save(MyCounts,file="MyCounts.RData")
+```
+
+```{r,eval=F, echo=T, warning=FALSE}
+library(GenomicAlignments)
+MyCounts <- summarizeOverlaps(HC_Peaks,
+                              reads = bamFL,
+                              ignore.strand = TRUE)
+save(MyCounts,file="MyCounts.RData")
+```
+
+---
+## Counting regions
+
+The count object has been saved and you can load it from the data directory.  
+
+```{r, warning=FALSE}
+load("data/MyCounts.RData")
+
+class(MyCounts)
+
+MyCounts
+
+```
+
+---
+## Differential regions using DESeq2
+
+To assess changes in signal bertween different conditions we will use the **DESeq2** package.
+
+The DESeq2 package contains a workflow for assessing local changes in fragment/read abundance between replicated conditions. This workflow includes normalization, variance estimation, outlier removal/replacement as well as significance testing suited to high throughput sequencing data (i.e. integer counts).
+
+To make use of DESeq2 workflow we must first create a data.frame of conditions of interest with rownames set as our BAM file names.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+metaDataFrame <- data.frame(DevStage=c("D0","D0","W6","W6"))
+rownames(metaDataFrame) <- colnames(MyCounts)
+metaDataFrame
+```
+
+---
+## Differential regions using DESeq2
+
+We can use the **DESeqDataSetFromMatrix()** function to create a **DESeq2** object.
+
+We must provide our matrix of counts to **countData** parameter, our metadata data.frame to **colData** parameter and we include to an optional parameter of **rowRanges** the nonredundant peak set we can counted on.
+
+Finally we provide the name of the column in our metadata data.frame within which we wish to test to the **design** parameter.
+
+```{r,eval=T,echo=T, warning=FALSE}
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix(countData = assay(MyCounts),
+                              colData = metaDataFrame,
+                              design = ~ DevStage,
+                              rowRanges= HC_Peaks)
+```
+
+---
+## Differential regions using DESeq2
+
+We can now run the DESeq2 workflow on our **DESeq2** object using the **DESeq()** function.
+
+```{r,eval=T,echo=T, warning=FALSE}
+dds <- DESeq(dds)
+```
+
+---
+## Differential regions using DESeq2
+
+Our **DESeq2** object is updated to include useful statistics such our normalized values and variance of signal within each HC peak call.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+dds
+```
+
+---
+## Differential regions using DESeq2
+
+We can extract our information of differential regions using the **results()** function.
+
+We provide to the **results()** function the **DESeq2** object, the comparison of interest to the **contrast** parameter and the type of output to return to the **format** parameter.
+
+The comparison to **contrast** parameter is provided as a vector of length 3 including the metadata column of interest and groups to test.
+
+We can sort the results by pvalue using the **order()** function to rank by the most significant changes.
+
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+W6MinusD0 <- results(dds,
+                        contrast = c("DevStage","W6","D0"),
+                        format="GRanges")
+W6MinusD0 <- W6MinusD0[order(W6MinusD0$pvalue),]
+W6MinusD0
+```
+
+---
+## Differential regions using DESeq2
+
+The GRanges object contains information on the comparison made in DESeq2.
+
+Most useful it contains the the difference in signal as log2 fold change in **log2FoldChange**, the significance of the change in the **pvalue** column and an adjusted p-value to address multiple correction in **padj** column.
+
+```{r,eval=T,echo=T, warning=FALSE}
+W6MinusD0
+```
+
+
+---
+## Differential regions using DESeq2
+
+We can now filter our HC peaks to those with significantly more signal in Mel or Ch12 cell lines by filtering by log2FoldChange and padj (p-value adjusted for multiple correction) less than 0.05.
+
+
+```{r,eval=T,echo=T, eval=F, echo=T, warning=FALSE}
+W6MinusD0.Filt <- W6MinusD0[!is.na(W6MinusD0$pvalue) | !is.na(W6MinusD0$padj)]
+UpinW6 <- W6MinusD0[W6MinusD0$padj < 0.05 & W6MinusD0$log2FoldChange > 0]
+DowninW6 <- W6MinusD0[W6MinusD0$padj < 0.05 & W6MinusD0$log2FoldChange < 0]
+export.bed(UpinW6,"UpinW6.bed")
+export.bed(DowninW6,"DowninW6.bed")
+
+```
+
+
+---
+## Differential regions using DESeq2
+![](imgs/DB.png)
+
+---
+## Differential regions using DESeq2
+
+Finally we can make our reviewing of sites in IGV a little easier using the **tracktables** package. 
+
+The **tracktables** package's **makebedtable()** function accepts a **GRanges** object and writes an HTML report contains links to IGV.
+
+An example can be found [here](../../data/MelMinusCh12.html)
+
+```{r,eval=T,echo=T, eval=F, echo=T, warning=FALSE}
+library(tracktables)
+myReport <- makebedtable(W6MinusD0.Filt,"W6MinusD0.html",
+                         basedirectory = getwd())
+
+browseURL(myReport)
+```
+
+---
+## Differential regions plotting
+
+To assess global levels of changes between samples PCA can be a very useful plot. This becomes very important when you have many groups and many samples. 
+
+To do this we want the normalized count values. We can get this from our dds object using the *rlog()* function. 
+
+```{R}
+myrlog <- rlog(dds)
+plotPCA(myrlog, intgroup="DevStage")
+```
+
+---
+## Differential regions plotting
+
+Volcano Plots can also be a nice way to show the amount of changes and reveal any global biases. 
+
+```{r}
+library(EnhancedVolcano)
+
+EnhancedVolcano(as.data.frame(W6MinusD0.Filt),
+                lab=paste0(seqnames(W6MinusD0.Filt), ranges(W6MinusD0.Filt)),
+                x = "log2FoldChange",
+                y="padj", selectLab = "")
+
+
+```
+
+
+---
+## Time for an exercise!
+
+
+Exercise on functions can be found [here](../..//exercises/exercises/MyExercise3_exercise.html)
+
+---
+## Answers to exercise.
+
+
+Answers can be found here  [here](../..//exercises/answers/MyExercise3_answers.html)
+
+Rcode for answers can be found here  [here](../..//exercises/answers//answers/MyExercise3_Answers.R)
+
