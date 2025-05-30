@@ -1,0 +1,8 @@
+<br>
+
+#### **Epigenomics , Session 1**
+
+This section focuses on sequencing QC
+
+* Intorudction to different epigenomic techniques
+* Sequencing QC
