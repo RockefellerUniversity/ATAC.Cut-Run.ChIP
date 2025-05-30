@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE, tidy = T) # delete cache before any merging
 
 ```{r, results='asis',include=TRUE,echo=FALSE}
 if(params$isSlides != "yes"){
-  cat("# CUT&RUN (part 3)
+  cat("# CUT&RUN/ATAC (part 3) - Quality Control
 
 ---
 "    

@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE, tidy = T) # delete cache before any merging
 
 ```{r, results='asis',include=TRUE,echo=FALSE}
 if(params$isSlides != "yes"){
-  cat("# CUT&RUN (part 2)
+  cat("# CUT&RUN/ATAC (part 2) - Alignment and Peak Calling
 
 ---
 "    
@@ -532,7 +532,7 @@ fragLenPlot <- ggplot(toPlot,aes(x=InsertSize,y=Count))+geom_line()
 ## Plotting insert sizes - CUT&RUN
 
 
-```{r processData_plottfingFragmentLengths2, echo=TRUE,eval=TRUE,cache=FALSE}
+```{r processData_plottfingFragmentLengths2, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4}
 
 fragLenPlot+theme_bw()
 
@@ -582,7 +582,7 @@ You can find a Blacklist for most genomes at the [Boyle lab Github page](https:/
 
 We read it into R as a GRanges object using the `import` function from rtracklayer. 
 
-```{r, readinBL, echo=T, eval=F}
+```{r, readinBL, echo=T, eval=T}
 library(rtracklayer)
 blacklist <- "data/mm10-blacklist.v2.bed"
 bl_regions <- rtracklayer::import(blacklist)
@@ -595,7 +595,7 @@ bl_regions
 The `granges` function finds the range spanning the whole fragment (5' read 1 to 3' read 2) when given a GAlignmentPairs object. 
 
 We then identify the fragments from this GRanges object that overlap the blacklist regions. 
-```{r  removeBl, echo=T, eval=F}
+```{r  removeBl, echo=T, eval=T}
 
 fragment_spans <- granges(cnrReads_filter)
 bl_remove <- overlapsAny(fragment_spans, bl_regions)
@@ -656,6 +656,7 @@ sortBam(forPeak_bam, gsub(".bam", "", forMacs_bam))
 indexBam(forMacs_bam)
 
 ```
+
 
 
 ---
@@ -754,9 +755,9 @@ with_CondaEnv("CnR_analysis",
 
 Lastly we  make a bedgraph file with the `genomecov` function from bedtools.  
 
-First we need to extract the chromosome lengths form the fasta file
+First we need to extract the chromosome lengths from the fasta file
 
-```{r echo=F,eval=F, include = F, warning=F}
+```{r echo=T,eval=F, include = F, warning=F}
 library(dplyr)
 library(tibble)
 
@@ -767,6 +768,11 @@ seqlengths(Rsamtools::FaFile("BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa")) %>%
   write.table(file = "chrom.lengths.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
 ```
 
+---
+
+## CUT&RUN peak calling with SEACR
+
+Then we make the bedgraph file with `genomecov` using the file containing chromosome lengths in the '-g' argument. 
 ```{r makeBedgraph, echo=F,eval=F, warning=F}
 
 bedgraph <- gsub("\\.bed", "\\.bedgraph", bedpe)
@@ -916,8 +922,6 @@ fragLenPlot_atac+ scale_y_continuous(trans='log2')+
 
 We will filter out fragments where either read has a MAPQ of 0. For CUT&RUN we also filtered out longer fragments, we will not do that here to get a full picture of the chromatin structure.
 
-It is also common to only use nucleosome free regions (e.g. < 120bp) to focus on TF binding sites. In this case, the larger fragments can be filtered as was done in the CUT&RUN section.
-
 ```{r processData_createOpenRegionBAM_atac, echo=TRUE,eval=TRUE,cache=FALSE}
 atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 
@@ -989,6 +993,62 @@ with_CondaEnv("CnR_analysis",
                       "--format", "BAMPE",
                       "--outdir", ".",
                       "--name", peaks_name_atac)))
+
+```
+
+---
+
+## Make BAM file for Nucleosome free regions
+
+It is also common to only use nucleosome free regions (e.g. < 100bp) to focus on TF binding sites. This can be helpful for some down stream analyses, such as motif analysis. 
+
+In this case, we filter the GAlignmentPairs object based on isnert size.
+
+```{r writeNFBAM_atac, echo=T, eval=F}
+read1_noBL <- GenomicAlignments::first(atacReads_filter_noBL)
+insertSizes_atac_noBL <- abs(elementMetadata(read1_noBL)$isize)
+
+atacReads_NF <- atacReads_filter_noBL[insertSizes_atac_noBL < 100]
+atacReads_NF_unlist <- unlist(atacReads_NF)
+names(atacReads_NF_unlist) <- mcols(atacReads_NF_unlist)$qname
+
+NF_bam_atac <- gsub("sorted.bam","filterNF.bam", basename(sortedBAM_atac))
+rtracklayer::export(atacReads_NF_unlist, NF_bam_atac,format = "bam")
+
+```
+
+---
+## Prepare NF BAM for peak calling - ATACseq
+
+As before, the BAM file needs to be cleaned up and prepared for MACS3.
+
+```{r fixmate_atacNF, echo=T, eval=F}
+
+forPeak_NFbam_atac <- gsub("_filterNF.bam", "_macsNF.bam", NF_bam_atac)
+Herper::with_CondaEnv("CnR_analysis",
+                      {
+                        tempBam <- paste0(tempfile(), ".bam")
+                        tempBam2 <- paste0(tempfile(), ".bam")
+                        system(paste("samtools sort", "-n", "-o", tempBam, NF_bam_atac, sep = " "))
+                        system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
+                        system(paste("samtools sort", "-n", "-o", forPeak_NFbam_atac, tempBam2, sep = " "))
+                      })
+
+```
+
+---
+## Call NF peaks with MACS
+
+Then we call peaks  for the nucleosome free regions with MACS3 using the BAMPE setting. 
+
+```{r callMacs_atacNF, echo=TRUE,eval=F, warning=F}
+peaksNF_name_atac <- gsub("_macsNF.bam", "_NF", basename(forPeak_bam_atac))
+with_CondaEnv("CnR_analysis",
+                      system2(command="macs3",args =c("callpeak",
+                      "-t", forPeak_NFbam_atac,
+                      "--format", "BAMPE",
+                      "--outdir", ".",
+                      "--name", peaksNF_name_atac)))
 
 ```
 
