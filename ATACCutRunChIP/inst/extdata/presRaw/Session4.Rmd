@@ -618,6 +618,16 @@ Most useful it contains the the difference in signal as log2 fold change in **lo
 W6MinusD0
 ```
 
+---
+## Differential regions using DESeq2
+
+We can export our results to an excel spreadsheet using rio so you can easily share and review results. 
+
+```{r}
+rio::export(as.data.frame(W6MinusD0), "data/W6MinusD0.xlsx")
+
+
+```
 
 ---
 ## Differential regions using DESeq2
