@@ -632,7 +632,7 @@ rio::export(as.data.frame(W6MinusD0), "data/W6MinusD0.xlsx")
 ---
 ## Differential regions using DESeq2
 
-We can now filter our HC peaks to those with significantly more signal in Mel or Ch12 cell lines by filtering by log2FoldChange and padj (p-value adjusted for multiple correction) less than 0.05.
+We can now filter our HC peaks to those with significantly more signal in D0 or W6 timepoints by filtering by log2FoldChange and padj (p-value adjusted for multiple correction) less than 0.05.
 
 
 ```{r,eval=T,echo=T, eval=F, echo=T, warning=FALSE}
@@ -656,7 +656,7 @@ Finally we can make our reviewing of sites in IGV a little easier using the **tr
 
 The **tracktables** package's **makebedtable()** function accepts a **GRanges** object and writes an HTML report contains links to IGV.
 
-An example can be found [here](../../data/MelMinusCh12.html)
+An example can be found [here](../../data/W6MinusD0.html)
 
 ```{r,eval=T,echo=T, eval=F, echo=T, warning=FALSE}
 library(tracktables)
