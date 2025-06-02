@@ -186,7 +186,7 @@ It is helpful to review CUT&RUN quality versus other samples (including any IgG)
 
 This will allow us to identify expected patterns of CUT&RUN enrichment in our samples versus controls as well as spot any outlier samples by these metrics.
 
-We can run **ChIPQCsample()** on all our samples of interest using an **lapply**. First we make vectors of BAM files and peak files where the indeces of BAMs and corresponding peaks line up.
+We can run **ChIPQCsample()** on all our samples of interest using an **lapply**. First we make vectors of BAM files and peak files where the indeces of BAMs and corresponding peaks line up. If you want to try on your own, the BAM files are [available on dropbox](https://www.dropbox.com/scl/fo/f8q9iz5j1mic0wrhzei2c/AEIL42gWMI-Tc_OwFxc5wOA?rlkey=gxl9u7rqk783zuz4tezj9e3pu&st=qzh2allk&dl=0), but be aware that they are big files. 
 
 
 ```{r mycQCshow2,cache=F,eval=FALSE, echo=T}
@@ -230,10 +230,10 @@ bamsToQC <- c("../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_D0_rep1_sor
               "../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_W6_rep1_sorted.bam",
               "../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_W6_rep2_sorted.bam")
 
-peaksToQC <- c("../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_D0_rep1_macs_peaks.narrowPeak", 
-              "../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
-              "../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_W6_rep1_macs_peaks.narrowPeak",
-              "../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
+peaksToQC <- c("data/peaks/SOX9CNR_D0_rep1_macs_peaks.narrowPeak", 
+              "data/peaks/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
+              "data/peaks/SOX9CNR_W6_rep1_macs_peaks.narrowPeak",
+              "data/peaks/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
 
 
 myQC <- lapply(seq_along(bamsToQC),function(x){
