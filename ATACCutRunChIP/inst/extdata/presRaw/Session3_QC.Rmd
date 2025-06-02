@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE, tidy = T) # delete cache before any merging
 
 ```{r, results='asis',include=TRUE,echo=FALSE}
 if(params$isSlides != "yes"){
-  cat("# CUT&RUN (part 3)
+  cat("# CUT&RUN/ATAC (part 3) - Quality Control
 
 ---
 "    
@@ -195,10 +195,10 @@ bamsToQC <- c("~/Downloads/SOX9CNR_D0_rep1_sorted.bam",
               "~/Downloads/SOX9CNR_W6_rep1_sorted.bam",
               "~/Downloads/SOX9CNR_W6_rep2_sorted.bam")
 
-peaksToQC <- c("~/Downloads/SOX9CNR_D0_rep1_macs_peaks.narrowPeak", 
-              "~/Downloads/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
-              "~/Downloads/SOX9CNR_W6_rep1_macs_peaks.narrowPeak",
-              "~/Downloads/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
+peaksToQC <- c("data/peaks/SOX9CNR_D0_rep1_macs_peaks.narrowPeak", 
+              "data/peaks/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
+              "data/peaks/SOX9CNR_W6_rep1_macs_peaks.narrowPeak",
+              "data/peaks/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
 
 ```
 
@@ -471,7 +471,7 @@ if(params$isSlides == "yes"){
 }
 ```
 
----
+
 ## ATACseqQC
 
 The **ATACseqQC** library allows us to run many of the ATACseq QC steps we have seen in a single step. It may consume a little more memory but will allow for the inclusion of two more useful metrics called the PCR Bottleneck Coefficients (PBC1 and PBC2).
@@ -490,7 +490,7 @@ As with ChIPQC, the ATACseqQC function contains a workflow function which will a
 
 Since this can be fairly memory heavy, I am just illustrating it here on a BAM file containing just the chromosome 18 reads of the ATACseq data.
 
-```{r, echo=F, eval=T}
+```{r, echo=T, eval=T}
 library(ATACseqQC)
 
 atac_bam <- "data/W6_ATAC_rep1_chr18_sorted.bam"
@@ -543,9 +543,9 @@ ATACQC$PCRbottleneckCoefficient_2
 
 ## ATACseqQC insert sizes plot
 
-In the peak calling lecture we made a plot of insert sizes (LINK!). This is a very important QC readout for ATACseq, and ATACseqQC has a function that makes a similar plot with just a path to a BAM file. 
+In the peak calling lecture we made a plot of insert sizes. This is a very important QC readout for ATACseq, and ATACseqQC has a function that makes a similar plot with just a path to a BAM file. 
 
-```{r}
+```{r, fig.height=6, fig.width=6}
 
 fragSize <- fragSizeDist(atac_bam,
                          bamFiles.labels = gsub("\\.bam", "", basename(atac_bam)))
