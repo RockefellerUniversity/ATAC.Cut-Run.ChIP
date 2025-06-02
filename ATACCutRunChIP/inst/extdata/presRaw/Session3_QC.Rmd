@@ -667,7 +667,7 @@ When we created our index we subset the genome to the main chromosomes. We can d
 ```{r processData_subset, echo=TRUE,eval=T}
 mainChromosomes <- paste0("chr",c(1:19,"X","Y","M"))
 
-tssLocations <- tssLocations[seqnames(tssLocations) %in% mainChromosomes]
+tssLocations <- tssLocations[as.vector(seqnames(tssLocations)) %in% mainChromosomes]
 
 seqlevels(tssLocations) <- mainChromosomes
 
