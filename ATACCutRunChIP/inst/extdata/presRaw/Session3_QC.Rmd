@@ -222,8 +222,6 @@ names(myQC) <- basename(bamsToQC)
 
 ```
 
-
-
 ```{r mycQCshow3,cache=F,eval=FALSE, echo=F}
 bamsToQC <- c("../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_D0_rep1_sorted.bam", 
               "../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_D0_rep2_sorted.bam",
@@ -669,7 +667,7 @@ When we created our index we subset the genome to the main chromosomes. We can d
 ```{r processData_subset, echo=TRUE,eval=T}
 mainChromosomes <- paste0("chr",c(1:19,"X","Y","M"))
 
-tssLocations <- tssLocations[seqnames(tssLocations) %in% mainChromosomes]
+tssLocations <- tssLocations[as.vector(seqnames(tssLocations)) %in% mainChromosomes]
 
 seqlevels(tssLocations) <- mainChromosomes
 

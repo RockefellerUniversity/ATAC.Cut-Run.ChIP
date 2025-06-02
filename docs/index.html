@@ -12,7 +12,7 @@
 <meta name="author" content="Bioinformatics Resource Center" />
 
 
-<title>Course Template</title>
+<title>Epigenomics</title>
 
 <script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -316,7 +316,7 @@ div.tocify {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">Template Package for Courses</a>
+      <a class="navbar-brand" href="index.html">Epigenomics</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
@@ -348,13 +348,41 @@ div.tocify {
       <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Session2</a>
       <ul class="dropdown-menu" role="menu">
         <li>
-          <a href="presentations/slides/Session2.html">Slide</a>
+          <a href="presentations/slides/Session2_Align_CallPeaks.html">Slide</a>
         </li>
         <li>
-          <a href="presentations/singlepage/Session2.html">Single Page</a>
+          <a href="presentations/singlepage/Session2_Align_CallPeaks.html">Single Page</a>
         </li>
         <li>
-          <a href="presentations/r_code/Session2.R">Code</a>
+          <a href="presentations/r_code/Session2_Align_CallPeaks.R">Code</a>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Session3</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="presentations/slides/Session3_QC.html">Slide</a>
+        </li>
+        <li>
+          <a href="presentations/singlepage/Session3_QC.html">Single Page</a>
+        </li>
+        <li>
+          <a href="presentations/r_code/Session3_QC.R">Code</a>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Session4</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="presentations/slides/Session4.html">Slide</a>
+        </li>
+        <li>
+          <a href="presentations/singlepage/Session4.html">Single Page</a>
+        </li>
+        <li>
+          <a href="presentations/r_code/Session4.R">Code</a>
         </li>
       </ul>
     </li>
@@ -378,34 +406,12 @@ div.tocify {
         </li>
       </ul>
     </li>
-    <li class="dropdown-submenu">
-      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">MyExercise2</a>
-      <ul class="dropdown-menu" role="menu">
-        <li>
-          <a href="exercises/exercises/MyExercise2_exercise.html">Exercise</a>
-        </li>
-        <li>
-          <a href="exercises/answers/MyExercise2_answers.html">Solution</a>
-        </li>
-      </ul>
-    </li>
-    <li class="dropdown-submenu">
-      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">MyExercise3</a>
-      <ul class="dropdown-menu" role="menu">
-        <li>
-          <a href="exercises/exercises/MyExercise3_exercise.html">Exercise</a>
-        </li>
-        <li>
-          <a href="exercises/answers/MyExercise3_answers.html">Solution</a>
-        </li>
-      </ul>
-    </li>
   </ul>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com//RockefellerUniversity/RU_course_template/issues">Getting help!</a>
+  <a href="https://github.com//RockefellerUniversity/ATAC.Cut-Run.ChIP/issues">Getting help!</a>
 </li>
 <li>
   <a href="https://twitter.com/Rockefeller_BRC">
@@ -422,7 +428,7 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore"><strong>Course Template</strong></h1>
+<h1 class="title toc-ignore"><strong>Epigenomics</strong></h1>
 <h4 class="author">Bioinformatics Resource Center</h4>
 <h4 class="date"><a href="mailto:brc@rockefeller.edu"
 class="email">brc@rockefeller.edu</a></h4>
@@ -437,29 +443,31 @@ class="email">brc@rockefeller.edu</a></h4>
 <p><br></p>
 <div id="course-integrity" class="section level3">
 <h3>Course Integrity</h3>
-<p><strong>This course is compiled automatically on <em>2025-05-11</em>
+<p><strong>This course is compiled automatically on <em>2025-06-02</em>
 </strong> <br> <a
-href="https://github.com/RockefellerUniversity/RU_course_template/actions/workflows/compilation-check.yml"><img
-src="https://github.com/RockefellerUniversity/RU_course_template/actions/workflows/compilation-check.yml/badge.svg"
+href="https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/compilation-check.yml"><img
+src="https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/compilation-check.yml/badge.svg"
 alt="compilation-check" /></a></p>
 <p><strong>The course is tested and available on MacOS, Windows and
 Ubuntu Linux for R version 4.4.0 (2024-04-24)</strong> <br> <a
-href="https://github.com/RockefellerUniversity/RU_course_template/actions/workflows/OS-check.yaml"><img
-src="https://github.com/RockefellerUniversity/RU_course_template/actions/workflows/OS-check.yaml/badge.svg"
+href="https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/OS-check.yaml"><img
+src="https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/actions/workflows/OS-check.yaml/badge.svg"
 alt="OS-check" /></a></p>
 <p><br> <br></p>
 </div>
 <div id="overview" class="section level3">
 <h3>Overview</h3>
-<p>?? This Section is used to build the course website ??</p>
-<p>?? What is this course about??</p>
-<p>?? Break down of course structure. You can look here for guidance: <a
-href="https://rockefelleruniversity.github.io/Intro_To_R_1Day/"
-class="uri">https://rockefelleruniversity.github.io/Intro_To_R_1Day/</a>??</p>
+<p>This course consists of 6 sections, walking participants through the
+basic concepts in analyzing epigenomic data: Sequencing QC, Alignment,
+Peak Calling, Technique Specific QC, Differentials, Annotation and Motif
+Analysis.</p>
+<p>Each section is presented as HTMl presentations or single page
+document. Exercises and answer sheets are included after all subsections
+to practice techniques and provide future reference examples</p>
 <p>Course material and exercises are available to view as rendered HTML
 at <a href="https://rockefelleruniversity.github.io/RU_Course_template/"
-class="uri">https://rockefelleruniversity.github.io/RU_Course_template/</a>.
-All material is available to download under GPL v2 license.</p>
+class="uri">https://rockefelleruniversity.github.io/RU_Course_template/</a>.</p>
+<p>All material is available to download under GPL v2 license.</p>
 <p><br><br></p>
 </div>
 </div>
@@ -506,7 +514,7 @@ commands into lower left pane of RStudio which should be labelled
 <h5>From the course package</h5>
 <pre><code>install.packages(&#39;BiocManager&#39;)
 install.packages(&#39;remotes&#39;)
-BiocManager::install(&#39;RockefellerUniversity/RU_course_template&#39;,subdir=&#39;MyCoursePackage&#39;)</code></pre>
+BiocManager::install(&#39;RockefellerUniversity/ATAC.Cut-Run.ChIP&#39;,subdir=&#39;ATACCutRunChIP&#39;)</code></pre>
 </div>
 <div id="from-cran-and-bioconductor" class="section level5">
 <h5>From CRAN and Bioconductor</h5>
@@ -515,6 +523,32 @@ BiocManager::install(&#39;methods&#39;)
 BiocManager::install(&#39;ggplot2&#39;)
 BiocManager::install(&#39;rmarkdown&#39;)
 BiocManager::install(&#39;rio&#39;)
+BiocManager::install(&#39;ShortRead&#39;)
+BiocManager::install(&#39;Rfastp&#39;)
+BiocManager::install(&#39;msigdbr&#39;)
+BiocManager::install(&#39;ggupset&#39;)
+BiocManager::install(&#39;BSgenome.Mmusculus.UCSC.mm10&#39;)
+BiocManager::install(&#39;Rsubread&#39;)
+BiocManager::install(&#39;Rsamtools&#39;)
+BiocManager::install(&#39;rtracklayer&#39;)
+BiocManager::install(&#39;Herper&#39;)
+BiocManager::install(&#39;GenomicAlignments&#39;)
+BiocManager::install(&#39;ChIPQC&#39;)
+BiocManager::install(&#39;ATACseqQC&#39;)
+BiocManager::install(&#39;soGGi&#39;)
+BiocManager::install(&#39;limma&#39;)
+BiocManager::install(&#39;DESeq2&#39;)
+BiocManager::install(&#39;tracktables&#39;)
+BiocManager::install(&#39;TxDb.Mmusculus.UCSC.mm10.knownGene&#39;)
+BiocManager::install(&#39;EnhancedVolcano&#39;)
+BiocManager::install(&#39;clusterProfiler&#39;)
+BiocManager::install(&#39;rGREAT&#39;)
+BiocManager::install(&#39;org.Mm.eg.db&#39;)
+BiocManager::install(&#39;GenomeInfoDb&#39;)
+BiocManager::install(&#39;motifmatchr&#39;)
+BiocManager::install(&#39;memes&#39;)
+BiocManager::install(&#39;ChIPseeker&#39;)
+BiocManager::install(&#39;enrichplot&#39;)
 BiocManager::install(&#39;knitr&#39;)
 BiocManager::install(&#39;testthat&#39;)
 BiocManager::install(&#39;yaml&#39;)</code></pre>
@@ -523,7 +557,7 @@ BiocManager::install(&#39;yaml&#39;)</code></pre>
 <div id="download-the-material" class="section level4">
 <h4><strong>Download the material</strong></h4>
 <p><a
-href="https://github.com/RockefellerUniversity/RU_course_template/archive/master.zip">Download
+href="https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/archive/master.zip">Download
 the material</a></p>
 <p><br><br><br></p>
 </div>
@@ -531,14 +565,12 @@ the material</a></p>
 <div id="the-presentations" class="section level2">
 <h2>The Presentations</h2>
 <p><br></p>
-<div id="my-course-name-session-1" class="section level4">
-<h4><strong>?? My course name?? , Session 1</strong></h4>
-<p>??What am I focusing on in this section. Bullet point lists are
-good??</p>
+<div id="epigenomics-session-1" class="section level4">
+<h4><strong>Epigenomics , Session 1</strong></h4>
+<p>This section focuses on sequencing QC</p>
 <ul>
-<li>Course content</li>
-<li>Building courses</li>
-<li>Making it look nice</li>
+<li>Introduction to different epigenomic techniques</li>
+<li>Sequencing QC</li>
 </ul>
 <iframe src="presentations/slides/Session1.html" width="100%" height="400" title="Session1">
 </iframe>
@@ -554,26 +586,70 @@ href="presentations/r_code/Session1.R"><strong>R code</strong></a></p>
 <p><br></p>
 </div>
 </div>
-<div id="my-course-name-session-2" class="section level4">
-<h4><strong>?? My course name?? , Session 2</strong></h4>
-<p>??If you have more sections then do this again. what is session 2
-about? keep adding more files if needed??</p>
+<div id="epigenomics-session-2" class="section level4">
+<h4><strong>Epigenomics , Session 2</strong></h4>
+<p>This section focuses on alignment and peak calling</p>
 <ul>
-<li>Course content</li>
-<li>Building courses</li>
-<li>Making it look nice</li>
+<li>How to build a reference genome index</li>
+<li>Running alignment</li>
+<li>Peak calling with MACS and SEACR</li>
 </ul>
-<iframe src="presentations/slides/Session2.html" width="100%" height="400" title="Session2">
+<iframe src="presentations/slides/Session2_Align_CallPeaks.html" width="100%" height="400" title="Session2">
 </iframe>
 <div id="links-to-presentations-1" class="section level5">
 <h5><em>Links to presentations:</em></h5>
 <p>The html slide presentation can be found at this link <a
-href="presentations/slides/Session2.html"><strong>Slide</strong></a></p>
+href="presentations/slides/Session2_Align_CallPeaks.html"><strong>Slide</strong></a></p>
 <p>The single page html presentation can be found at this link <a
-href="presentations/singlepage/Session2.html"><strong>Single
+href="presentations/singlepage/Session2_Align_CallPeaks.html"><strong>Single
 Page</strong></a></p>
 <p>The code use in the presentations can be found at <a
-href="presentations/r_code/Session2.R"><strong>R code</strong></a></p>
+href="presentations/r_code/Session2_Align_CallPeaks.R"><strong>R
+code</strong></a></p>
+<p><br></p>
+</div>
+</div>
+<div id="epigenomics-session-3" class="section level4">
+<h4><strong>Epigenomics , Session 3</strong></h4>
+<p>This section focuses on technique-specific QC</p>
+<ul>
+<li>Cut&amp;Run and ChIP QC with the ChIPQC package</li>
+<li>ATAC QC with the ATACseqQC package</li>
+</ul>
+<iframe src="presentations/slides/Session3_QC.html" width="100%" height="400" title="Session3">
+</iframe>
+<div id="links-to-presentations-2" class="section level5">
+<h5><em>Links to presentations:</em></h5>
+<p>The html slide presentation can be found at this link <a
+href="presentations/slides/Session3_QC.html"><strong>Slide</strong></a></p>
+<p>The single page html presentation can be found at this link <a
+href="presentations/singlepage/Session3_QC.html"><strong>Single
+Page</strong></a></p>
+<p>The code use in the presentations can be found at <a
+href="presentations/r_code/Session3_QC.R"><strong>R
+code</strong></a></p>
+<p><br></p>
+</div>
+</div>
+<div id="epigenomics-session-4" class="section level4">
+<h4><strong>Epigenomics , Session 4</strong></h4>
+<p>This section focuses on differentials peak analysis</p>
+<ul>
+<li>Peak intersections and unique peaks</li>
+<li>Generating a consensus</li>
+<li>Using DESeq2 to run differentials</li>
+</ul>
+<iframe src="presentations/slides/Session4.html" width="100%" height="400" title="Session4">
+</iframe>
+<div id="links-to-presentations-3" class="section level5">
+<h5><em>Links to presentations:</em></h5>
+<p>The html slide presentation can be found at this link <a
+href="presentations/slides/Session4.html"><strong>Slide</strong></a></p>
+<p>The single page html presentation can be found at this link <a
+href="presentations/singlepage/Session4.html"><strong>Single
+Page</strong></a></p>
+<p>The code use in the presentations can be found at <a
+href="presentations/r_code/Session4.R"><strong>R code</strong></a></p>
 <p><br><br></p>
 </div>
 </div>
@@ -587,7 +663,7 @@ href="presentations/r_code/Session2.R"><strong>R code</strong></a></p>
 course</em> please contact us at the issues page associated to this
 course.</p>
 <p>The link to the help pages can be found <a
-href="https://github.com/RockefellerUniversity/RU_course_template/issues">here</a></p>
+href="https://github.com/RockefellerUniversity/ATAC.Cut-Run.ChIP/issues">here</a></p>
 <p><br></p>
 </div>
 <div id="general-bioinformatics-support" class="section level4">

@@ -294,7 +294,7 @@ We are going to look at the peaks that are increased in W6, so the Granges is su
 
 We also remove peaks that aren't on the main chromosomes (usually unplaced configs). 
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
-W6MinusD0_gr_main <- W6MinusD0_gr[seqnames(W6MinusD0_gr) %in% paste0("chr", c(1:19, "X", "Y", "M"))]
+W6MinusD0_gr_main <- W6MinusD0_gr[as.vector(seqnames(W6MinusD0_gr)) %in% paste0("chr", c(1:19, "X", "Y", "M"))]
 W6MinusD0_gr_up <- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange > 1 & W6MinusD0_gr_main$padj < 0.05, ]
 
 W6MinusD0_gr_up

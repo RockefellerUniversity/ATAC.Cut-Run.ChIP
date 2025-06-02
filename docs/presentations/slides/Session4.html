@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Epigenomics, Session 4</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="http://rockefelleruniversity.github.io/RU_course_template/" />
+    <meta name="author" content="brc@rockefeller.edu" />
+    <script src="libs/header-attrs-2.29/header-attrs.js"></script>
+    <link rel="stylesheet" href="default.css" type="text/css" />
+    <link rel="stylesheet" href="metropolisCustom.css" type="text/css" />
+    <link rel="stylesheet" href="metropolis-fontsCustom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: middle, inverse, title-slide
+
+.title[
+# Epigenomics, Session 4
+]
+.subtitle[
+## <html><br />
+<br />
+<hr color='#EB811B' size=1px width=796px><br />
+</html><br />
+Bioinformatics Resource Center - Rockefeller University
+]
+.author[
+### <a href="http://rockefelleruniversity.github.io/RU_course_template/" class="uri">http://rockefelleruniversity.github.io/RU_course_template/</a>
+]
+.author[
+### <a href="mailto:brc@rockefeller.edu" class="email">brc@rockefeller.edu</a>
+]
+
+---
+
+
+
+
+
+
+
+##  Recap
+
+?? can add a recap to link to keypoints in first session??
+Session 1 covered introduction to R data types and import/export of data.
+
+- [Background to R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#background-to-r)
+- [Data types in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#data_types_in_r)
+- [Reading and writing in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#reading-and-writing-data-in-r)
+
+1) Fastq QC
+2) Alignment
+3) Peak calling
+4) Technique QC
+5) Consensus Building
+6) Counting
+7) Differentials
+
+Consensus and counts and differentials (Tom)
+
+----
+## TF binding and epigenetic states
+
+A common goal in Cut&amp;Run or ATACseq is to characterize genome wide transcription factor binding sites or epigenetic states. 
+
+The presence of transcription factor binding sites and epigenetics events is often further analyzed in the context of their putative targets genes to characterize the transcription factor's and epigenetic event's function and/or biological role.
+
+&lt;div align="center"&gt;
+&lt;img src="imgs/singlemap.png" alt="igv screenshot" height="300" width="600"&gt;
+&lt;/div&gt;
+
+---
+## TF binding and epigenetic states
+
+Combined with replicates we can then statistically test for and identify changes in epigenetic events between conditions and/or cell lines.
+
+&lt;div align="center"&gt;
+&lt;img src="imgs/multiplesamples.png" alt="Multiple Samples" height="300" width="600"&gt;
+&lt;/div&gt;
+
+
+---
+## Our Data
+
+We have been working to process and a characterize developmental changes in the context of the TF Sox9 using data from the Fuchs lab: [*The pioneer factor SOX9 competes for epigenetic factors to switch stem cell fates*](https://www.nature.com/articles/s41556-023-01184-y)
+
+In this session we will look at how we can define a high confidence/reproducible set of Sox9 peaks in the at Day 0 and Week 6 of development as well as identify unique or common peaks between the time points. 
+
+---
+class: inverse, center, middle
+
+# Consensus Peaks
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+
+## Reading in a set of peaks
+
+First we need to read our peak calls from MACS2 into R. This procedure would also work with other peak callers like SEACR and it is also the same process for ATAC.
+
+The Sox9 peak calls we will review are within the data directory under peaks, so here we list all files matching our expected file pattern using the **dir() function.** 
+
+
+``` r
+peakFiles &lt;- dir("data/peaks", pattern = "narrowPeak", full.names = TRUE)
+peakFiles
+```
+
+```
+## [1] "data/peaks/SOX9CNR_D0_rep1_macs_peaks.narrowPeak"
+## [2] "data/peaks/SOX9CNR_D0_rep2_macs_peaks.narrowPeak"
+## [3] "data/peaks/SOX9CNR_W6_rep1_macs_peaks.narrowPeak"
+## [4] "data/peaks/SOX9CNR_W6_rep2_macs_peaks.narrowPeak"
+```
+
+
+---
+## Reading in a set of peaks
+
+Our MACS peaks are narrowPeak. These are similar to a bed file as they contain information about chromosome and position of the peaks. There is also additional columns containing peak IDs, scores and statistical p/qvalues.
+
+![](imgs/narrowpeak.png)
+
+
+---
+## Reading in a set of peaks
+
+We can import these files (and other bioinformatic formats like bed files), using the *rtracklayer* package.
+
+
+``` r
+library(rtracklayer)
+macsPeaks_list &lt;- lapply(peakFiles, import)
+length(macsPeaks_list)
+```
+
+```
+## [1] 4
+```
+
+---
+## Reading in a set of peaks
+
+rtracklayer imports peaks into a **GRanges** object. This is a specialist Bioconductor format designed to store any kind of positional data. 
+
+
+``` r
+macsPeaks_list[[1]]
+```
+
+```
+## GRanges object with 30971 ranges and 6 metadata columns:
+##           seqnames            ranges strand |                   name     score
+##              &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; |            &lt;character&gt; &lt;numeric&gt;
+##       [1]     chr1   4815778-4815937      * | SOX9CNR_D0_rep1_macs..        18
+##       [2]     chr1   4857438-4857727      * | SOX9CNR_D0_rep1_macs..        77
+##       [3]     chr1   4966150-4966252      * | SOX9CNR_D0_rep1_macs..        17
+##       [4]     chr1   5015413-5015683      * | SOX9CNR_D0_rep1_macs..       480
+##       [5]     chr1   5070386-5070533      * | SOX9CNR_D0_rep1_macs..       120
+##       ...      ...               ...    ... .                    ...       ...
+##   [30967]     chrY 10320514-10320669      * | SOX9CNR_D0_rep1_macs..        31
+##   [30968]     chrY 10329515-10329618      * | SOX9CNR_D0_rep1_macs..        16
+##   [30969]     chrY 10356019-10356123      * | SOX9CNR_D0_rep1_macs..        36
+##   [30970]     chrY 10366391-10366510      * | SOX9CNR_D0_rep1_macs..        24
+##   [30971]     chrY 41074909-41075022      * | SOX9CNR_D0_rep1_macs..        41
+##           signalValue    pValue    qValue      peak
+##             &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;integer&gt;
+##       [1]     3.68186   4.43871   1.80034        69
+##       [2]     7.07188  11.12770   7.71454       174
+##       [3]     3.65833   4.38951   1.76503        81
+##       [4]    18.85640  52.67520  48.01540       112
+##       [5]     9.57073  15.81240  12.09390        71
+##       ...         ...       ...       ...       ...
+##   [30967]     4.72891   6.11399   3.16008       118
+##   [30968]     3.56717   4.20449   1.63028         1
+##   [30969]     4.99404   6.62755   3.61563        69
+##   [30970]     4.25411   5.33028   2.49480        89
+##   [30971]     5.26280   7.19715   4.12086        65
+##   -------
+##   seqinfo: 37 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## Reading in a set of peaks
+
+We can convert our list of **GRanges** objects to a **GRangesList** using the **GRangesList()** function.
+
+
+``` r
+macsPeaks_GRL &lt;- GRangesList(macsPeaks_list)
+names(macsPeaks_GRL) &lt;- c("D0_rep1", "D0_rep2", "W6_rep1", "W6_rep2")
+class(macsPeaks_GRL)
+```
+
+```
+## [1] "CompressedGRangesList"
+## attr(,"package")
+## [1] "GenomicRanges"
+```
+
+``` r
+names(macsPeaks_GRL)
+```
+
+```
+## [1] "D0_rep1" "D0_rep2" "W6_rep1" "W6_rep2"
+```
+
+---
+## GRangesList objects
+
+The GRangesList object can behave just as our standard lists. Here we use the **lengths()** function to a get the number of peaks in each replicate.
+
+
+``` r
+lengths(macsPeaks_GRL)
+```
+
+```
+## D0_rep1 D0_rep2 W6_rep1 W6_rep2 
+##   30971    7089   72174   46760
+```
+
+---
+## GRangesList objects
+
+A major advantage of **GRangesList** objects is that we can apply many of the **GRanges** accessor and operator functions directly to our **GRangesList**. 
+
+This means there is no need to lapply and convert back to **GRangesList** if we wish to alter our **GRanges** by a common method.
+
+
+``` r
+macsPeaks_GRLCentred &lt;- resize(macsPeaks_GRL, 10, fix = "center")
+width(macsPeaks_GRLCentred)
+```
+
+```
+## IntegerList of length 4
+## [["D0_rep1"]] 10 10 10 10 10 10 10 10 10 10 ... 10 10 10 10 10 10 10 10 10 10
+## [["D0_rep2"]] 10 10 10 10 10 10 10 10 10 10 ... 10 10 10 10 10 10 10 10 10 10
+## [["W6_rep1"]] 10 10 10 10 10 10 10 10 10 10 ... 10 10 10 10 10 10 10 10 10 10
+## [["W6_rep2"]] 10 10 10 10 10 10 10 10 10 10 ... 10 10 10 10 10 10 10 10 10 10
+```
+
+---
+## GRangesList objects
+
+We can also extract the peak calls for specific groups easily i.e. D0.
+
+
+``` r
+D0_rep1_Peaks &lt;- macsPeaks_GRL$D0_rep1
+D0_rep2_Peaks &lt;- macsPeaks_GRL$D0_rep2
+length(D0_rep1_Peaks)
+```
+
+```
+## [1] 30971
+```
+
+``` r
+length(D0_rep2_Peaks)
+```
+
+```
+## [1] 7089
+```
+
+---
+
+## Finding unique peaks
+
+We can extract peak calls unique to replicate 1 or 2 using the **%over%** operator. Once isolated it is easy to export these peaks to a bed file which we can visualize in [IGV](https://rockefelleruniversity.github.io/IGV_course/). 
+
+
+``` r
+D0_rep1_unique.Peaks &lt;- D0_rep1_Peaks[!D0_rep1_Peaks %over% D0_rep2_Peaks]
+D0_rep2_unique.Peaks &lt;- D0_rep2_Peaks[!D0_rep2_Peaks %over% D0_rep1_Peaks]
+length(D0_rep1_unique.Peaks)
+```
+
+```
+## [1] 25097
+```
+
+``` r
+length(D0_rep2_unique.Peaks)
+```
+
+```
+## [1] 1210
+```
+
+``` r
+export.bed(D0_rep1_unique.Peaks, "D0_rep1_Unique.bed")
+export.bed(D0_rep2_unique.Peaks, "D0_rep2_Unique.bed")
+```
+
+---
+## Finding unique peaks
+
+![](imgs/uniquePeaks.png)
+
+
+---
+
+## Finding common peaks
+
+Similarly we can extract peak calls common to replicate 1 or 2.
+
+The numbers in common however differ. This is because 2 peak calls in one sample can overlap 1 peak call in the other replicate.
+
+
+``` r
+D0_rep1_common.Peaks &lt;- D0_rep1_Peaks[D0_rep1_Peaks %over% D0_rep2_Peaks]
+D0_rep2_common.Peaks &lt;- D0_rep2_Peaks[D0_rep2_Peaks %over% D0_rep1_Peaks]
+length(D0_rep1_common.Peaks)
+```
+
+```
+## [1] 5874
+```
+
+``` r
+length(D0_rep2_common.Peaks)
+```
+
+```
+## [1] 5879
+```
+
+``` r
+export.bed(D0_rep1_common.Peaks, "D0_rep1_Common.bed")
+export.bed(D0_rep2_common.Peaks, "D0_rep2_Common.bed")
+```
+
+---
+## Finding common peaks
+![](imgs/commonPeaks.png)
+
+---
+## Finding common peaks
+Despite overlapping these peaks are not identical. To determine quantitative differences we need to determine a common consensus peak across several samples. 
+![](imgs/differentpeaks.png)
+
+---
+## Define a consensus, redundant set
+
+To address this problem, a common operation in peak set analysis is to define a non-redundant set of peaks across all samples.
+
+To do this we first pool all our peaks across all replicates, here D0 and W6, into one set of redundant overlapping peaks.
+
+
+``` r
+allPeaksSet_Overlapping &lt;- unlist(macsPeaks_GRL)
+allPeaksSet_Overlapping
+```
+
+```
+## GRanges object with 156994 ranges and 6 metadata columns:
+##           seqnames            ranges strand |                   name     score
+##              &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; |            &lt;character&gt; &lt;numeric&gt;
+##   D0_rep1     chr1   4815778-4815937      * | SOX9CNR_D0_rep1_macs..        18
+##   D0_rep1     chr1   4857438-4857727      * | SOX9CNR_D0_rep1_macs..        77
+##   D0_rep1     chr1   4966150-4966252      * | SOX9CNR_D0_rep1_macs..        17
+##   D0_rep1     chr1   5015413-5015683      * | SOX9CNR_D0_rep1_macs..       480
+##   D0_rep1     chr1   5070386-5070533      * | SOX9CNR_D0_rep1_macs..       120
+##       ...      ...               ...    ... .                    ...       ...
+##   W6_rep2     chrY   6425000-6425144      * | SOX9CNR_W6_rep2_macs..        40
+##   W6_rep2     chrY   6858756-6858925      * | SOX9CNR_W6_rep2_macs..        24
+##   W6_rep2     chrY 10010276-10010370      * | SOX9CNR_W6_rep2_macs..        24
+##   W6_rep2     chrY 10347416-10347605      * | SOX9CNR_W6_rep2_macs..        24
+##   W6_rep2     chrY 10404405-10404545      * | SOX9CNR_W6_rep2_macs..        24
+##           signalValue    pValue    qValue      peak
+##             &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;integer&gt;
+##   D0_rep1     3.68186   4.43871   1.80034        69
+##   D0_rep1     7.07188  11.12770   7.71454       174
+##   D0_rep1     3.65833   4.38951   1.76503        81
+##   D0_rep1    18.85640  52.67520  48.01540       112
+##   D0_rep1     9.57073  15.81240  12.09390        71
+##       ...         ...       ...       ...       ...
+##   W6_rep2     3.88371   7.48547   4.09522        68
+##   W6_rep2     2.91278   5.35904   2.41824        85
+##   W6_rep2     2.91278   5.35904   2.41824        47
+##   W6_rep2     2.91278   5.35904   2.41824        95
+##   W6_rep2     2.91278   5.35904   2.41824        70
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## Define a consensus, nonredundant set
+
+We can then use the **reduce()** function to collapse our peaks into nonredundant, distinct peaks representing peaks present in any sample.
+
+
+``` r
+allPeaksSet_nR &lt;- reduce(allPeaksSet_Overlapping)
+allPeaksSet_nR
+```
+
+```
+## GRanges object with 105162 ranges and 0 metadata columns:
+##                  seqnames            ranges strand
+##                     &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt;
+##        [1]           chr1   3037143-3037265      *
+##        [2]           chr1   3063798-3063963      *
+##        [3]           chr1   3271964-3272108      *
+##        [4]           chr1   3313708-3313837      *
+##        [5]           chr1   3362070-3362199      *
+##        ...            ...               ...    ...
+##   [105158]           chrY 10366391-10366510      *
+##   [105159]           chrY 10404405-10404545      *
+##   [105160]           chrY 10422709-10422823      *
+##   [105161]           chrY 41074909-41075022      *
+##   [105162] chrUn_GL456360       18880-18987      *
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+``` r
+export.bed(allPeaksSet_nR, "allPeaksSet_nR.bed")
+```
+
+---
+## Define a consensus, nonredundant set
+![](imgs/nrp.png)
+
+
+---
+## Defining a common set of peaks
+
+With our newly defined nonredundant peak set we can now identify from this set which peaks were present in both our replicates using the **%over%** operator and a logical expression.
+
+
+``` r
+commonPeaks &lt;- allPeaksSet_nR[allPeaksSet_nR %over% D0_rep1_Peaks &amp; allPeaksSet_nR %over%
+    D0_rep2_Peaks]
+commonPeaks
+```
+
+```
+## GRanges object with 5858 ranges and 0 metadata columns:
+##          seqnames            ranges strand
+##             &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt;
+##      [1]     chr1   5015332-5015707      *
+##      [2]     chr1   6188409-6188778      *
+##      [3]     chr1   7125893-7126460      *
+##      [4]     chr1   7397680-7398254      *
+##      [5]     chr1 13258061-13258276      *
+##      ...      ...               ...    ...
+##   [5854]     chrY   6528806-6528939      *
+##   [5855]     chrY   6679044-6679269      *
+##   [5856]     chrY   6759314-6759439      *
+##   [5857]     chrY   9488315-9488474      *
+##   [5858]     chrY   9506858-9507069      *
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+``` r
+export.bed(commonPeaks, "D0_commonPeaks.bed")
+```
+
+---
+## Defining a common set of peaks
+![](imgs/commonPR.png)
+
+---
+## Complex overlaps
+
+When working with larger numbers of peaks we will often define a logical matrix describing in which samples our nonredundant peaks were present.
+
+First then we use a loop to generate a logical vector for the occurrence of nonredundant peaks in each sample.
+
+
+``` r
+overlap &lt;- list()
+for (i in 1:length(macsPeaks_GRL)) {
+    overlap[[i]] &lt;- allPeaksSet_nR %over% macsPeaks_GRL[[i]]
+}
+overlap[[1]][1:2]
+```
+
+```
+## [1] FALSE FALSE
+```
+
+---
+## Complex overlaps
+
+We can now use to **do.call** and **cbind** function to column bind our list of overlaps into our matrix of peak occurrence.
+
+
+``` r
+overlapMatrix &lt;- do.call(cbind, overlap)
+colnames(overlapMatrix) &lt;- names(macsPeaks_GRL)
+overlapMatrix[1:3, ]
+```
+
+```
+##      D0_rep1 D0_rep2 W6_rep1 W6_rep2
+## [1,]   FALSE   FALSE   FALSE    TRUE
+## [2,]   FALSE   FALSE   FALSE    TRUE
+## [3,]   FALSE   FALSE   FALSE    TRUE
+```
+
+---
+## Complex overlaps
+
+We can add the matrix back into the metadata columns of our **GRanges()** of nonredundant peaks using the **mcols()** accessor.
+
+Now we have our nonredundant peaks and the occurence of these peaks in every sample we can easily identify peaks unique or common to replicates and conditions/cell lines.
+
+
+``` r
+mcols(allPeaksSet_nR) &lt;- overlapMatrix
+allPeaksSet_nR[1:3, ]
+```
+
+```
+## GRanges object with 3 ranges and 4 metadata columns:
+##       seqnames          ranges strand |   D0_rep1   D0_rep2   W6_rep1   W6_rep2
+##          &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; | &lt;logical&gt; &lt;logical&gt; &lt;logical&gt; &lt;logical&gt;
+##   [1]     chr1 3037143-3037265      * |     FALSE     FALSE     FALSE      TRUE
+##   [2]     chr1 3063798-3063963      * |     FALSE     FALSE     FALSE      TRUE
+##   [3]     chr1 3271964-3272108      * |     FALSE     FALSE     FALSE      TRUE
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## Complex overlaps
+
+The **limma** package is commonly used in the analysis of RNAseq and microarray data and contains many useful helpful functions.
+
+One very useful function is the **vennDiagram** function which allows us to plot overlaps from a logical matrix, just like the one we created.
+
+
+
+``` r
+library(limma)
+```
+
+```
+## 
+## Attaching package: 'limma'
+```
+
+```
+## The following object is masked from 'package:BiocGenerics':
+## 
+##     plotMA
+```
+
+``` r
+vennDiagram(mcols(allPeaksSet_nR))
+```
+
+![](Session4_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+
+---
+## Complex overlaps
+
+The **limma** package's **vennCounts** function allows us to retrieve the counts displayed in the Venn diagram as a data.frame.
+
+
+``` r
+vennCounts(mcols(allPeaksSet_nR))
+```
+
+```
+##    D0_rep1 D0_rep2 W6_rep1 W6_rep2 Counts
+## 1        0       0       0       0      0
+## 2        0       0       0       1  22574
+## 3        0       0       1       0  39110
+## 4        0       0       1       1  11885
+## 5        0       1       0       0    959
+## 6        0       1       0       1     13
+## 7        0       1       1       0    115
+## 8        0       1       1       1     72
+## 9        1       0       0       0   8943
+## 10       1       0       0       1    304
+## 11       1       0       1       0   8229
+## 12       1       0       1       1   7100
+## 13       1       1       0       0    370
+## 14       1       1       0       1     32
+## 15       1       1       1       0   1755
+## 16       1       1       1       1   3701
+## attr(,"class")
+## [1] "VennCounts"
+```
+
+---
+## High confidence peaks
+
+With our nonredundant set of peaks and our matrix of peak occurrence, we can define replicated peaks within conditions.
+
+Here we define the peaks which occur in both the D0 replicates.
+
+Since logical matrix is equivalent to a 1 or 0  matrix (1 = TRUE and 0 = FALSE), we can use the rowSums function to extract peaks in at least 2 of the D0 replicates.
+
+
+``` r
+D0_HC_Peaks &lt;- allPeaksSet_nR[rowSums(as.data.frame(mcols(allPeaksSet_nR)[, c("D0_rep1",
+    "D0_rep2")])) &gt;= 2]
+
+tail(D0_HC_Peaks)
+```
+
+```
+## GRanges object with 6 ranges and 4 metadata columns:
+##       seqnames          ranges strand |   D0_rep1   D0_rep2   W6_rep1   W6_rep2
+##          &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; | &lt;logical&gt; &lt;logical&gt; &lt;logical&gt; &lt;logical&gt;
+##   [1]     chrY 6231157-6231391      * |      TRUE      TRUE     FALSE     FALSE
+##   [2]     chrY 6528806-6528939      * |      TRUE      TRUE     FALSE     FALSE
+##   [3]     chrY 6679044-6679269      * |      TRUE      TRUE     FALSE     FALSE
+##   [4]     chrY 6759314-6759439      * |      TRUE      TRUE     FALSE     FALSE
+##   [5]     chrY 9488315-9488474      * |      TRUE      TRUE     FALSE     FALSE
+##   [6]     chrY 9506858-9507069      * |      TRUE      TRUE      TRUE     FALSE
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+
+---
+## High confidence unique peaks
+
+Similarly we can define peaks which are replicated in one group, but not the other i.e. D0 but absent in W6 samples.
+
+
+``` r
+D0_HC_UniquePeaks &lt;- allPeaksSet_nR[rowSums(as.data.frame(mcols(allPeaksSet_nR)[,
+    c("D0_rep1", "D0_rep2")])) &gt;= 2 &amp; rowSums(as.data.frame(mcols(allPeaksSet_nR)[,
+    c("W6_rep1", "W6_rep2")])) == 0]
+export.bed(D0_HC_UniquePeaks, "D0_HC_UniquePeaks.bed")
+D0_HC_UniquePeaks[1:5, ]
+```
+
+```
+## GRanges object with 5 ranges and 4 metadata columns:
+##       seqnames              ranges strand |   D0_rep1   D0_rep2   W6_rep1
+##          &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;logical&gt; &lt;logical&gt; &lt;logical&gt;
+##   [1]     chr1   61539962-61540358      * |      TRUE      TRUE     FALSE
+##   [2]     chr1   61565337-61565727      * |      TRUE      TRUE     FALSE
+##   [3]     chr1   78532594-78532833      * |      TRUE      TRUE     FALSE
+##   [4]     chr1 106862211-106862379      * |      TRUE      TRUE     FALSE
+##   [5]     chr1 120120999-120121173      * |      TRUE      TRUE     FALSE
+##         W6_rep2
+##       &lt;logical&gt;
+##   [1]     FALSE
+##   [2]     FALSE
+##   [3]     FALSE
+##   [4]     FALSE
+##   [5]     FALSE
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## High confidence unique peaks
+![](imgs/D0_unique.png)
+
+
+---
+class: inverse, center, middle
+
+# Differential Peaks
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+## Finding differential regions
+
+Identifying peaks specific to cell lines or conditions does not capture the full range of changes in epigenetic events. Though it is a useful descriptor it is reliant completely on the discrete classification of peak callers. 
+
+To identify quantitative differences in epigenetic events we can compare the changes in fragment abundance from IP samples across our nonredundant set of peaks.
+
+![](imgs/quant.png)
+
+---
+## Finding differential regions
+
+We first must establish a set of regions within which to quantify fragments. We have already spent time looking at how to extract non-redundant or high confidence peaks. 
+
+An established technique is to produce a set of non-redundant peaks which occur in the **majority** of at least one experimental condition under evaluation i.e. high confident peaks from each group. If you only have duplicates it must be present in both.  
+
+Here we identify peaks which occurred in both replicates in either D0 or W6 developmental time points.
+
+
+``` r
+HC_Peaks &lt;- allPeaksSet_nR[rowSums(as.data.frame(mcols(allPeaksSet_nR)[, c("D0_rep1",
+    "D0_rep2")])) &gt;= 2 | rowSums(as.data.frame(mcols(allPeaksSet_nR)[, c("W6_rep1",
+    "W6_rep2")])) &gt;= 2]
+export.bed(HC_Peaks, "HC_Peaks.bed")
+HC_Peaks
+```
+
+```
+## GRanges object with 24915 ranges and 4 metadata columns:
+##           seqnames          ranges strand |   D0_rep1   D0_rep2   W6_rep1
+##              &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; | &lt;logical&gt; &lt;logical&gt; &lt;logical&gt;
+##       [1]     chr1 4807146-4807341      * |     FALSE     FALSE      TRUE
+##       [2]     chr1 4807593-4807733      * |     FALSE     FALSE      TRUE
+##       [3]     chr1 4857438-4857809      * |      TRUE     FALSE      TRUE
+##       [4]     chr1 5007395-5007681      * |     FALSE     FALSE      TRUE
+##       [5]     chr1 5015332-5015707      * |      TRUE      TRUE      TRUE
+##       ...      ...             ...    ... .       ...       ...       ...
+##   [24911]     chrY 6528806-6528939      * |      TRUE      TRUE     FALSE
+##   [24912]     chrY 6679044-6679269      * |      TRUE      TRUE     FALSE
+##   [24913]     chrY 6759314-6759439      * |      TRUE      TRUE     FALSE
+##   [24914]     chrY 9488315-9488474      * |      TRUE      TRUE     FALSE
+##   [24915]     chrY 9506858-9507069      * |      TRUE      TRUE      TRUE
+##             W6_rep2
+##           &lt;logical&gt;
+##       [1]      TRUE
+##       [2]      TRUE
+##       [3]      TRUE
+##       [4]      TRUE
+##       [5]      TRUE
+##       ...       ...
+##   [24911]     FALSE
+##   [24912]     FALSE
+##   [24913]     FALSE
+##   [24914]     FALSE
+##   [24915]     FALSE
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## Finding differential regions
+![](imgs/HC_peaks.png)
+
+---
+## Counting regions
+
+Now we know the regions of the genome that are relevant i.e our HC peaks, we can then work on counting how many fragments overlap these regions. 
+
+To do this we will need to use our BAM files again. As mentioned before these files are big and counting can take from a few minutes to many hours depending on the number samples, peaks and read depth.
+
+The next few slides will show you how to run counting, but we will also provide you with the count matrix after so you do not have to run the counting yourself for this training.
+
+---
+## Counting regions
+
+We will count from our aligned BAM files to quantify IP fragments.
+
+We can use the **BamFileList()** function to specify which BAMs to count and importantly, to control memory we specify the number of reads to be held in memory at one time using the **yield()** parameter.
+
+
+
+
+``` r
+library(Rsamtools)
+
+bams &lt;- c("SOX9CNR_D0_rep1.fastq.gz", "SOX9CNR_D0_rep2.fastq.gz", "SOX9CNR_W6_rep1.fastq.gz",
+    "SOX9CNR_W6_rep2.fastq.gz")
+
+bamFL &lt;- BamFileList(bams, yieldSize = 5e+06)
+bamFL
+```
+
+---
+## Counting regions
+
+We can count the number of fragments overlapping our peaks using the **summarizeOverlaps** function. Since Cut&amp;Run and/or ATAC is strandless, we set the **ignore.strand** parameter to **TRUE**.
+
+The returned object is a **RangedSummarizedExperiment** containing our GRanges of HC peaks and the counts in these regions for our BAM files.
+
+
+
+
+
+``` r
+library(GenomicAlignments)
+MyCounts &lt;- summarizeOverlaps(HC_Peaks, reads = bamFL, ignore.strand = TRUE)
+save(MyCounts, file = "MyCounts.RData")
+```
+
+---
+## Counting regions
+
+The count object has been saved and you can load it from the data directory.  
+
+
+``` r
+load("data/MyCounts.RData")
+
+class(MyCounts)
+```
+
+```
+## [1] "RangedSummarizedExperiment"
+## attr(,"package")
+## [1] "SummarizedExperiment"
+```
+
+``` r
+MyCounts
+```
+
+```
+## class: RangedSummarizedExperiment 
+## dim: 24915 4 
+## metadata(0):
+## assays(1): counts
+## rownames: NULL
+## rowData names(2): name score
+## colnames(4): SOX9CNR_D0_rep1_sorted.bam SOX9CNR_D0_rep2_sorted.bam
+##   SOX9CNR_W6_rep1_sorted.bam SOX9CNR_W6_rep2_sorted.bam
+## colData names(0):
+```
+
+---
+## Differential regions using DESeq2
+
+To assess changes in signal bertween different conditions we will use the **DESeq2** package.
+
+The DESeq2 package contains a workflow for assessing local changes in fragment/read abundance between replicated conditions. This workflow includes normalization, variance estimation, outlier removal/replacement as well as significance testing suited to high throughput sequencing data (i.e. integer counts).
+
+To make use of DESeq2 workflow we must first create a data.frame of conditions of interest with rownames set as our BAM file names.
+
+
+``` r
+metaDataFrame &lt;- data.frame(DevStage = c("D0", "D0", "W6", "W6"))
+rownames(metaDataFrame) &lt;- colnames(MyCounts)
+metaDataFrame
+```
+
+```
+##                            DevStage
+## SOX9CNR_D0_rep1_sorted.bam       D0
+## SOX9CNR_D0_rep2_sorted.bam       D0
+## SOX9CNR_W6_rep1_sorted.bam       W6
+## SOX9CNR_W6_rep2_sorted.bam       W6
+```
+
+---
+## Differential regions using DESeq2
+
+We can use the **DESeqDataSetFromMatrix()** function to create a **DESeq2** object.
+
+We must provide our matrix of counts to **countData** parameter, our metadata data.frame to **colData** parameter and we include to an optional parameter of **rowRanges** the nonredundant peak set we can counted on.
+
+Finally we provide the name of the column in our metadata data.frame within which we wish to test to the **design** parameter.
+
+
+``` r
+library(DESeq2)
+dds &lt;- DESeqDataSetFromMatrix(countData = assay(MyCounts), colData = metaDataFrame,
+    design = ~DevStage, rowRanges = HC_Peaks)
+```
+
+---
+## Differential regions using DESeq2
+
+We can now run the DESeq2 workflow on our **DESeq2** object using the **DESeq()** function.
+
+
+``` r
+dds &lt;- DESeq(dds)
+```
+
+```
+## estimating size factors
+```
+
+```
+## estimating dispersions
+```
+
+```
+## gene-wise dispersion estimates
+```
+
+```
+## mean-dispersion relationship
+```
+
+```
+## final dispersion estimates
+```
+
+```
+## fitting model and testing
+```
+
+---
+## Differential regions using DESeq2
+
+Our **DESeq2** object is updated to include useful statistics such our normalized values and variance of signal within each HC peak call.
+
+
+``` r
+dds
+```
+
+```
+## class: DESeqDataSet 
+## dim: 24915 4 
+## metadata(1): version
+## assays(4): counts mu H cooks
+## rownames: NULL
+## rowData names(26): D0_rep1 D0_rep2 ... deviance maxCooks
+## colnames(4): SOX9CNR_D0_rep1_sorted.bam SOX9CNR_D0_rep2_sorted.bam
+##   SOX9CNR_W6_rep1_sorted.bam SOX9CNR_W6_rep2_sorted.bam
+## colData names(2): DevStage sizeFactor
+```
+
+---
+## Differential regions using DESeq2
+
+We can extract our information of differential regions using the **results()** function.
+
+We provide to the **results()** function the **DESeq2** object, the comparison of interest to the **contrast** parameter and the type of output to return to the **format** parameter.
+
+The comparison to **contrast** parameter is provided as a vector of length 3 including the metadata column of interest and groups to test.
+
+We can sort the results by pvalue using the **order()** function to rank by the most significant changes.
+
+
+
+``` r
+W6MinusD0 &lt;- results(dds, contrast = c("DevStage", "W6", "D0"), format = "GRanges")
+W6MinusD0 &lt;- W6MinusD0[order(W6MinusD0$pvalue), ]
+W6MinusD0
+```
+
+```
+## GRanges object with 24915 ranges and 6 metadata columns:
+##                 seqnames              ranges strand |  baseMean log2FoldChange
+##                    &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;      &lt;numeric&gt;
+##       [1]          chr12   24581325-24586154      * |  9192.998       -8.89109
+##       [2]          chr12   24575912-24578078      * |  2788.408       -9.48731
+##       [3]          chr13   23573848-23574171      * |  1399.161       -7.28962
+##       [4]           chr4 135549991-135552699      * |   439.303       -6.26537
+##       [5] chrUn_GL456383         22710-26551      * |  2422.719       -5.46235
+##       ...            ...                 ...    ... .       ...            ...
+##   [24911]           chr2   18214116-18214392      * |   61.0846    4.23216e-04
+##   [24912]          chr17   26601189-26601589      * |   59.1127   -5.37722e-04
+##   [24913]           chr5 149298316-149298577      * |   66.4519    2.83050e-04
+##   [24914]           chr7   76790080-76790396      * |   52.8866   -9.19631e-05
+##   [24915]          chr17   11431472-11431585      * |   32.0941   -3.85222e-05
+##               lfcSE         stat       pvalue         padj
+##           &lt;numeric&gt;    &lt;numeric&gt;    &lt;numeric&gt;    &lt;numeric&gt;
+##       [1]  0.325300     -27.3320 1.77006e-164 4.41011e-160
+##       [2]  0.438005     -21.6603 4.86441e-104 6.05984e-100
+##       [3]  0.389123     -18.7335  2.64187e-78  2.19408e-74
+##       [4]  0.446038     -14.0467  8.06944e-45  5.02625e-41
+##       [5]  0.399348     -13.6782  1.37108e-42  6.83207e-39
+##       ...       ...          ...          ...          ...
+##   [24911]  0.836693  5.05820e-04     0.999596     0.999757
+##   [24912]  1.194353 -4.50220e-04     0.999641     0.999761
+##   [24913]  0.808439  3.50120e-04     0.999721     0.999801
+##   [24914]  0.799271 -1.15059e-04     0.999908     0.999948
+##   [24915]  1.019378 -3.77899e-05     0.999970     0.999970
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## Differential regions using DESeq2
+
+The GRanges object contains information on the comparison made in DESeq2.
+
+Most useful it contains the the difference in signal as log2 fold change in **log2FoldChange**, the significance of the change in the **pvalue** column and an adjusted p-value to address multiple correction in **padj** column.
+
+
+``` r
+W6MinusD0
+```
+
+```
+## GRanges object with 24915 ranges and 6 metadata columns:
+##                 seqnames              ranges strand |  baseMean log2FoldChange
+##                    &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;      &lt;numeric&gt;
+##       [1]          chr12   24581325-24586154      * |  9192.998       -8.89109
+##       [2]          chr12   24575912-24578078      * |  2788.408       -9.48731
+##       [3]          chr13   23573848-23574171      * |  1399.161       -7.28962
+##       [4]           chr4 135549991-135552699      * |   439.303       -6.26537
+##       [5] chrUn_GL456383         22710-26551      * |  2422.719       -5.46235
+##       ...            ...                 ...    ... .       ...            ...
+##   [24911]           chr2   18214116-18214392      * |   61.0846    4.23216e-04
+##   [24912]          chr17   26601189-26601589      * |   59.1127   -5.37722e-04
+##   [24913]           chr5 149298316-149298577      * |   66.4519    2.83050e-04
+##   [24914]           chr7   76790080-76790396      * |   52.8866   -9.19631e-05
+##   [24915]          chr17   11431472-11431585      * |   32.0941   -3.85222e-05
+##               lfcSE         stat       pvalue         padj
+##           &lt;numeric&gt;    &lt;numeric&gt;    &lt;numeric&gt;    &lt;numeric&gt;
+##       [1]  0.325300     -27.3320 1.77006e-164 4.41011e-160
+##       [2]  0.438005     -21.6603 4.86441e-104 6.05984e-100
+##       [3]  0.389123     -18.7335  2.64187e-78  2.19408e-74
+##       [4]  0.446038     -14.0467  8.06944e-45  5.02625e-41
+##       [5]  0.399348     -13.6782  1.37108e-42  6.83207e-39
+##       ...       ...          ...          ...          ...
+##   [24911]  0.836693  5.05820e-04     0.999596     0.999757
+##   [24912]  1.194353 -4.50220e-04     0.999641     0.999761
+##   [24913]  0.808439  3.50120e-04     0.999721     0.999801
+##   [24914]  0.799271 -1.15059e-04     0.999908     0.999948
+##   [24915]  1.019378 -3.77899e-05     0.999970     0.999970
+##   -------
+##   seqinfo: 38 sequences from an unspecified genome; no seqlengths
+```
+
+---
+## Differential regions using DESeq2
+
+We can export our results to an excel spreadsheet using rio so you can easily share and review results. 
+
+
+``` r
+rio::export(as.data.frame(W6MinusD0), "data/W6MinusD0.xlsx")
+```
+
+---
+## Differential regions using DESeq2
+
+We can now filter our HC peaks to those with significantly more signal in D0 or W6 timepoints by filtering by log2FoldChange and padj (p-value adjusted for multiple correction) less than 0.05.
+
+
+
+``` r
+W6MinusD0.Filt &lt;- W6MinusD0[!is.na(W6MinusD0$pvalue) | !is.na(W6MinusD0$padj)]
+UpinW6 &lt;- W6MinusD0[W6MinusD0$padj &lt; 0.05 &amp; W6MinusD0$log2FoldChange &gt; 0]
+DowninW6 &lt;- W6MinusD0[W6MinusD0$padj &lt; 0.05 &amp; W6MinusD0$log2FoldChange &lt; 0]
+export.bed(UpinW6, "UpinW6.bed")
+export.bed(DowninW6, "DowninW6.bed")
+```
+
+
+---
+## Differential regions using DESeq2
+![](imgs/DB.png)
+
+---
+## Differential regions using DESeq2
+
+Finally we can make our reviewing of sites in IGV a little easier using the **tracktables** package. 
+
+The **tracktables** package's **makebedtable()** function accepts a **GRanges** object and writes an HTML report contains links to IGV.
+
+An example can be found [here](../../data/W6MinusD0.html)
+
+
+``` r
+library(tracktables)
+myReport &lt;- makebedtable(W6MinusD0.Filt, "W6MinusD0.html", basedirectory = getwd())
+
+browseURL(myReport)
+```
+
+---
+## Differential regions plotting
+
+To assess global levels of changes between samples PCA can be a very useful plot. This becomes very important when you have many groups and many samples. 
+
+To do this we want the normalized count values. We can get this from our dds object using the *rlog()* function. 
+
+
+``` r
+myrlog &lt;- rlog(dds)
+plotPCA(myrlog, intgroup = "DevStage")
+```
+
+```
+## using ntop=500 top features by variance
+```
+
+![](Session4_files/figure-html/unnamed-chunk-38-1.png)&lt;!-- --&gt;
+
+---
+## Differential regions plotting
+
+Volcano Plots can also be a nice way to show the amount of changes and reveal any global biases. 
+
+
+``` r
+library(EnhancedVolcano)
+```
+
+```
+## Warning: package 'EnhancedVolcano' was built under R version 4.4.1
+```
+
+```
+## Loading required package: ggrepel
+```
+
+``` r
+EnhancedVolcano(as.data.frame(W6MinusD0.Filt), lab = paste0(seqnames(W6MinusD0.Filt),
+    ranges(W6MinusD0.Filt)), x = "log2FoldChange", y = "padj", selectLab = "")
+```
+
+![](Session4_files/figure-html/unnamed-chunk-39-1.png)&lt;!-- --&gt;
+
+
+---
+## Time for an exercise!
+
+
+Exercise on functions can be found [here](../..//exercises/exercises/MyExercise3_exercise.html)
+
+---
+## Answers to exercise.
+
+
+Answers can be found here  [here](../..//exercises/answers/MyExercise3_answers.html)
+
+Rcode for answers can be found here  [here](../..//exercises/answers//answers/MyExercise3_Answers.R)
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+  "highlightStyle": "github",
+  "highlightLines": true,
+  "countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

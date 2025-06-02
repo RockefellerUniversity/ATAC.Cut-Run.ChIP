@@ -635,7 +635,7 @@ rio::export(as.data.frame(W6MinusD0), "data/W6MinusD0.xlsx")
 We can now filter our HC peaks to those with significantly more signal in D0 or W6 timepoints by filtering by log2FoldChange and padj (p-value adjusted for multiple correction) less than 0.05.
 
 
-```{r,eval=T,echo=T, eval=F, echo=T, warning=FALSE}
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
 W6MinusD0.Filt <- W6MinusD0[!is.na(W6MinusD0$pvalue) | !is.na(W6MinusD0$padj)]
 UpinW6 <- W6MinusD0[W6MinusD0$padj < 0.05 & W6MinusD0$log2FoldChange > 0]
 DowninW6 <- W6MinusD0[W6MinusD0$padj < 0.05 & W6MinusD0$log2FoldChange < 0]
