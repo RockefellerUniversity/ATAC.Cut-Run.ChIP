@@ -4,5 +4,5 @@
 
 This section focuses on sequencing QC
 
-* Intorudction to different epigenomic techniques
+* Introduction to different epigenomic techniques
 * Sequencing QC

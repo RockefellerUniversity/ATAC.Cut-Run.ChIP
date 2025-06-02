@@ -331,6 +331,8 @@ We can subsample from a FASTQ file using functions in **ShortRead** package.
 
 Here we use the [**FastqSampler** and **yield** function](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#41) to randomly sample a defined number of reads from a FASTQ file. Here we subsample 1 million reads. This should be enough to have an understanding of the quality of the data.
 
+* NOTE: This step may take a little time, so you can skip it for now.* 
+
 ```{r, echo=F,eval=F}
 fqSample <- FastqSampler("~/Downloads/SOX9CNR_D0_rep1_R1.fastq.gz",n=10^6)
 fastq <- yield(fqSample)
@@ -339,13 +341,23 @@ writeFastq(fastq,file = "../data/SOX9CNR_D0_rep1_R1_subsample.fastq.gz",mode = "
 
 ```
 
-```{r eval=T, echo=F}
-fastq <- readFastq(dirPath = "data/sampled_ENCFF001NQP.fastq.gz")
+```{r eval=F, echo=F}
+fastq <- readFastq(dirPath = "data/SOX9CNR_D0_rep1_R1_subsample.fastq.gz")
 ```
 
 ```{r mycRep1Reads,echo=T,eval=F}
-fqSample <- FastqSampler("~/Downloads/SRR20110418_1.fastq.gz",n=10^6)
+fqSample <- FastqSampler("~/Downloads/SOX9CNR_D0_rep1_R1.fastq.gz",n=10^6)
 fastq <- yield(fqSample)
+```
+
+
+---
+## Reading a subsample
+
+We have provided a subsampled version of our fastq file here for you to read in directly. 
+
+```{r eval=T, echo=T}
+fastq <- readFastq(dirPath = "data/SOX9CNR_D0_rep1_R1_subsample.fastq.gz")
 ```
 
 ---
