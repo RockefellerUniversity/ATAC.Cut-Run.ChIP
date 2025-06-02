@@ -124,10 +124,10 @@ qc_sox9_rep1
 #               "../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_W6_rep1_sorted.bam",
 #               "../../../../pipeline_files/CnR/BAMS_forChIPQC/SOX9CNR_W6_rep2_sorted.bam")
 # 
-# peaksToQC <- c("../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_D0_rep1_macs_peaks.narrowPeak",
-#               "../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
-#               "../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_W6_rep1_macs_peaks.narrowPeak",
-#               "../../../../pipeline_files/CnR/peaks_forChIPQC/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
+# peaksToQC <- c("data/peaks/SOX9CNR_D0_rep1_macs_peaks.narrowPeak",
+#               "data/peaks/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
+#               "data/peaks/SOX9CNR_W6_rep1_macs_peaks.narrowPeak",
+#               "data/peaks/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
 # 
 # 
 # myQC <- lapply(seq_along(bamsToQC),function(x){

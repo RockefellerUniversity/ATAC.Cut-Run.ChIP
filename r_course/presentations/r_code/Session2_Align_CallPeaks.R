@@ -19,6 +19,11 @@ if(params$isSlides != "yes"){
 
 
 
+## ----setwd_introtoR,eval=F----------------------------------------------------
+# setwd("/PathToMyDownload/RU_Course_template/r_course")
+# # e.g. setwd("~/Downloads/Intro_To_R_1Day/r_course")
+
+
 ## ----results='asis',include=TRUE,echo=FALSE-----------------------------------
 if(params$isSlides == "yes"){
   cat("class: inverse, center, middle
@@ -39,10 +44,6 @@ if(params$isSlides == "yes"){
   
 }
 
-
-
-## ----fa1q, include=FALSE------------------------------------------------------
-library(BSgenome.Mmusculus.UCSC.mm10)
 
 
 ## ----fa1, echo=TRUE-----------------------------------------------------------
@@ -72,10 +73,9 @@ mainChrSeqSet
 # 
 
 
-## ----echo=F,eval=FALSE--------------------------------------------------------
+## ----echo=F,eval=FALSE, include=F---------------------------------------------
 # 
 # chr18Seq <- BSgenome.Mmusculus.UCSC.mm10[["chr18"]]
-# names(chr18Seq) <- "chr18"
 # chr18SeqSet <- DNAStringSet(chr18Seq)
 # writeXStringSet(chr18SeqSet,
 #                 "BSgenome.Mmusculus.UCSC.mm10.chr18.fa")
@@ -84,27 +84,30 @@ mainChrSeqSet
 #            indexSplit=TRUE)
 
 
-## -----------------------------------------------------------------------------
-read1 <- "SOX9CNR_W6_rep1_QC_R1.fastq.gz"
-read2 <- "SOX9CNR_W6_rep1_QC_R2.fastq.gz"
-
-
 ## ----eval=FALSE,include=FALSE, echo=FALSE, message = F------------------------
 # require(ShortRead)
 # read1 <- readFastq("~/Desktop/BRC/training/ATAC.Cut-Run.ChIP/pipeline_files/CnR/SOX9CNR_W6_rep1_allFiles/FQ_QC/SOX9CNR_W6_rep1_QC_R1.fastq.gz")
 # read2 <- readFastq("~/Desktop/BRC/training/ATAC.Cut-Run.ChIP/pipeline_files/CnR/SOX9CNR_W6_rep1_allFiles/FQ_QC/SOX9CNR_W6_rep1_QC_R2.fastq.gz")
-# writeFastq(read1[1:1000,],"data/SOX9CNR_W6_rep1_QC_R1.fastq.gz")
-# writeFastq(read2[1:1000,],"data/SOX9CNR_W6_rep1_QC_R2.fastq.gz")
+# 
+# writeFastq(read1[1:1000,],"data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
+# writeFastq(read2[1:1000,],"data/SOX9CNR_W6_rep1_1K_R2.fastq.gz")
 # # id(read2[1:1000,])
 # # myRes <- bamQC("~/Downloads/Sorted_ATAC_50K_2.bam")
 
 
 ## ----eval=TRUE, message = F---------------------------------------------------
 require(ShortRead)
-read1 <- readFastq("data/SOX9CNR_W6_rep1_QC_R1.fastq.gz")
-read2 <- readFastq("data/SOX9CNR_W6_rep1_QC_R2.fastq.gz")
+
+# first 1000 reads in each file
+read1 <- readFastq("data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
+read2 <- readFastq("data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
 id(read1)[1:2]
 id(read2)[1:2]
+
+
+## -----------------------------------------------------------------------------
+read1_toAlign <- "~/Downloads/SOX9CNR_W6_rep1_QC_R1.fastq.gz"
+read2_toAlign <- "~/Downloads/SOX9CNR_W6_rep1_QC_R2.fastq.gz"
 
 
 ## ----echo=F,eval=TRUE---------------------------------------------------------
@@ -112,10 +115,9 @@ library(Rsubread)
 
 
 ## ----align, echo=TRUE,eval=F--------------------------------------------------
-# 
 # myMapped <- align("mm10_mainchrs",
-#                   readfile1 = "data/SOX9CNR_W6_rep1_QC_R1.fastq.gz",
-#                   readfile2 = "data/SOX9CNR_W6_rep1_QC_R2.fastq.gz",
+#                   readfile1 = read1_toAlign,
+#                   readfile2 = read2_toAlign,
 #                   type = "dna",
 #                   output_file = "SOX9CNR_W6_rep1.bam",
 #                   nthreads = 4,
@@ -127,11 +129,11 @@ library(Rsubread)
 # library(Rsamtools)
 # 
 # sortBam("SOX9CNR_W6_rep1.bam", "SOX9CNR_W6_rep1_sorted")
-# indexBam("SOX9CNR_W6_rep1_sorted")
+# indexBam("SOX9CNR_W6_rep1_sorted.bam")
 
 
 ## ----coverage, echo=TRUE,eval=FALSE-------------------------------------------
-# forBigWig <- coverage(sortedBam)
+# forBigWig <- coverage("SOX9CNR_W6_rep1_sorted.bam")
 # forBigWig
 
 
@@ -140,8 +142,16 @@ library(Rsubread)
 # export.bw(forBigWig,con="SOX9CNR_W6_rep1.bw")
 
 
-## ----weightedCover, echo=TRUE,eval=FALSE--------------------------------------
-# forBigWig <- coverage(sortedBam,
+## ----weightedCover1, echo=TRUE,eval=FALSE-------------------------------------
+# mappedReads <- idxstatsBam("SOX9CNR_W6_rep1_sorted.bam")
+# TotalMapped <- sum(mappedReads[,"mapped"])
+# 
+# TotalMapped
+
+
+## ----weightedCover2, echo=TRUE,eval=FALSE-------------------------------------
+# 
+# forBigWig <- coverage("SOX9CNR_W6_rep1_sorted.bam",
 #                       weight = (10^6)/TotalMapped)
 # forBigWig
 # export.bw(forBigWig,con="SOX9CNR_W6_rep1_weighted.bw")
@@ -176,7 +186,8 @@ if(params$isSlides == "yes"){
 
 
 ## ----makeCondaEnv, echo=T, eval=F---------------------------------------------
-# macs_paths <- install_CondaTools(tools= c("macs3", "samtools", "bedtools"), env="CnR_analysis")
+# dir.create("miniconda")
+# macs_paths <- install_CondaTools(tools= c("macs3", "samtools", "bedtools"), env="CnR_analysis", pathToMiniConda = "miniconda")
 # macs_paths
 
 
@@ -193,6 +204,10 @@ if(params$isSlides == "yes"){
 # myMiniconda <- file.path(tempdir2(), "Test")
 # install_CondaTools(tools=c("macs3", "samtools", "bedtools"), env="CnR_analysis", pathToMiniConda = myMiniconda)
 # 
+
+
+## ----makeCondaEnv2, echo=T, eval=F--------------------------------------------
+# macs_paths
 
 
 ## ----testCondaEnv, echo=T, eval=F---------------------------------------------
@@ -228,7 +243,7 @@ cnrReads[1:2,]
 ## ----processData_readingInData2, echo=TRUE,eval=TRUE,cache=FALSE--------------
 read1 <- GenomicAlignments::first(cnrReads)
 read2 <- GenomicAlignments::second(cnrReads)
-read2[1,]
+read2[1:2,]
 
 
 ## ----processData_readingInData3, echo=TRUE,eval=TRUE,cache=FALSE--------------
@@ -250,7 +265,9 @@ toPlot <- data.frame(MapQ=c(names(read1MapQFreqs),names(read2MapQFreqs)),
            Frequency=c(read1MapQFreqs,read2MapQFreqs),
            Read=c(rep("Read1",length(read1MapQFreqs)),rep("Read2",length(read2MapQFreqs))))
 toPlot$MapQ <- factor(toPlot$MapQ,levels = unique(sort(as.numeric(toPlot$MapQ))))
-ggplot(toPlot,aes(x=MapQ,y=Frequency,fill=MapQ))+geom_bar(stat="identity")+facet_grid(~Read)
+ggplot(toPlot,aes(x=MapQ,y=Frequency,fill=MapQ))+
+  geom_bar(stat="identity")+
+  facet_grid(~Read)
 
 
 ## ----processData_extractingRead1, echo=FALSE,eval=TRUE,cache=FALSE------------
@@ -265,7 +282,7 @@ fragLenSizes[1:5]
 
 
 
-## ----processData_plottingFrdagmentLengths, echo=TRUE,eval=TRUE,cache=FALSE----
+## ----processData_plottingFrdagmentLengths, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=5, fig.width=7----
 library(ggplot2)
 toPlot <- data.frame(InsertSize=as.numeric(names(fragLenSizes)),
                             Count=as.numeric(fragLenSizes))
@@ -273,13 +290,13 @@ fragLenPlot <- ggplot(toPlot,aes(x=InsertSize,y=Count))+geom_line()
 
 
 
-## ----processData_plottfingFragmentLengths2, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4----
+## ----processData_plottfingFragmentLengths2, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=5, fig.width=7----
 
 fragLenPlot+theme_bw()
 
 
 
-## ----processData_plottingFragmentLengths24, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4----
+## ----processData_plottingFragmentLengths24, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=5, fig.width=7----
 fragLenPlot+ 
   geom_vline(xintercept = c(120),colour="darkgreen")+theme_bw()
 
@@ -310,7 +327,7 @@ table(bl_remove)
 # cnrReads_unlist <- unlist(cnrReads_filter_noBL)
 # names(cnrReads_unlist) <- mcols(cnrReads_unlist)$qname
 # 
-# filter_bam <- gsub("sorted.bam","filter.bam", basename(sortedBam))
+# filter_bam <- gsub("sorted.bam","filter.bam", basename(sortedBAM))
 # rtracklayer::export(cnrReads_unlist, filter_bam,format = "bam")
 # 
 
@@ -362,9 +379,9 @@ if(params$isSlides == "yes"){
 # with_CondaEnv("CnR_analysis",
 #                       system2(command="macs3",args =c("callpeak",
 #                       "-t", forMacs_bam,
-#                       "--format", "BAMPE",
+#                       "-f", "BAMPE",
 #                       "--outdir", ".",
-#                       "--name", peaks_name)))
+#                       "-n", peaks_name)))
 # 
 
 
@@ -377,7 +394,7 @@ if(params$isSlides == "yes"){
 # 
 
 
-## ----echo=T,eval=F, include = F, warning=F------------------------------------
+## ----echo=T,eval=F, include = T, warning=F------------------------------------
 # library(dplyr)
 # library(tibble)
 # 
@@ -388,7 +405,7 @@ if(params$isSlides == "yes"){
 #   write.table(file = "chrom.lengths.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
 
 
-## ----makeBedgraph, echo=F,eval=F, warning=F-----------------------------------
+## ----makeBedgraph, echo=T,eval=F, warning=F-----------------------------------
 # 
 # bedgraph <- gsub("\\.bed", "\\.bedgraph", bedpe)
 # with_CondaEnv("CnR_analysis",
@@ -547,7 +564,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 
 
 ## ----callMacs_atacNF, echo=TRUE,eval=F, warning=F-----------------------------
-# peaksNF_name_atac <- gsub("_macsNF.bam", "_NF", basename(forPeak_bam_atac))
+# peaksNF_name_atac <- gsub("_macsNF.bam", "_macsNF", basename(forPeak_NFbam_atac))
 # with_CondaEnv("CnR_analysis",
 #                       system2(command="macs3",args =c("callpeak",
 #                       "-t", forPeak_NFbam_atac,

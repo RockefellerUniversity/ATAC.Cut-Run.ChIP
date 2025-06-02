@@ -1701,7 +1701,8 @@ samples by these metrics.</p>
 <p>We can run <strong>ChIPQCsample()</strong> on all our samples of
 interest using an <strong>lapply</strong>. First we make vectors of BAM
 files and peak files where the indeces of BAMs and corresponding peaks
-line up.</p>
+line up. If you want to try on your own, the BAM files are <a href="https://www.dropbox.com/scl/fo/f8q9iz5j1mic0wrhzei2c/AEIL42gWMI-Tc_OwFxc5wOA?rlkey=gxl9u7rqk783zuz4tezj9e3pu&amp;st=qzh2allk&amp;dl=0">available
+on dropbox</a>, but be aware that they are big files.</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>bamsToQC <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;~/Downloads/SOX9CNR_D0_rep1_sorted.bam&quot;</span>, <span class="st">&quot;~/Downloads/SOX9CNR_D0_rep2_sorted.bam&quot;</span>,</span>
 <span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>    <span class="st">&quot;~/Downloads/SOX9CNR_W6_rep1_sorted.bam&quot;</span>, <span class="st">&quot;~/Downloads/SOX9CNR_W6_rep2_sorted.bam&quot;</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
