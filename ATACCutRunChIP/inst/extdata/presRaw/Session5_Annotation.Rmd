@@ -84,7 +84,7 @@ A useful package for annotation of peaks to genes is **ChIPseeker**.
 
 By using pre-defined annotation in the from of a **TXDB** object for mouse (mm10 genome), ChIPseeker will provide us with an overview of where peaks land in the gene and distance to TSS sites.
 
-First load the libraries we require for the next part and read in our SOX9 CUT&RUN peaks from Chromosome 18. 
+First load the libraries we require for the next part and read in our SOX9 CUT&RUN peaks. 
 
 
 ```{r,echo=T, eval=T, echo=T, warning=FALSE,tidy=T,message=FALSE}
@@ -94,7 +94,7 @@ library(GenomeInfoDb)
 library(ChIPseeker)
 library(rtracklayer)
 
-cnrPeaks_GR <- rtracklayer::import("data/SOX9CNR_W6_rep1_macs_peaks.narrowPeak")
+cnrPeaks_GR <- rtracklayer::import("data/peaks/SOX9CNR_W6_rep1_macs_peaks.narrowPeak")
 ```
 
 ---
@@ -106,7 +106,7 @@ The annotatePeak function accepts a GRanges object of the regions to annotate, a
 
 
 ```{r,eval=T,echo=T, message=FALSE,messages=FALSE, eval=T, echo=T, warning=FALSE}
-peakAnno <- annotatePeak(cnrPeaks_GR, tssRegion=c(-500, 500), 
+peakAnno <- annotatePeak(cnrPeaks_GR, tssRegion=c(-1000, 1000), 
                          TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene, 
                          annoDb="org.Mm.eg.db")
 class(peakAnno)
@@ -139,6 +139,15 @@ annotatedPeaksDF <- as.data.frame(peakAnno)
 annotatedPeaksGR[1:2,]
 ```
 
+## Peak annotation
+
+The genomic annotation for each peak is whin the *annotation* column and the closest gene is in shown in the *geneId*, *ENSEMBL*, and *SYMBOL* columns (geneId is the Entrez ID).
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
+annotatedPeaksGR$annotation[1:5]
+annotatedPeaksGR$SYMBOL[1:5]
+```
+
 ---
 ## Vizualising peak annotation
 
@@ -155,11 +164,10 @@ plotAnnoBar(peakAnno)
 Similarly we can plot the distribution of peaks around TSS sites.
 
 
-```{r,eval=T,echo=T, eval=F, echo=T, warning=FALSE,fig.height=5, fig.width=15,tidy=T}
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,fig.height=5, fig.width=15,tidy=T}
 plotDistToTSS(peakAnno)
 ```
 
-![](imgs/TSS1.png)
 
 ---
 # Vizualising peak annotation
@@ -196,60 +204,137 @@ if(params$isSlides == "yes"){
 
 ```
 
-## Gene Set testing
+## Gene Set testing for peaks
 
 Transcription factors or epigenetic marks may act on specific sets of genes grouped by a common biological feature (shared Biological function, common regulation in RNAseq experiment etc).
 
-A frequent step in CUT&RUN analysis is to test whether common gene sets are enriched for transcription factor binding or epigenetic marks.
+A frequent step in CUT&RUN or ATACseq analysis is to test whether common gene sets are enriched for transcription factor binding, epigenetic marks, or open chromatin regions.
 
 Sources of well curated gene sets include [GO consortium](http://geneontology.org/) (gene's function, biological process and cellular localisation), [REACTOME](http://www.reactome.org/) (Biological Pathways) and [MsigDB](http://software.broadinstitute.org/gsea/msigdb/) (Computationally and Experimentally derived).
 
 ---
-## Gene Set testing for CUT&RUN
+## Gene Set testing for peaks
 
-Gene set enrichment testing may be performed on the sets of genes with peaks associated to them. In this example we will consider genes with peaks within 1000bp of a gene's TSS.
+Gene set enrichment testing may be performed on the sets of genes with peaks associated to them. We will not access these database libraries directly in testing but will use other R/Bioconductor libraries which make extensive use of them.
 
-We will not access these database libraries directly in testing but will use other R/Bioconductor libraries which make extensive use of them.
+How we perform this analysis will depend on the type of peaks we are interested in. There are a wide range of types of peaks in our data set, some in promoters where annotation is straightforward, and many elswhere where annotation is trickier.
 
 
+---
+## Gene Set testing for peaks
+
+
+We will go through two strategies:
+
+ * using the closest gene with **ChIPseeker** followed by gene set enrichment with **clusterProfiler**. This is typically done for peaks in promoters
+ 
 <div align="center">
-<img src="imgs/TSSPeak.png" alt="offset" height="250" width="600">
+<img src="imgs/gene_example_prom.png" alt="offset" height="250" width="800">
+</div>
+
+
+---
+## Gene Set testing for peaks
+
+
+We will go through two strategies:
+
+ * using the closest gene with **ChIPseeker** followed by gene set enrichment with **clusterProfiler**. This is typically done for peaks in promoters
+ 
+ * allowing for annotation of one peak with multiple genes using toolset called **GREAT**. This is usually done to annotate enhancer peaks.
+ 
+<div align="center">
+<img src="imgs/gene_example_enh.png" alt="offset" height="250" width="800">
 </div>
 
 ---
-## Gene ontology and gene set testing
+## Choosing a peak set
 
-To perform gene set testing here, we will use the **clusterProfiler package**.
+Our peak set is large (~72k peaks), which will result in many genes being annotated to peaks. 
+
+Even from the ChIPseeker annotation of the nearest gene, there are almost 17k genes, making it unlikely we will find any real specific enrichment of gene sets.
+
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+length(unique(annotatedPeaksGR$geneId))
+```
+---
+
+
+## Using differential peaks for test
+
+The specific set of peaks we choose will depend on our question. In our case, we just performed differential analysis on our consensus peak set, so we can use the genes that go up in W6 vs W0.
+
+Here we read in the differential results and look at them.
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+W6MinusD0 <- rio::import("data/W6MinusD0.xlsx")
+
+W6MinusD0[1:5, ]
+```
+
+---
+
+## Using differential peaks for test
+
+The gene annotation packages (e.g. ChIPseeker, GREAT) require a GRanges object. We can convert this table to a GRanges and keep key differential statistics as metadata in the GRanges object. 
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+W6MinusD0_gr <- GRanges(seqnames = W6MinusD0$seqnames,
+                        IRanges(start = W6MinusD0$start, end = W6MinusD0$end),
+                        log2FoldChange = W6MinusD0$log2FoldChange,
+                        padj = W6MinusD0$padj)
+
+W6MinusD0_gr[1:3, ]
+```
+
+---
+
+## Using differential peaks for test
+
+We are going to look at the peaks that are increased in W6, so the Granges is subset to the peaks that have a fold change greater than 2 and an adjusted p-value less than 0.05.
+
+We also remove peaks that aren't on the main chromosomes (usually unplaced configs). 
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
+W6MinusD0_gr_main <- W6MinusD0_gr[seqnames(W6MinusD0_gr) %in% paste0("chr", c(1:19, "X", "Y", "M"))]
+W6MinusD0_gr_up <- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange > 1 & W6MinusD0_gr_main$padj < 0.05, ]
+
+W6MinusD0_gr_up
+```
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Functional Enrichment with nearest gene
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Functional Enrichment with nearest gene
+
+---
+"    
+  )
+  
+}
+
+```
+
+## Enrichment with nearest gene
+
+To perform gene set using the closest gene to each peak, we will use the **clusterProfiler package**.
 
 clusterProfiler provides multiple enrichment functions that allow for comparison of your gene list to known (e.g. GO, KEGG) or custom gene sets. Detailed information about all of the functionality within this package is available [here](http://yulab-smu.top/clusterProfiler-book/).
 
-In this example we use all TSS sites we found to be overlapped by Sox9 peaks.
-
-The peaks landing in TSS regions will be marked as "Promoter" in the **annotation** column of our annotated GRanges object.
-
-```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
-annotatedPeaksGR[1:2,]
-```
-
+The functions in clusterProfiler take a list of genes, which we can obtain from the ChIPseeker result. 
 
 ---
-## Gene ontology and gene set testing
+## Identify universe of genes
 
-
-We can extract the unique names of genes with peaks in their TSS by subsetting the annotated GRanges and retrieving gene names from the **geneId** column.
-
-```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
-annotatedPeaksGR_TSS <- annotatedPeaksGR[annotatedPeaksGR$annotation == "Promoter",]
-genesWithPeakInTSS <- unique(annotatedPeaksGR_TSS$geneId)
-genesWithPeakInTSS[1:2]
-```
-
----
-## Gene ontology and functional testing
-
-
-Next we can extract all genes which are included in the TxDb object to use as our universe of genes for pathway enrichment.
-
+Pathway enrichment requires a 'universe' of genes. We can extract all genes which are included in the TxDb object to use as our universe.
 
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, message = F}
 allGeneGR <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
@@ -258,35 +343,110 @@ allGeneIDs <- allGeneGR$gene_id
 ```
 
 ---
-## Gene ontology and functional testing
 
-Once we have our gene list and the universe of genes in the same format, we can use them in the **enrichGO** function to perform gene ontology analysis
+## Enrichment with nearest gene
+
+Since transcription factors, as suggested in name, may regulate the transcription of their target genes, we used the **ChIPseeker package** to associate our peaks, representing potential transcription factor binding events, to their overlapping or closest mm10 genes.
+
+This will give us our gene list to test for functional enrichment.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE, message = F, results='hide'}
+peakAnno_up <- annotatePeak(W6MinusD0_gr_up, 
+                            tssRegion=c(-1000, 1000),
+                            TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene, 
+                            annoDb="org.Mm.eg.db")
+
+```
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE, message = F}
+
+peakAnno_up
+```
+
+---
+
+## Enrichment with nearest gene
+
+We again convert this csAnno object to a GRanges to see the individual peak annotations.
+
+```{r}
+annotatedPeaksGR_up <- as.GRanges(peakAnno_up)
+annotatedPeaksGR_up[1:3]
+```
+
+---
+## Analysis of promoter peaks 
+
+The closest gene annotation approach works well when we subset to just the peaks localized to promoters as this leads to confident peak to gene annotations.  
+
+For this Sox9 CUT&RUN dataset this is is not many peaks, resulting in a small gene list. 
+```{r}
+annotatedPeaksGR_up_prom <- annotatedPeaksGR_up[grepl("Promoter", annotatedPeaksGR_up$annotation)]
+up_promGenes_uniq <- unique(annotatedPeaksGR_up_prom$geneId)
+
+length(up_promGenes_uniq)
+```
+
+
+---
+## Analysis of promoter peaks 
+
+Once we have our gene list and the universe of genes in the same format, we can use them in the `enrichGO` function to perform gene ontology analysis
 
 For the **ont** argument, we can choose between the "BP", "MF", and "CC" subontologies, or "ALL" for all three.
 
-```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+```{r}
 library(clusterProfiler)
 library(org.Mm.eg.db)
-GO_result <- enrichGO(gene = genesWithPeakInTSS, 
+
+GO_result_prom <- enrichGO(gene = up_promGenes_uniq, 
                       universe = allGeneIDs,
                       OrgDb = org.Mm.eg.db,
-                      ont = "BP",
-                      pvalueCutoff = 0.2,
-                      qvalueCutoff = 0.2)
-
+                      ont = "BP")
+GO_result_prom
 ```
 
 ---
-## Gene ontology and functional testing
+## Nearest gene approach with all genes
+
+In our case, this results in no enriched terms. This suggests the Sox9 is not likely not enacting its main regulatory effect by binding to promoters.
+
+This is not surprising given how few peaks overlapped with promoters 
+
+We can try to use the whole set of Sox9 peaks that go up in the week 6 time point. 
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+
+up_genes_uniq <- unique(annotatedPeaksGR_up$geneId)
+
+length(up_genes_uniq)
+```
+
+---
+## Nearest gene approach with all genes
+
+We again use the `enrichGO` function, but this time with all of the genes from the differential peaks. 
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+
+GO_result <- enrichGO(gene = up_genes_uniq, 
+                      universe = allGeneIDs,
+                      OrgDb = org.Mm.eg.db,
+                      ont = "BP")
+GO_result
+```
+
+---
+## Nearest gene approach with all genes
 
 We now have an **enrichResult** instance. From this object, we can extract a data frame of the most highly enriched gene ontology categories.
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
-GO_result_df <- data.frame(GO_result)
-GO_result_df[1:5, ]
+GO_result_df <- data.frame(GO_result, row.names = NULL)
+GO_result_df[1:3, ]
 ```
 
 ---
-## Gene ontology and functional testing
+## Visualize enrichment result
 
 Network plots can be generated from any enrichResult object using the **enrichplot** package.
 
@@ -294,125 +454,239 @@ We measure similarities between the various significant gene sets and group them
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, fig.height=4, fig.width=8}
 library(enrichplot)
 GO_result_plot <- pairwise_termsim(GO_result)
-emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.6)
+emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.7)
 ```
 
 
 ---
-## Gene ontology and functional testing
+## Using MSigDB gene sets
 
-In addition to gene ontology, we can test our gene list against custom gene sets that we import as gmt files using the clusterProfiler **enricher** function. Similar to the enrichGO function, this will produce an enrichResult object that can be used for visualization. 
+In addition to gene ontology, we can test our gene list against custom gene sets that we import using the clusterProfiler **enricher** function. Similar to the enrichGO function, this will produce an enrichResult object that can be used for visualization. 
 
 Here we will get gene sets from MSigDB using the **msigdbr** package. We can use this package to pull out specific gene sets, which can be seen [at this link](http://software.broadinstitute.org/gsea/msigdb/). We can also run the **msigdbr_collections** function to see the categories and subcategory codes that will be used for accessing the gene sets. 
 
-````{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
 library(msigdbr)
 msigdbr_collections()
 ```
 
 ---
 
-## Gene ontology and functional testing
+## Using MSigDB gene sets
 
-From the data frame on the previous slide we can identify the category/subcategory we want, and use those in the **msigdbr** function. Here we will use "H" to access the Hallmark gene sets, and in the end we need to get a data frame where the first column contains the name of the gene sets and the second column contains the gene ID. 
+From the data frame on the previous slide we can identify the category/subcategory we want, and use those in the **msigdbr** function. Here we will use "C2" as the category, and "REACTOME" as the subcategory to access the [Reactome](https://reactome.org/) gene sets, and in the end we need to get a data frame where the first column contains the name of the gene sets and the second column contains the gene ID. 
 
-````{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
 library(msigdbr)
-msig_t2g <- msigdbr(species = "Mus musculus", 
-                    category = "H", 
-                    subcategory = NULL)
-msig_t2g <- msig_t2g[ , colnames(msig_t2g) %in% c("gs_name", "entrez_gene")]
-msig_t2g[1:3, ]
+msig_t2g_reac <- msigdbr(species = "Mus musculus", 
+                    category = "C2", 
+                    subcategory = "REACTOME")
+msig_t2g_reac <- msig_t2g_reac[ , colnames(msig_t2g_reac) %in% c("gs_name", "entrez_gene")]
+msig_t2g_reac[1:3, ]
 ```
 
 ---
-## Gene ontology and functional testing
+## Using MSigDB gene sets
 
 We then run the gene set enrichment, using the term to gene mapping we created as the **TERM2GENE** argument in the enricher function. 
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
-hallmark <- enricher(gene = genesWithPeakInTSS, 
+reactome <- enricher(gene = up_genes_uniq, 
                      universe = allGeneIDs,
-                     TERM2GENE = msig_t2g)
-hallmark_df <- data.frame(hallmark)
-hallmark_df[1:5, ]
+                     TERM2GENE = msig_t2g_reac)
+reactome_df <- data.frame(reactome, row.names = NULL)
+# clean up table to print on slide
+reactome_df <- reactome_df %>% dplyr::select(-Description, -geneID) %>% dplyr::mutate(ID = substr(ID, 1, 50))
+reactome_df[1:5, ]
+
+```
+---
+
+## Limitations of nearest gene
+
+In our case, annotating the peaks with the nearest gene is likely not the best strategy given the high number of non-promoter and distal intergenic peaks. 
+
+For example, it's known that regulatory elements like enhancers can regulate genes that are far away, and can even skip over nearby genes to regulate distant ones. 
+
+By only using the closest gene, we might be missing key peak to gene relationships. For enhancer-focused peak sets we have other methods that are better suited. 
+
+
+
+
+---
+```{r, results='asis',include=TRUE,echo=FALSE}
+if(params$isSlides == "yes"){
+  cat("class: inverse, center, middle
+
+# Functional Enrichment of distal regions with GREAT
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+"    
+  )
+}else{
+  cat("# Functional Enrichment of distal regions with GREAT
+
+---
+"    
+  )
+  
+}
+
 ```
 
+## GREAT for GO and functional testing
+
+For methods that rely on genomic regions (i.e. peaks) like CUT&RUN and ATACseq, tools have been developed to better incorporate peaks distal to genes into their enrichment testing, such as the popular [GREAT](http://bejerano.stanford.edu/great/public/html/splash.php) toolset.
+
+Incorporating distal peaks by rules such as nearest gene results in some genes having a higher chance of being selected and hence some gene sets as a whole having a higher chance of having its members selected.
+
+It's known that genes can be regulated by elements that are far away (e.g. 1000kb), so you might miss key regulatory relationships by limiting to the closest gene. 
+
+Of course this method will likely introduce more false positives, so this might be worth it if you know you are looking at enhancers (like Sox9), but not if the TF is binding to promoters. 
+
+---
 
 
 ## GREAT for GO and functional testing
 
-In addition to a standard enrichment tests, methods have been implemented specifically for CUT&RUN. Many of these tools aim to incorporate peaks distal to genes into their enrichment testing such as the popular [GREAT](http://bejerano.stanford.edu/great/public/html/splash.php) toolset.
+Instead of assigning a peak the closest genes (like ChIPseeker), GREAT provides flexible options for controlling peak annotation.
 
-Incorporating distal peaks by rules such as nearest gene results in some genes having a higher chance of being selected and hence some gene sets as a whole having a higher chance of having its members selected.
+The default setting is called 'basalPlusExt', which gives each gene a defined basal regulatory regions (e.g. 5kb upstream and 1kb downstream) and then expends that region in either direction based on a maximum set distance (e.g. 1000kb).
 
-[GREAT](http://bejerano.stanford.edu/great/public/html/splash.php) defines regulatory regions for each individual gene and compares the proportion of peaks mapping to a gene set's regulatory regions to the proportion of the genome occupied by gene set's regulatory regions.
+A peak is then annotated by any gene regulatory region the peak overlaps. This might be multiple genes.
+
+<img src="imgs/great_basal_extension.png" alt="offset" height="250" width="800">
+
+---
+
+## GREAT for GO and functional testing
+
+After defining regulatory regions for each individual gene, GREAT then compares the proportion of peaks mapping to an entire gene set's regulatory regions to the proportion of the genome occupied by gene set's regulatory regions.
 
 i.e. If a gene set's regulatory regions account for 1% of the genome then one might expect 1% of peaks to overlap these regions by chance.
 
+This will help reduce bias towards gene sets that have many genes with large regulatory domains (i.e. more distal, few surrounding genes)
 ---
 
-## rGREAT - R interface to GREAT server
+
+## rGREAT 
 
 
-We can use the GREAT Bioconductor interface available in the rGREAT package. 
+We can use the rGREAT package to utilize the GREAT algorithm. 
 
-```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
+There are two ways to use rGREAT, by remotely accessing the GREAT server with the `submitGreatJob` function, or running the algorithms locally with the `great` function. 
+
+The local version provides a bit more flexibility, so we will use this. 
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
 library(rGREAT)
 ```
+
+
 ---
 
 ## rGREAT for GO and functional testing
 
 
-To submit jobs we can use our GRanges of Myc peaks and specify a genome with the **submitGreatJob** function.
+To use the `great` function we need at least three arguments: 
 
-This function returns a GreatJob object containing a reference to our results on the GREAT server. To review the categories of results available we can use the availableCategories function on our GreatJob object.
+  * GRanges of Sox9 peaks
+  * the gene sets to test against (look at the help to see options - ?great)
+  * a genome to define the TSS loci, usually easiest to specify a TxDb 
 
-```{r,eval=T,echo=T, eval=T, echo=T,messages=F,message=F,warning=FALSE,tidy=T}
-great_Job <- submitGreatJob(cnrPeaks_GR,species="mm10",version = "4",request_interval = 1)
-availableCategories(great_Job)
+This function contains many other arguments to fine tune the gene annotation settings.
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+great_gobp <- great(W6MinusD0_gr_up, gene_sets = "GO:BP", tss_source = "TxDb.Mmusculus.UCSC.mm10.knownGene")
+
 ```
+
+---
+
+## rGREAT for GO and functional testing
+
+This function returns a GreatObject containing the results of the test and various informaiton about the inputs. These can be accessed using the '@' accessor. 
+
+If we print the object, we get a summary.
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+great_gobp
+```
+
 ---
 
 ## rGREAT for GO and functional testing
 
 
-The results table can be retrieved using the getEnrichmentTables function and specifying which tables we wish to review.
+The results table can be retrieved using the `getEnrichmentTables` function.
 
-Here we retrieve the results tables for the "GO" gene sets. All three GO gene lists are included in the result.
 
-```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE, message =F}
-great_ResultTable = getEnrichmentTables(great_Job,
-                                        category="GO")
-names(great_ResultTable)
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+great_gobp_tab <- getEnrichmentTables(great_gobp)
+
+great_gobp_tab[1:5, ]
+
 ```
----
 
-## rGREAT for GO and functional testin
-
-
-Now we can review the enrichment of our genes with Myc peaks in their TSS for the "MSigDB Predicted Promoter Motifs" gene sets.
-
-```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T}
-greatGO <- great_ResultTable[["GO Biological Process"]]
-greatGO[1:10,]
-```
 
 ---
 
-```{r}
+## Reactome gene sets with rGREAT 
 
-cnR_notProm <- annotatedPeaksGR[!annotatedPeaksGR$annotation == "Promoter"]
+The `great` function can be used to test custom gene sets. The gene sets need to be a list where each entry is named and contains a character vector of gene IDs. 
 
-atacPeaks_GR <- rtracklayer::import("data/W6_ATAC_rep1_macs_peaks.narrowPeak")
+We can convert our Reactome gene set table we previously generated to a list. 
 
-cnR_notProm_atac <- cnR_notProm[cnR_notProm %over% atacPeaks_GR]
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+# convert to a list of gene sets
+reac_gene_sets <- split(msig_t2g_reac$entrez_gene, msig_t2g_reac$gs_name)
+reac_gene_sets <- lapply(reac_gene_sets, as.character)  # just to make sure gene IDs are all in character.
 
-great_Job_overlap <- submitGreatJob(cnR_notProm_atac,species="mm10",version = "4",request_interval = 1)
-great_ResultTable_overlap = getEnrichmentTables(great_Job_overlap,
-                                        category="GO")
-greatGO_overlap <- great_ResultTable_overlap[["GO Biological Process"]]
-greatGO_overlap[1:10,]
+reac_gene_sets[1:2]
+```
+
+---
+
+
+## Reactome gene sets with rGREAT 
+
+This list is then used for the 'gene_sets' argument for the `great` function.
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+
+great_reac <- great(W6MinusD0_gr_up, gene_sets = reac_gene_sets, tss_source = "TxDb.Mmusculus.UCSC.mm10.knownGene", mode = "oneClosest")
+
+great_reac_tab <- getEnrichmentTable(great_reac)
+great_reac_tab[1:2, ]
+```
+
+
+---
+
+## Reactome gene sets with rGREAT 
+
+Our top hit, RUNX related regulation, lines up well with the publication. Below is a figure showing RNAseq results, demonstrating that at week 6 there is a string increase in RUNX genes. 
+
+
+<img src="imgs/rnaseq_heatmap.png" alt="igv" height="500" width="300">
+
+
+---
+
+
+## Retrieve rGREAT gene annotations
+
+
+It might be useful to know the genes associated with each peak. For example to overlap with a DE gene list from an RNAseq experiment. 
+
+This can be retrieved with the `getRegionGeneAssociations` function. 
+
+
+```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
+great_genes <- getRegionGeneAssociations(great_reac)
+
+great_genes[1:5]
 ```
 
 
