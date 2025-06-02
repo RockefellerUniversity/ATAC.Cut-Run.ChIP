@@ -1,6 +1,6 @@
 output_dir: '.'
 navbar:
-  title: Template Package for Courses
+  title: Epigenomics
   left:
   - text: Home
     href: index.html
@@ -17,11 +17,27 @@ navbar:
     - text: Session2
       menu:
       - text: Slide
-        href: presentations/slides/Session2.html
+        href: presentations/slides/Session2_Align_CallPeaks.html
       - text: Single Page
-        href: presentations/singlepage/Session2.html
+        href: presentations/singlepage/Session2_Align_CallPeaks.html
       - text: Code
-        href: presentations/r_code/Session2.R
+        href: presentations/r_code/Session2_Align_CallPeaks.R
+    - text: Session3
+      menu:
+      - text: Slide
+        href: presentations/slides/Session3_QC.html
+      - text: Single Page
+        href: presentations/singlepage/Session3_QC.html
+      - text: Code
+        href: presentations/r_code/Session3_QC.R
+    - text: Session4
+      menu:
+      - text: Slide
+        href: presentations/slides/Session4.html
+      - text: Single Page
+        href: presentations/singlepage/Session4.html
+      - text: Code
+        href: presentations/r_code/Session4.R
   - text: Exercises
     menu:
     - text: MyExercise1
@@ -30,21 +46,9 @@ navbar:
         href: exercises/exercises/MyExercise1_exercise.html
       - text: Solution
         href: exercises/answers/MyExercise1_answers.html
-    - text: MyExercise2
-      menu:
-      - text: Exercise
-        href: exercises/exercises/MyExercise2_exercise.html
-      - text: Solution
-        href: exercises/answers/MyExercise2_answers.html
-    - text: MyExercise3
-      menu:
-      - text: Exercise
-        href: exercises/exercises/MyExercise3_exercise.html
-      - text: Solution
-        href: exercises/answers/MyExercise3_answers.html
   right:
   - text: Getting help!
-    href: https://github.com//RockefellerUniversity/RU_course_template/issues
+    href: https://github.com//RockefellerUniversity/ATAC.Cut-Run.ChIP/issues
   - href: https://twitter.com/Rockefeller_BRC
     icon: ion-social-twitter
 output:

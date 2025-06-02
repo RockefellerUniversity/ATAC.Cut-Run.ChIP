@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>CUT&amp;RUN In Bioconductor (part3)    </title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Rockefeller University, Bioinformatics Resource Centre" />
+    <script src="libs/header-attrs-2.29/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="metropolisCustom.css" type="text/css" />
+    <link rel="stylesheet" href="metropolis-fontsCustom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# CUT&amp;RUN In Bioconductor (part3)<br />
+<html><br />
+<br />
+<hr color='#EB811B' size=1px width=796px><br />
+</html>
+]
+.author[
+### Rockefeller University, Bioinformatics Resource Centre
+]
+.date[
+### <a href="http://rockefelleruniversity.github.io/RU_CUT&amp;RUN/" class="uri">http://rockefelleruniversity.github.io/RU_CUT&amp;RUN/</a>
+]
+
+---
+
+
+
+
+
+
+
+class: inverse, center, middle
+
+# Quality control - CUT&amp;RUN
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+
+
+## Quality Control
+
+
+CUT&amp;RUN has many sources of potential noise including 
+* Varying efficiency of antibodies
+* Non-specific binding
+* Library complexity
+* artifacts and background
+
+Many of these sources of noise can be assessed using some well established methodology.
+
+---
+
+# Quality Control References 
+
+For some discussions on ChIPseq QC:
+
+* Encode quality metrics.
+
+[Large-scale quality analysis of published ChIP-seq data. Marinov GK, Kundaje A, Park PJ, Wold BJ. G3 (Bethesda). 2014 Feb 19;4(2)](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931556/)
+
+* Overestimation of artefact duplicates in ChIP-seq.
+
+[Systematic evaluation of factors influencing ChIP-seq fidelity.Nat Methods. Chen Y, Negre N, Li Q, Mieczkowska JO, Slattery M, Liu T, Zhang Y, Kim TK, He HH, Zieba J, Ruan Y, Bickel PJ, Myers RM, Wold BJ, White KP, Lieb JD, Liu XS. 2012 Jun;9(6)](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3477507/)
+
+
+* When and what QC is useful.
+
+[Impact of artifact removal on ChIP quality metrics in ChIP-seq and ChIP-exo data.Front Genet. 2014 Apr 10;5:75.Carroll TS, Liang Z, Salama R, Stark R, de Santiago I](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3989762/)
+
+
+
+---
+
+## Mapped reads
+
+First, we can retrieve and plot the number of mapped reads using [the **idxstatsBam()** function.](https://rockefelleruniversity.github.io/Bioconductor_Introduction//presentations/slides/AlignedDataInBioconductor.html#16)
+
+
+
+
+
+``` r
+mappedReads &lt;- idxstatsBam("~/Downloads/SOX9CNR_W6_rep1_sorted.bam")
+mappedReads &lt;- mappedReads[mappedReads$seqnames %in% paste0("chr", c(1:19, "X", "Y",
+    "M")), ]
+TotalMapped &lt;- sum(mappedReads[, "mapped"])
+ggplot(mappedReads, aes(x = seqnames, y = mapped)) + geom_bar(stat = "identity") +
+    coord_flip()
+```
+
+![](Session3_QC_files/figure-html/mapped-1.png)&lt;!-- --&gt;
+---
+
+## Quality metrics for CUT&amp;RUN
+
+
+The [**ChIPQC package**](https://bioconductor.org/packages/release/bioc/html/ChIPQC.html) wraps some of the metrics into a Bioconductor package and takes care to measure these metrics under the appropriate condition. 
+
+To run a single sample we can use the **ChIPQCsample()** function, the relevant **unfiltered** BAM file and we are recommended to supply a **blacklist** as a BED file or GRanges and Genome name.
+
+You can find a Blacklist for most genomes at [Anshul Kundaje's site](https://sites.google.com/site/anshulkundaje/projects/blacklists) or directly from the [Encode websites](https://www.encodeproject.org/annotations/ENCSR636HFF/)
+
+
+
+
+
+``` r
+QCresult &lt;- ChIPQCsample(reads = "/pathTo/myCnRreads.bam", genome = "mm10", peaks = "/pathTo/myCnRpeaks.bed",
+    blacklist = "/pathTo/mm10_Blacklist.bed")
+```
+
+---
+## Quality control with ChIPQC
+
+We download the blacklist for mm10 from [Encode ](https://www.encodeproject.org/files/ENCFF547MET/@@download/ENCFF547MET.bed.gz)
+
+We can then provide an initial analysis of our CUT&amp;RUN samples quality using the **ChIPQCsample()** function from the [**ChIPQC** package.](http://bioconductor.org/packages/stats/bioc/ChIPQC/)
+
+Here we evaluate the quality of samples we aligned in the prior session with Rsubread. The returned object is a **ChIPQCsample** object.
+
+
+``` r
+library(ChIPQC)
+blklist &lt;- rtracklayer::import.bed("data/mm10-blacklist.v2.bed")
+qc_sox9_rep1 &lt;- ChIPQCsample("data/SOX9CNR_W6_rep1_chr18_sorted.bam", annotation = "mm10",
+    peaks = "data/SOX9CNR_W6_rep1_chr18_peaks.narrowPeak", blacklist = blklist, chromosomes = "chr18")
+```
+
+```
+## 
+ 1 / 300
+ 2 / 300
+ 3 / 300
+ 4 / 300
+ 5 / 300
+ 6 / 300
+ 7 / 300
+ 8 / 300
+ 9 / 300
+ 10 / 300
+ 11 / 300
+ 12 / 300
+ 13 / 300
+ 14 / 300
+ 15 / 300
+ 16 / 300
+ 17 / 300
+ 18 / 300
+ 19 / 300
+ 20 / 300
+ 21 / 300
+ 22 / 300
+ 23 / 300
+ 24 / 300
+ 25 / 300
+ 26 / 300
+ 27 / 300
+ 28 / 300
+ 29 / 300
+ 30 / 300
+ 31 / 300
+ 32 / 300
+ 33 / 300
+ 34 / 300
+ 35 / 300
+ 36 / 300
+ 37 / 300
+ 38 / 300
+ 39 / 300
+ 40 / 300
+ 41 / 300
+ 42 / 300
+ 43 / 300
+ 44 / 300
+ 45 / 300
+ 46 / 300
+ 47 / 300
+ 48 / 300
+ 49 / 300
+ 50 / 300
+ 51 / 300
+ 52 / 300
+ 53 / 300
+ 54 / 300
+ 55 / 300
+ 56 / 300
+ 57 / 300
+ 58 / 300
+ 59 / 300
+ 60 / 300
+ 61 / 300
+ 62 / 300
+ 63 / 300
+ 64 / 300
+ 65 / 300
+ 66 / 300
+ 67 / 300
+ 68 / 300
+ 69 / 300
+ 70 / 300
+ 71 / 300
+ 72 / 300
+ 73 / 300
+ 74 / 300
+ 75 / 300
+ 76 / 300
+ 77 / 300
+ 78 / 300
+ 79 / 300
+ 80 / 300
+ 81 / 300
+ 82 / 300
+ 83 / 300
+ 84 / 300
+ 85 / 300
+ 86 / 300
+ 87 / 300
+ 88 / 300
+ 89 / 300
+ 90 / 300
+ 91 / 300
+ 92 / 300
+ 93 / 300
+ 94 / 300
+ 95 / 300
+ 96 / 300
+ 97 / 300
+ 98 / 300
+ 99 / 300
+ 100 / 300
+ 101 / 300
+ 102 / 300
+ 103 / 300
+ 104 / 300
+ 105 / 300
+ 106 / 300
+ 107 / 300
+ 108 / 300
+ 109 / 300
+ 110 / 300
+ 111 / 300
+ 112 / 300
+ 113 / 300
+ 114 / 300
+ 115 / 300
+ 116 / 300
+ 117 / 300
+ 118 / 300
+ 119 / 300
+ 120 / 300
+ 121 / 300
+ 122 / 300
+ 123 / 300
+ 124 / 300
+ 125 / 300
+ 126 / 300
+ 127 / 300
+ 128 / 300
+ 129 / 300
+ 130 / 300
+ 131 / 300
+ 132 / 300
+ 133 / 300
+ 134 / 300
+ 135 / 300
+ 136 / 300
+ 137 / 300
+ 138 / 300
+ 139 / 300
+ 140 / 300
+ 141 / 300
+ 142 / 300
+ 143 / 300
+ 144 / 300
+ 145 / 300
+ 146 / 300
+ 147 / 300
+ 148 / 300
+ 149 / 300
+ 150 / 300
+ 151 / 300
+ 152 / 300
+ 153 / 300
+ 154 / 300
+ 155 / 300
+ 156 / 300
+ 157 / 300
+ 158 / 300
+ 159 / 300
+ 160 / 300
+ 161 / 300
+ 162 / 300
+ 163 / 300
+ 164 / 300
+ 165 / 300
+ 166 / 300
+ 167 / 300
+ 168 / 300
+ 169 / 300
+ 170 / 300
+ 171 / 300
+ 172 / 300
+ 173 / 300
+ 174 / 300
+ 175 / 300
+ 176 / 300
+ 177 / 300
+ 178 / 300
+ 179 / 300
+ 180 / 300
+ 181 / 300
+ 182 / 300
+ 183 / 300
+ 184 / 300
+ 185 / 300
+ 186 / 300
+ 187 / 300
+ 188 / 300
+ 189 / 300
+ 190 / 300
+ 191 / 300
+ 192 / 300
+ 193 / 300
+ 194 / 300
+ 195 / 300
+ 196 / 300
+ 197 / 300
+ 198 / 300
+ 199 / 300
+ 200 / 300
+ 201 / 300
+ 202 / 300
+ 203 / 300
+ 204 / 300
+ 205 / 300
+ 206 / 300
+ 207 / 300
+ 208 / 300
+ 209 / 300
+ 210 / 300
+ 211 / 300
+ 212 / 300
+ 213 / 300
+ 214 / 300
+ 215 / 300
+ 216 / 300
+ 217 / 300
+ 218 / 300
+ 219 / 300
+ 220 / 300
+ 221 / 300
+ 222 / 300
+ 223 / 300
+ 224 / 300
+ 225 / 300
+ 226 / 300
+ 227 / 300
+ 228 / 300
+ 229 / 300
+ 230 / 300
+ 231 / 300
+ 232 / 300
+ 233 / 300
+ 234 / 300
+ 235 / 300
+ 236 / 300
+ 237 / 300
+ 238 / 300
+ 239 / 300
+ 240 / 300
+ 241 / 300
+ 242 / 300
+ 243 / 300
+ 244 / 300
+ 245 / 300
+ 246 / 300
+ 247 / 300
+ 248 / 300
+ 249 / 300
+ 250 / 300
+ 251 / 300
+ 252 / 300
+ 253 / 300
+ 254 / 300
+ 255 / 300
+ 256 / 300
+ 257 / 300
+ 258 / 300
+ 259 / 300
+ 260 / 300
+ 261 / 300
+ 262 / 300
+ 263 / 300
+ 264 / 300
+ 265 / 300
+ 266 / 300
+ 267 / 300
+ 268 / 300
+ 269 / 300
+ 270 / 300
+ 271 / 300
+ 272 / 300
+ 273 / 300
+ 274 / 300
+ 275 / 300
+ 276 / 300
+ 277 / 300
+ 278 / 300
+ 279 / 300
+ 280 / 300
+ 281 / 300
+ 282 / 300
+ 283 / 300
+ 284 / 300
+ 285 / 300
+ 286 / 300
+ 287 / 300
+ 288 / 300
+ 289 / 300
+ 290 / 300
+ 291 / 300
+ 292 / 300
+ 293 / 300
+ 294 / 300
+ 295 / 300
+ 296 / 300
+ 297 / 300
+ 298 / 300
+ 299 / 300
+ 300 / 300
+```
+
+```
+## done
+## Calculating coverage
+## [1] 1
+```
+
+
+``` r
+class(qc_sox9_rep1)
+```
+
+```
+## [1] "ChIPQCsample"
+## attr(,"package")
+## [1] "ChIPQC"
+```
+
+
+
+---
+## Quality control with ChIPQC
+
+We can display our **ChIPQCsample** object which will show a basic summary of our CUT&amp;RUN quality.
+
+
+``` r
+qc_sox9_rep1
+```
+
+```
+## 					ChIPQCsample
+```
+
+```
+## Number of Mapped reads: 829781
+```
+
+```
+## Number of Mapped reads passing MapQ filter: 788532
+```
+
+```
+## Percentage Of Reads as Non-Duplicates (NRF): 100(0)
+```
+
+```
+## Percentage Of Reads in Blacklisted Regions: 2
+```
+
+```
+## SSD: 2.61011887557391
+```
+
+```
+## Fragment Length Cross-Coverage: 0.0133142837287353
+```
+
+```
+## Relative Cross-Coverage: 1.06351020408163
+```
+
+```
+## Percentage Of Reads in GenomicFeature:
+```
+
+```
+##                         ProportionOfCounts
+## Peaks                           0.00000000
+## BlackList                       0.02050392
+## LongPromoter20000to2000         0.27655060
+## Promoters2000to500              0.03991975
+## Promoters500                    0.03665038
+## All5utrs                        0.01701516
+## Alltranscripts                  0.57769628
+## Allcds                          0.01479838
+## Allintrons                      0.54665125
+## All3utrs                        0.01184733
+```
+
+```
+## Percentage Of Reads in Peaks: 0
+```
+
+```
+## Number of Peaks: 0
+```
+
+```
+## GRanges object with 0 ranges and 2 metadata columns:
+##    seqnames    ranges strand |    Counts bedRangesSummitsTemp
+##       &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt;            &lt;numeric&gt;
+##   -------
+##   seqinfo: 1 sequence from an unspecified genome; no seqlengths
+```
+
+---
+## QC of multiple samples
+
+It is helpful to review CUT&amp;RUN quality versus other samples (including any IgG) which we are using (or even external data if you do not have your own).
+
+This will allow us to identify expected patterns of CUT&amp;RUN enrichment in our samples versus controls as well as spot any outlier samples by these metrics.
+
+We can run **ChIPQCsample()** on all our samples of interest using an **lapply**. First we make vectors of BAM files and peak files where the indeces of BAMs and corresponding peaks line up.
+
+
+
+``` r
+bamsToQC &lt;- c("~/Downloads/SOX9CNR_D0_rep1_sorted.bam", "~/Downloads/SOX9CNR_D0_rep2_sorted.bam",
+    "~/Downloads/SOX9CNR_W6_rep1_sorted.bam", "~/Downloads/SOX9CNR_W6_rep2_sorted.bam")
+
+peaksToQC &lt;- c("data/peaks/SOX9CNR_D0_rep1_macs_peaks.narrowPeak", "data/peaks/SOX9CNR_D0_rep2_macs_peaks.narrowPeak",
+    "data/peaks/SOX9CNR_W6_rep1_macs_peaks.narrowPeak", "data/peaks/SOX9CNR_W6_rep2_macs_peaks.narrowPeak")
+```
+
+---
+## QC of multiple samples
+
+Then we can run the `ChIPQCsample` function using *lapply* while cycling through the paths to BAM and peak files. Here we limit the analyis to chromosome 18.
+
+
+``` r
+myQC &lt;- lapply(seq_along(bamsToQC), function(x) {
+    ChIPQCsample(bamsToQC[x], annotation = "mm10", peaks = peaksToQC[x], blacklist = blklist,
+        chromosomes = "chr18")
+})
+names(myQC) &lt;- basename(bamsToQC)
+```
+
+
+
+---
+## QC of multiple samples
+
+All ChIPQC functions can work with a named list of **ChIPQCsample** objects to aggregate scores into table as well as plots.
+
+Here we use the **QCmetrics()** function to give an overview of quality metrics. 
+
+
+
+
+``` r
+QCmetrics(myQC)
+```
+
+```
+##                              Reads Map% Filt% Dup% ReadL FragL RelCC  SSD  RiP%
+## SOX9CNR_D0_rep1_sorted.bam 3858873  100  7.49    0    36    79 2.000 3.23  5.59
+## SOX9CNR_D0_rep2_sorted.bam 2310101  100  9.05    0    34    81 3.290 3.50  1.22
+## SOX9CNR_W6_rep1_sorted.bam  835558  100  5.05    0    36    73 0.975 2.66 32.80
+## SOX9CNR_W6_rep2_sorted.bam 1600013  100  5.49    0    35    71 0.348 5.60 25.90
+##                            RiBL%
+## SOX9CNR_D0_rep1_sorted.bam  2.70
+## SOX9CNR_D0_rep2_sorted.bam  2.72
+## SOX9CNR_W6_rep1_sorted.bam  1.91
+## SOX9CNR_W6_rep2_sorted.bam  1.97
+```
+
+---
+class: inverse, center, middle
+
+# Blacklists and SSD
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+
+## Blacklists
+
+As we discussed while calling peaks, CUT&amp;RUN will often show the presence of common artifacts, such as ultra-high signal regions. Such regions can confound peak calling, fragment length estimation and QC metrics. Anshul Kundaje created the DAC blacklist as a reference to help deal with these regions.
+
+&lt;div align="center"&gt;
+&lt;img src="imgs/blacklist.png" alt="offset" height="400" width="400"&gt;
+&lt;/div&gt;
+
+---
+## Blacklists and SSD
+
+SSD is one of these measures that is sensitive to blacklisted artifacts. SSD is a measure of standard deviation of signal across the genome with higher scores reflecting significant pile-up of reads. SSD can therefore be used to assess both the extent of ultra high signals and the signal. But first blacklisted regions must be removed.
+
+&lt;div align="center"&gt;
+&lt;img src="imgs/ssdAndBlacklist.png" alt="offset" height="400" width="300"&gt;
+&lt;/div&gt;
+
+---
+## Standardized Standard Deviation
+
+ChIPQC calculates SSD before and after removing signal coming from Blacklisted regions.
+
+The **plotSSD()** function plots samples's pre-blacklisting score in **red** and post-blacklisting score in **blue**.
+
+Blacklisting does not have a huge impact on SSD in our samples, suggesting a strong peak signal. 
+
+
+``` r
+plotSSD(myQC) + xlim(0, 7)
+```
+
+![](Session3_QC_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+---
+## Standardized Standard Deviation
+
+This is not always the case. Sometimes you will much higher pre-blacklist SSD than post-blacklist SSD. This would indicate a strong background signal in blacklisted regions for that sample.
+
+Below is an example of this: 
+
+&lt;img src="imgs/blacklist_ssd.png"height="200" width="600"&gt;
+
+
+---
+class: inverse, center, middle
+
+# Library complexity and enrichment
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+
+## Library complexity
+
+A potential source of noise in CUT&amp;RUN is overamplification of the CUT&amp;RUN library during a PCR step. This can lead to large number of duplicate reads which may confound peak calling.
+
+![](imgs/mappable.png)
+
+---
+## Duplication
+
+We should compare our duplication rate across samples to identify any sample experiencing overamplification and so potential of a lower complexity.
+
+The **flagtagcounts()** function reports can report the number of duplicates and total mapped reads and so from there we can calculate our duplication rate.
+
+
+``` r
+myFlags &lt;- flagtagcounts(myQC)
+myFlags["DuplicateByChIPQC", ]/myFlags["Mapped", ]
+```
+
+```
+## SOX9CNR_D0_rep1_sorted.bam SOX9CNR_D0_rep2_sorted.bam 
+##                 0.18044154                 0.25100764 
+## SOX9CNR_W6_rep1_sorted.bam SOX9CNR_W6_rep2_sorted.bam 
+##                 0.22392940                 0.05412144
+```
+
+
+---
+## Enrichment for reads across genes
+
+We can also use ChIPQC to review where our distribution of reads across gene features using the **plotRegi()** function.
+
+Here we expect CUT&amp;RUN signal to be stronger in 5'UTRs and promoters when compared to input samples.
+
+
+``` r
+p &lt;- plotRegi(myQC)
+```
+
+---
+## Enrichment for reads across genes.
+
+
+``` r
+p
+```
+
+![](Session3_QC_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+
+---
+
+class: inverse, center, middle
+
+# Quality control - ATACseq
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+## Distribution of mapped reads
+
+In ATACseq we will want to check the distribution of mapped reads across chromosomes. [We can check the number of mapped reads on every chromosome using the **idxstatsBam()** function.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/r_course/presentations/slides/AlignedDataInBioconductor.html#15)
+
+ATACseq is known have high signal on the mitochondrial chromosomes and so we can check for that here.
+
+
+
+
+
+
+``` r
+library(Rsamtools)
+mappedReads_atac &lt;- idxstatsBam("W6_ATAC_rep1_sorted.bam")
+mappedReads_atac &lt;- mappedReads_atac[mappedReads_atac$seqnames %in% paste0("chr",
+    c(1:19, "X", "Y", "M")), ]
+```
+
+---
+## Distribution of mapped reads
+
+We can now use the mapped reads data frame to make a barplot of reads across chromosomes.
+
+In this example, we see a case where the mapping rate to mitochondrial genome is high.
+
+
+``` r
+library(ggplot2)
+
+ggplot(mappedReads_atac, aes(seqnames, mapped)) + geom_bar(stat = "identity") + coord_flip()
+```
+
+![](Session3_QC_files/figure-html/quickMappingStatsPerChromosomes-1.png)&lt;!-- --&gt;
+
+---
+class: inverse, center, middle
+
+# ATACseqQC
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+
+## ATACseqQC
+
+The **ATACseqQC** library allows us to run many of the ATACseq QC steps we have seen in a single step. It may consume a little more memory but will allow for the inclusion of two more useful metrics called the PCR Bottleneck Coefficients (PBC1 and PBC2).
+
+First we must install the library.
+
+
+``` r
+BiocManager::install("ATACseqQC")
+```
+
+
+---
+## ATACseqQC
+
+As with ChIPQC, the ATACseqQC function contains a workflow function which will acquire much of the required QC with a single argument of the BAM file path.
+
+Since this can be fairly memory heavy, I am just illustrating it here on a BAM file containing just the chromosome 18 reads of the ATACseq data.
+
+
+``` r
+library(ATACseqQC)
+```
+
+```
+## 
+```
+
+``` r
+atac_bam &lt;- "data/W6_ATAC_rep1_chr18_sorted.bam"
+ATACQC &lt;- bamQC(atac_bam)
+```
+
+
+---
+## ATACseqQC
+
+The resulting ATACQC object has many slots of QC information including duplicateRate, non-redundant fraction, distribution of signal across chromosomes, mitochondrial fraction etc.
+
+These include the **PCRbottleneckCoefficient_1** and **PCRbottleneckCoefficient_2** values.
+
+
+``` r
+names(ATACQC)
+```
+
+```
+##  [1] "totalQNAMEs"                   "duplicateRate"                
+##  [3] "mitochondriaRate"              "properPairRate"               
+##  [5] "unmappedRate"                  "hasUnmappedMateRate"          
+##  [7] "notPassingQualityControlsRate" "nonRedundantFraction"         
+##  [9] "PCRbottleneckCoefficient_1"    "PCRbottleneckCoefficient_2"   
+## [11] "MAPQ"                          "idxstats"
+```
+
+---
+## PCR bottleneck coefficients
+
+PCR bottleneck coefficients identify PCR bias/overamplification which may have occurred in preparation of ATAC samples.
+
+The **PCRbottleneckCoefficient_1** is calculated as the number of positions in genome with *exactly* 1 read mapped uniquely compared to the number of positions with *at least* 1 read.
+
+For example if we have 20 reads. 16 map uniquely to locations. 4 do not map uniquely, instead there are 2 locations, both of which have 2 reads. This would lead us to calculation 16/18. We therefore have a PBC1 of 0.889
+
+Values less than 0.7 indicate severe bottlenecking, between 0.7 and 0.9 indicate moderate bottlenecking. Greater than 0.9 show no bottlenecking.
+
+
+``` r
+ATACQC$PCRbottleneckCoefficient_1
+```
+
+```
+## [1] 0.9419972
+```
+
+
+---
+## PCR bottleneck coefficients
+
+The **PCRbottleneckCoefficient_2** is our secondary measure of bottlenecking. It is calculated as the number of positions in genome with **exactly** 1 read mapped uniquely compared to the number of positions with **exactly** 2 reads mapping uniquely.
+
+We can reuse our example. If we have 20 reads, 16 of which map uniquely. 4 do not map uniquely, instead there are 2 locations, both of which have 2 reads. This would lead us to calculation 16/2. We therefore have a PBC2 of 8.
+
+Values less than 1 indicate severe bottlenecking, between 1 and 3 indicate moderate bottlenecking. Greater than 3 show no bottlenecking.
+
+
+``` r
+ATACQC$PCRbottleneckCoefficient_2
+```
+
+```
+## [1] 17.22071
+```
+
+
+---
+
+## ATACseqQC insert sizes plot
+
+In the peak calling lecture we made a plot of insert sizes. This is a very important QC readout for ATACseq, and ATACseqQC has a function that makes a similar plot with just a path to a BAM file. 
+
+
+``` r
+fragSize &lt;- fragSizeDist(atac_bam, bamFiles.labels = gsub("\\.bam", "", basename(atac_bam)))
+```
+
+![](Session3_QC_files/figure-html/unnamed-chunk-21-1.png)&lt;!-- --&gt;
+---
+
+## ATACseqQC insert sizes plot
+
+In addition to printing the plot, this function returns a vector of insert size distributions that could be used to manually make a plot.
+
+This BAM file has not been filtered for proper pairs, so these numbers will be different from those seen in the peak calling lecture. 
+
+
+``` r
+fragSize$W6_ATAC_rep1_chr18_sorted[1:10]
+```
+
+```
+## 
+##    0   18   19   21   22   23   24   25   26   27 
+## 1720    2    2   14   10    2  312  198 1714 1314
+```
+
+---
+class: inverse, center, middle
+
+# Evaluating TSS signal
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+
+##  Evaluating signal over TSS regions
+
+If our shorter fragments represent the open regions around transcription factors and transcriptional machinery we would expect to see signal at transcriptional start sites.
+
+Our longer fragments will represent signal around nucleosomes and so signal should be outside of the transcriptional start sites and more present at the +1 and -1 nucleosome positions.
+
+&lt;div align="center"&gt;
+&lt;img src="imgs/phasing.png" alt="offset" height="300" width="350"&gt;
+&lt;/div&gt;
+
+---
+
+##  Evaluating signal over TSS regions
+
+We can create a meta-plot over all TSS regions to illustrate where our nucleosome free and nucleosome occupied fractions of signal are most prevalent.
+
+Meta-plots average or sum signal over sets of regions to identify trends in data.
+
+&lt;div align="center"&gt;
+&lt;img src="imgs/signalOverTSS.png" alt="offset" height="300" width="600"&gt;
+&lt;/div&gt;
+
+---
+
+##  Plotting signal over regions in R
+
+To produce meta-plots of signal over regions we can use the **soGGi** bioconductor package. We can load in **soGGi** with the BiocManager::install and library function, as we have done before.
+
+
+``` r
+BiocManager::install("soGGi")
+library(soGGi)
+```
+---
+
+##  Plotting regions in soGGi
+
+The soGGi library simply requires a BAM file and a GRanges of regions over which to average signal to produce the meta-plot.
+
+We wish to plot over TSS regions and so we first will need to produce a GRanges of TSS locations for hg19 genome.
+
+Thankfully we now know how to extract these regions for all genes using the **TxDB packages** and some **GenomicRanges** functions.
+
+First we can load our TxDb of interest - **TxDb.Hsapiens.UCSC.hg19.knownGene**.
+
+
+``` r
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+```
+
+```
+## Warning: package 'TxDb.Mmusculus.UCSC.mm10.knownGene' was built under R version
+## 4.4.1
+```
+
+```
+## Warning: package 'GenomicFeatures' was built under R version 4.4.1
+```
+
+```
+## Warning: package 'AnnotationDbi' was built under R version 4.4.1
+```
+
+``` r
+TxDb.Mmusculus.UCSC.mm10.knownGene
+```
+
+```
+## TxDb object:
+## # Db type: TxDb
+## # Supporting package: GenomicFeatures
+## # Data source: UCSC
+## # Genome: mm10
+## # Organism: Mus musculus
+## # Taxonomy ID: 10090
+## # UCSC Table: knownGene
+## # UCSC Track: GENCODE VM23
+## # Resource URL: http://genome.ucsc.edu/
+## # Type of Gene ID: Entrez Gene ID
+## # Full dataset: yes
+## # miRBase build ID: NA
+## # transcript_nrow: 142446
+## # exon_nrow: 447558
+## # cds_nrow: 243727
+## # Db created by: GenomicFeatures package from Bioconductor
+## # Creation time: 2019-10-21 20:52:26 +0000 (Mon, 21 Oct 2019)
+## # GenomicFeatures version at creation time: 1.37.4
+## # RSQLite version at creation time: 2.1.2
+## # DBSCHEMAVERSION: 1.2
+```
+
+---
+
+##  Plotting regions in soGGi
+
+We can extract gene locations (TSS to TTS) [using the **genes()** function and our **TxDb** object.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/r_course/presentations/slides/GenomicFeatures_In_Bioconductor.html#15)
+
+
+``` r
+genesLocations &lt;- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+```
+
+```
+##   66 genes were dropped because they have exons located on both strands
+##   of the same reference sequence or on more than one reference sequence,
+##   so cannot be represented by a single genomic range.
+##   Use 'single.strand.genes.only=FALSE' to get all the genes in a
+##   GRangesList object, or use suppressMessages() to suppress this message.
+```
+
+``` r
+genesLocations
+```
+
+```
+## GRanges object with 24528 ranges and 1 metadata column:
+##             seqnames              ranges strand |     gene_id
+##                &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+##   100009600     chr9   21062393-21073096      - |   100009600
+##   100009609     chr7   84935565-84964115      - |   100009609
+##   100009614    chr10   77711457-77712009      + |   100009614
+##   100009664    chr11   45808087-45841171      + |   100009664
+##      100012     chr4 144157557-144162663      - |      100012
+##         ...      ...                 ...    ... .         ...
+##       99889     chr3   84496093-85887516      - |       99889
+##       99890     chr3 110246109-110250998      - |       99890
+##       99899     chr3 151730922-151749960      - |       99899
+##       99929     chr3   65528410-65555518      + |       99929
+##       99982     chr4 136550540-136602723      - |       99982
+##   -------
+##   seqinfo: 66 sequences (1 circular) from mm10 genome
+```
+
+
+---
+## Plotting regions in soGGi
+
+We can then use the [**resize()** function](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/GenomicIntervals_In_Bioconductor.html#40) to extract the location of start of every gene (the TSSs) in a stranded manner.
+
+Here we set the **fix** position as the start and the width as 1.
+
+
+``` r
+tssLocations &lt;- resize(genesLocations, fix = "start", width = 1)
+tssLocations
+```
+
+```
+## GRanges object with 24528 ranges and 1 metadata column:
+##             seqnames    ranges strand |     gene_id
+##                &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+##   100009600     chr9  21073096      - |   100009600
+##   100009609     chr7  84964115      - |   100009609
+##   100009614    chr10  77711457      + |   100009614
+##   100009664    chr11  45808087      + |   100009664
+##      100012     chr4 144162663      - |      100012
+##         ...      ...       ...    ... .         ...
+##       99889     chr3  85887516      - |       99889
+##       99890     chr3 110250998      - |       99890
+##       99899     chr3 151749960      - |       99899
+##       99929     chr3  65528410      + |       99929
+##       99982     chr4 136602723      - |       99982
+##   -------
+##   seqinfo: 66 sequences (1 circular) from mm10 genome
+```
+
+---
+## Plotting regions in soGGi
+
+When we created our index we subset the genome to the main chromosomes. We can do this again with our TSS GRange object, and update the levels. This means the BAM and GRanges will play nicely. 
+
+
+``` r
+mainChromosomes &lt;- paste0("chr", c(1:19, "X", "Y", "M"))
+
+tssLocations &lt;- tssLocations[as.vector(seqnames(tssLocations)) %in% mainChromosomes]
+
+seqlevels(tssLocations) &lt;- mainChromosomes
+```
+
+
+
+---
+##  Plotting regions in soGGi
+
+The soGGi package's **regionPlot()** function requires a BAM file of data to plot supplied to **bamFile** parameter and a GRanges to plot over supplied to **testRanges** argument.
+
+
+
+``` r
+library(soGGi)
+sortedBAM &lt;- "~/Downloads/W6_ATAC_rep1_sorted.bam"
+
+library(Rsamtools)
+# Nucleosome free
+allSignal &lt;- regionPlot(bamFile = sortedBAM, testRanges = tssLocations)
+```
+
+
+
+---
+## Plotting regions in soGGi
+
+Additionally we supply information on input file format to **format** parameter, whether data is paired to **paired** parameter and type of plot to **style** parameter. We explore visualization options [visualization training](https://rockefelleruniversity.github.io/RU_VisualizingGenomicsData.html).
+
+A useful feature is that we can we can specify the minimum and maximum fragment lengths of paired reads to be used in our plot with the **minFragmentLength** and **maxFragmentLength** parameters. This allows us to select only our nucleosome free signal (&lt; 100 base-pairs) to produce our metaplot over TSS regions.
+
+
+
+
+``` r
+nucFree &lt;- regionPlot(bamFile = sortedBAM, testRanges = tssLocations, style = "point",
+    format = "bam", paired = TRUE, minFragmentLength = 0, maxFragmentLength = 100,
+    forceFragment = 50)
+```
+
+
+
+
+```
+## Warning: package 'soGGi' was built under R version 4.4.1
+```
+
+---
+##  Plotting regions in soGGi
+
+Now we have our profile object we can create our metaplot using the **plotRegion()** function in **soGGi**.
+
+Here we see the expected peak of signal for our nucleosome free region in the region over the TSS.
+
+
+``` r
+plotRegion(nucFree)
+```
+
+![](Session3_QC_files/figure-html/processData_plot-1.png)&lt;!-- --&gt;
+
+
+---
+
+##  Plotting regions in soGGi
+
+We can create a plot for our mono-nucleosome signal by adjusting our **minFragmentLength** and **maxFragmentLength** parameters to those expected for nucleosome length fragments (here 180 to 240).
+
+
+
+
+
+
+``` r
+monoNuc &lt;- regionPlot(bamFile = sortedBAM, testRanges = tssLocations, style = "point",
+    format = "bam", paired = TRUE, minFragmentLength = 180, maxFragmentLength = 240,
+    forceFragment = 80)
+```
+
+---
+##  Plotting regions in soGGi
+
+Similarly we can plot the mono-nucleosome signal over TSS locations using **plotRegion()** function.
+
+In this plot we can clearly see the expected +1 nucleosome signal peak as well as several other nucleosome signalpeaks
+
+
+``` r
+plotRegion(monoNuc)
+```
+
+![](Session3_QC_files/figure-html/processData_plot3-1.png)&lt;!-- --&gt;
+
+
+---
+
+## Time for an exercise!
+
+Exercise on CUT&amp;RUN data can be found [here](../../exercises/exercises/CUT&amp;RUN_part1_exercise.html)
+
+---
+## Answers to exercise
+
+Answers can be found [here](../../exercises/answers/CUT&amp;RUN_part1_answers.html)
+
+R code for solutions can be found [here](../../exercises/answers/CUT&amp;RUN_part1_answers.R)
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+  "highlightStyle": "github",
+  "highlightLines": true,
+  "countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
