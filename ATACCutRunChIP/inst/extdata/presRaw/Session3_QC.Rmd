@@ -764,13 +764,13 @@ plotRegion(monoNuc)
 
 ## Time for an exercise!
 
-Exercise on CUT&RUN data can be found [here](../../exercises/exercises/CUT&RUN_part1_exercise.html)
+Exercise on CUT&RUN data can be found [here](../../exercises/exercises/ATACCutRunChIP_AlignPeaksQC_exercise.html)
 
 ---
 ## Answers to exercise
 
-Answers can be found [here](../../exercises/answers/CUT&RUN_part1_answers.html)
+Answers can be found [here](../../exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.html)
 
-R code for solutions can be found [here](../../exercises/answers/CUT&RUN_part1_answers.R)
+R code for solutions can be found [here](../../exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.R)
 
 

@@ -1,0 +1,9 @@
+<br>
+
+#### **Epigenomics , Session 5**
+
+This section focuses on annotation of peaks and functional enrichment analysis
+
+* Annotate peaks to genomic features
+* Annotate peaks to genes
+* Perform gene and region centric functional enrichment
