@@ -17,6 +17,6 @@ Suggests: knitr,
     rmarkdown,
     testthat,
     yaml
-SystemRequirements: R, RStudio
+SystemRequirements: R, RStudio, MEME, SEACR, MACS3
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
