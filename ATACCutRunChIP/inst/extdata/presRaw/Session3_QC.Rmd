@@ -72,27 +72,7 @@ CUT&RUN has many sources of potential noise including
 * Library complexity
 * artifacts and background
 
-Many of these sources of noise can be assessed using some well established methodology.
-
----
-
-# Quality Control References 
-
-For some discussions on ChIPseq QC:
-
-* Encode quality metrics.
-
-[Large-scale quality analysis of published ChIP-seq data. Marinov GK, Kundaje A, Park PJ, Wold BJ. G3 (Bethesda). 2014 Feb 19;4(2)](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931556/)
-
-* Overestimation of artefact duplicates in ChIP-seq.
-
-[Systematic evaluation of factors influencing ChIP-seq fidelity.Nat Methods. Chen Y, Negre N, Li Q, Mieczkowska JO, Slattery M, Liu T, Zhang Y, Kim TK, He HH, Zieba J, Ruan Y, Bickel PJ, Myers RM, Wold BJ, White KP, Lieb JD, Liu XS. 2012 Jun;9(6)](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3477507/)
-
-
-* When and what QC is useful.
-
-[Impact of artifact removal on ChIP quality metrics in ChIP-seq and ChIP-exo data.Front Genet. 2014 Apr 10;5:75.Carroll TS, Liang Z, Salama R, Stark R, de Santiago I](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3989762/)
-
+Many of these sources of noise can be assessed using some well established methodology, many borrowed from ChIPseq..
 
 
 ---
@@ -131,7 +111,7 @@ The [**ChIPQC package**](https://bioconductor.org/packages/release/bioc/html/ChI
 
 To run a single sample we can use the **ChIPQCsample()** function, the relevant **unfiltered** BAM file and we are recommended to supply a **blacklist** as a BED file or GRanges and Genome name.
 
-You can find a Blacklist for most genomes at [Anshul Kundaje's site](https://sites.google.com/site/anshulkundaje/projects/blacklists) or directly from the [Encode websites](https://www.encodeproject.org/annotations/ENCSR636HFF/)
+We can use the same blacklist bed file that we used for peak calling. This file is available in the *data* folder of this course and also at the [Boyle lab Github page](https://github.com/Boyle-Lab/Blacklist/tree/master/lists). 
 
 ```{r mycQCdwdwshowL,include=FALSE}
 library(ChIPQC)
@@ -148,11 +128,11 @@ QCresult <- ChIPQCsample(reads="/pathTo/myCnRreads.bam",
 ---
 ## Quality control with ChIPQC
 
-We download the blacklist for mm10 from [Encode ](https://www.encodeproject.org/files/ENCFF547MET/@@download/ENCFF547MET.bed.gz)
-
 We can then provide an initial analysis of our CUT&RUN samples quality using the **ChIPQCsample()** function from the [**ChIPQC** package.](http://bioconductor.org/packages/stats/bioc/ChIPQC/)
 
 Here we evaluate the quality of samples we aligned in the prior session with Rsubread. The returned object is a **ChIPQCsample** object.
+
+Note: We use the BAM file before we filtered out low quality reads and blacklist so we can incorporate those reads into our QC analysis.
 
 ```{r mycQC,cache=F,eval=TRUE, message=F}
 library(ChIPQC)
@@ -186,7 +166,9 @@ It is helpful to review CUT&RUN quality versus other samples (including any IgG)
 
 This will allow us to identify expected patterns of CUT&RUN enrichment in our samples versus controls as well as spot any outlier samples by these metrics.
 
-We can run **ChIPQCsample()** on all our samples of interest using an **lapply**. First we make vectors of BAM files and peak files where the indeces of BAMs and corresponding peaks line up. If you want to try on your own, the BAM files are [available on dropbox](https://www.dropbox.com/scl/fo/f8q9iz5j1mic0wrhzei2c/AEIL42gWMI-Tc_OwFxc5wOA?rlkey=gxl9u7rqk783zuz4tezj9e3pu&st=qzh2allk&dl=0), but be aware that they are big files. 
+We can run **ChIPQCsample()** on all our samples of interest using an **lapply**. First we make vectors of BAM files and peak files where the indeces of BAMs and corresponding peaks line up. 
+
+If you want to try on your own, the BAM files are [available on dropbox](https://www.dropbox.com/scl/fo/f8q9iz5j1mic0wrhzei2c/AEIL42gWMI-Tc_OwFxc5wOA?rlkey=gxl9u7rqk783zuz4tezj9e3pu&st=qzh2allk&dl=0), but be aware that they are big files. 
 
 
 ```{r mycQCshow2,cache=F,eval=FALSE, echo=T}
@@ -322,7 +304,7 @@ plotSSD(myQC)+xlim(0,7)
 
 This is not always the case. Sometimes you will much higher pre-blacklist SSD than post-blacklist SSD. This would indicate a strong background signal in blacklisted regions for that sample.
 
-Below is an example of this: 
+Below is an example of this from another dataset: 
 
 <img src="imgs/blacklist_ssd.png"height="200" width="600">
 
@@ -543,7 +525,7 @@ ATACQC$PCRbottleneckCoefficient_2
 
 ## ATACseqQC insert sizes plot
 
-In the peak calling lecture we made a plot of insert sizes. This is a very important QC readout for ATACseq, and ATACseqQC has a function that makes a similar plot with just a path to a BAM file. 
+In the peak calling lecture we made a plot of insert sizes. This is a very important QC readout for ATACseq, and ATACseqQC has a function that makes a similar plot by just providing a path to a BAM file. 
 
 ```{r, fig.height=6, fig.width=6}
 
