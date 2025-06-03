@@ -1,3 +1,10 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
 rmarkdown
 xaringan
 knitr
@@ -6,6 +13,7 @@ ymlthis
 stringr
 magrittr
 BiocGenerics
+stats4
 S4Vectors
 IRanges
 compileCourses
@@ -21,4 +29,3 @@ Biobase
 SummarizedExperiment
 GenomicAlignments
 ShortRead
-ggplot2

@@ -386,6 +386,20 @@ div.tocify {
         </li>
       </ul>
     </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Session5</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="presentations/slides/Session5_Annotation.html">Slide</a>
+        </li>
+        <li>
+          <a href="presentations/singlepage/Session5_Annotation.html">Single Page</a>
+        </li>
+        <li>
+          <a href="presentations/r_code/Session5_Annotation.R">Code</a>
+        </li>
+      </ul>
+    </li>
   </ul>
 </li>
 <li class="dropdown">
@@ -403,6 +417,50 @@ div.tocify {
         </li>
         <li>
           <a href="exercises/answers/MyExercise1_answers.html">Solution</a>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">MyExercise2</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="exercises/exercises/MyExercise2_exercise.html">Exercise</a>
+        </li>
+        <li>
+          <a href="exercises/answers/MyExercise2_answers.html">Solution</a>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">MyExercise3</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="exercises/exercises/MyExercise3_exercise.html">Exercise</a>
+        </li>
+        <li>
+          <a href="exercises/answers/MyExercise3_answers.html">Solution</a>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">ATACCutRunChIP_AlignPeaksQC</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="exercises/exercises/ATACCutRunChIP_AlignPeaksQC_exercise.html">Exercise</a>
+        </li>
+        <li>
+          <a href="exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.html">Solution</a>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">ATACCutRunChIP_Annotation</a>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <a href="exercises/exercises/ATACCutRunChIP_Annotation_exercise.html">Exercise</a>
+        </li>
+        <li>
+          <a href="exercises/answers/ATACCutRunChIP_Annotation_answers.html">Solution</a>
         </li>
       </ul>
     </li>
@@ -477,6 +535,54 @@ class="uri">https://rockefelleruniversity.github.io/RU_Course_template/</a>.</p>
 <div id="system-requirements" class="section level4">
 <h4><strong>System Requirements</strong></h4>
 </div>
+<div id="install-macs3" class="section level4">
+<h4>Install MACS3</h4>
+<p>Though there is a R package for MACS, we typically use MACS3 from the
+<a href="https://anaconda.org/bioconda/macs2">Anaconda package
+repository</a> for Linux or MacOS. The easiest way to install MACS3 is
+using the R package <a
+href="https://bioconductor.org/packages/release/bioc/html/Herper.html">Herper</a>.
+Herper allows you to manage and install Anaconda packages from within
+R.</p>
+<pre><code>BiocManager::install(&quot;Herper&quot;)
+library(Herper)</code></pre>
+<p>Once Herper is installed you can install MACS3 with the
+<em>install_CondaTools</em> function. Behind the scenes, Herper will
+install the most minimal version of conda (called miniconda), and then
+will create a new environment into which MACS3 will be installed. When
+you run the function it prints out where MACS3 is installed.</p>
+<p>The <em>env</em> argument is the name you want to give the
+environment created. The <em>pathToMiniConda</em> specifies the location
+you want to install Miniconda, and all the conda tools like MACS2.</p>
+<pre><code>install_CondaTools(tools=&quot;macs3&quot;, env=&quot;PeakCalling_analysis&quot;, pathToMiniConda=&quot;/path/to/install&quot;)</code></pre>
+<p>More information on MACS3 is available from the Tao Liu’s dedicated
+<a href="https://macs3-project.github.io/MACS/">GitHub page</a>.</p>
+<p><br></p>
+</div>
+<div id="install-meme" class="section level4">
+<h4>Install MEME</h4>
+<p>There is no R package for MEME, but MEME is available in the <a
+href="https://anaconda.org/bioconda/meme">Anaconda package
+repository</a> for Linux or MacOS. The easiest way to install MEME is
+using the R package <a
+href="https://bioconductor.org/packages/release/bioc/html/Herper.html">Herper</a>.
+Herper allows you to manage and install Anaconda packages from within
+R.</p>
+<pre><code>BiocManager::install(&quot;Herper&quot;)
+library(Herper)</code></pre>
+<p>Once Herper is installed you can install MEME with the
+<em>install_CondaTools</em> function. Behind the scenes, Herper will
+install the most minimal version of conda (called miniconda), and then
+will create a new environment into which MEME will be installed. When
+you run the function it prints out where MEME is installed.</p>
+<p>The <em>env</em> argument is the name you want to give the
+environment created. The <em>pathToMiniConda</em> specifies the location
+you want to install Miniconda, and all the conda tools like MEME.</p>
+<pre><code>install_CondaTools(tools=&quot;meme&quot;, env=&quot;Motif_analysis&quot;, pathToMiniConda=&quot;/path/to/install&quot;, channels=&quot;bioconda&quot;)</code></pre>
+<p>More information on MEME can be found on the <a
+href="https://meme-suite.org/meme/">website</a>.</p>
+<p><br></p>
+</div>
 <div id="install-r" class="section level4">
 <h4>Install R</h4>
 <p>R can be installed from the R-project website.</p>
@@ -501,6 +607,29 @@ class="uri">http://www.rstudio.com/</a></p>
 <p>RStudio can be downloaded for all platforms at the link below</p>
 <p><a href="https://rstudio.com/products/rstudio/download/"
 class="uri">https://rstudio.com/products/rstudio/download/</a></p>
+<p><br></p>
+</div>
+<div id="install-seacr" class="section level4">
+<h4>Install SEACR</h4>
+<p>There is no R package for SEACR, but you can download it from the
+Fred Hutch <a href="https://github.com/FredHutch/SEACR/">GitHub
+page</a>.</p>
+<p>You will need to unzip it and then you should be good to go. Here are
+the commands to do this all in R.</p>
+<pre><code>download.file(&quot;https://github.com/FredHutch/SEACR/archive/refs/tags/v1.4-beta.2.zip&quot;, destfile = &quot;~/Downloads/SEACR_v1.4.zip&quot;)
+unzip(&quot;~/Downloads/SEACR_v1.4.zip&quot;, exdir = &quot;~/Downloads/SEACR_v1.4&quot; )
+seacr_path &lt;- &quot;~/Downloads/SEACR_v1.4/SEACR-1.4-beta.2/SEACR_1.4.sh&quot;</code></pre>
+<p>To test SEACR is running correctly you can run the SEACR help command
+from R.</p>
+<pre><code>system(paste(seacr_path, &quot;-h&quot;))</code></pre>
+<p>Some people get an error message at this stage as SEACR does not have
+permission to run. You can update your permissions like this.</p>
+<pre><code>system(paste(&quot;chmod 777&quot;, seacr_path))
+system(paste(seacr_path, &quot;-h&quot;))</code></pre>
+<p>More information on SEACR is available on the <a
+href="https://github.com/FredHutch/SEACR/">GitHub page</a> along with
+the SEACR <a href="https://seacr.fredhutch.org/">website</a> (which also
+includes a web interface for running SEACR).</p>
 <p><br></p>
 </div>
 <div id="install-required-r-packages" class="section level4">
@@ -650,6 +779,30 @@ href="presentations/singlepage/Session4.html"><strong>Single
 Page</strong></a></p>
 <p>The code use in the presentations can be found at <a
 href="presentations/r_code/Session4.R"><strong>R code</strong></a></p>
+<p><br></p>
+</div>
+</div>
+<div id="epigenomics-session-5" class="section level4">
+<h4><strong>Epigenomics , Session 5</strong></h4>
+<p>This section focuses on annotation of peaks and functional enrichment
+analysis</p>
+<ul>
+<li>Annotate peaks to genomic features</li>
+<li>Annotate peaks to genes</li>
+<li>Perform gene and region centric functional enrichment</li>
+</ul>
+<iframe src="presentations/slides/Session5_Annotation.html" width="100%" height="400" title="Session5">
+</iframe>
+<div id="links-to-presentations-4" class="section level5">
+<h5><em>Links to presentations:</em></h5>
+<p>The html slide presentation can be found at this link <a
+href="presentations/slides/Session5_Annotation.html"><strong>Slide</strong></a></p>
+<p>The single page html presentation can be found at this link <a
+href="presentations/singlepage/Session5_Annotation.html"><strong>Single
+Page</strong></a></p>
+<p>The code use in the presentations can be found at <a
+href="presentations/r_code/Session5_Annotation.R"><strong>R
+code</strong></a></p>
 <p><br><br></p>
 </div>
 </div>

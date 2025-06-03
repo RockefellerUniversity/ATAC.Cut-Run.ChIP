@@ -41,8 +41,8 @@ if(params$isSlides == "yes"){
 
 
 ## ----setwd_introtoR,eval=F----------------------------------------------------
-# setwd("/PathToMyDownload/RU_Course_template/r_course")
-# # e.g. setwd("~/Downloads/Intro_To_R_1Day/r_course")
+# setwd("/PathToMyDownload/ATAC.Cut-Run.ChIP-master/r_course")
+# # e.g. setwd("~/Downloads/ATAC.Cut-Run.ChIP-master/r_course")
 
 
 ## ----results='asis',include=TRUE,echo=FALSE-----------------------------------
@@ -130,18 +130,6 @@ readIDs <- id(fastq)
 readSequences
 
 
-## ----mycRep1ReadsQScores------------------------------------------------------
-readQuality <- quality(fastq)
-readQualities <- alphabetScore(readQuality)
-readQualities[1:10]
-
-
-## ----mycRep1ReadsQScoresPlot--------------------------------------------------
-library(ggplot2)
-toPlot <- data.frame(ReadQ=readQualities)
-ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()
-
-
 ## ----mycRep1ReadsAlpFreq------------------------------------------------------
 readSequences <- sread(fastq)
 readSequences_AlpFreq <- alphabetFrequency(readSequences)
@@ -170,24 +158,27 @@ toPlot <- data.frame(Count=c(AFreq,CFreq,GFreq,TFreq),
 
 
 ## ----mycRep1ReadsAlpByCyclePlot2,cache=TRUE,eval=FALSE,dependson="mycRep1ReadsAlpByCyclePlot",fig.height=4,fig.width=8----
-# 
+# library(ggplot2)
 # ggplot(toPlot, aes(y=Count,x=Cycle,colour=Base)) + geom_line() +
 #   theme_bw()
 
 
-## ----mycRep1ReadsAlpByCyclePlot3----------------------------------------------
-
-ggplot(toPlot,aes(y=Count,x=Cycle,colour=Base)) + geom_line() + ylim(150000,400000) +
+## ----mycRep1ReadsAlpByCyclePlot3, warning=F, message=F, fig.width=5, fig.height=3----
+library(ggplot2)
+ggplot(toPlot,aes(y=Count,x=Cycle,colour=Base)) + geom_line() + ylim(150000,350000) +
   theme_bw()
 
 
-## ----mycRep1ReadsQByCycle,cache=TRUE,dependson="mycRep1ReadsAlpFreq"----------
-qualAsMatrix <- as(readQuality,"matrix")
-qualAsMatrix[1:2,]
+## ----mycRep1ReadsQScores------------------------------------------------------
+readQuality <- quality(fastq)
+readQualities <- alphabetScore(readQuality)
+readQualities[1:10]
 
 
-## ----mycRep1ReadsQByCyclePlot,cache=TRUE,dependson="mycRep1ReadsQByCycle",fig.width=8,fig.height=4----
-boxplot(qualAsMatrix[1:1000,])
+## ----mycRep1ReadsQScoresPlot, warning=F, message=F, fig.width=5, fig.height=3----
+
+toPlot <- data.frame(ReadQ=readQualities)
+ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()
 
 
 ## ----eval=F-------------------------------------------------------------------
