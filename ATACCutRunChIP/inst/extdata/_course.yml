@@ -2,7 +2,7 @@ Description:
   CourseName: Epigenomics
   OverviewRmd: CourseOverview.Rmd
 Presentations:
-    titles: Session1 Session2 Session3 Session4
-    PresRmd: Session1.Rmd Session2_Align_CallPeaks.Rmd Session3_QC.Rmd Session4.Rmd 
+    titles: Session1 Session2 Session3 Session4 Session5
+    PresRmd: Session1.Rmd Session2_Align_CallPeaks.Rmd Session3_QC.Rmd Session4.Rmd Session5_Annotation.Rmd 
     PresOverviewRmd: Session1Overview.Rmd Session2Overview.Rmd Session3Overview.Rmd Session4Overview.Rmd
-    Exercises: MyExercise1.Rmd
+    Exercises: MyExercise1.Rmd MyExercise2.Rmd MyExercise3.Rmd
