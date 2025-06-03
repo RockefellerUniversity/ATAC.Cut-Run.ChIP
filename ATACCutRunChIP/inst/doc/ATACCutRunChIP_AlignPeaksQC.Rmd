@@ -295,9 +295,10 @@ qc_sox9_rep2 <- ChIPQCsample(sortedBAM,
 saveRDS(qc_sox9_rep2, "data/qc_sox9_rep2_chipqc.rds")
 ```
 
-```{r, echo=F, eval=T}
+```{r, echo=F, eval=F}
 
 qc_sox9_rep2 <- readRDS("data/qc_sox9_rep2_chipqc.rds")
+
 ```
 
 ```{r,echo=toMessage, fig.width=9}
