@@ -18,33 +18,120 @@ message(toMessage)
 
 
 <p>&nbsp;</p>
-These exercises are about ??Add a summary of the topic?? [??Topic Name??](https://rockefelleruniversity.github.io/RU_course_template/). 
+These exercises are about [fastq quality control](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html). 
 
-**Exercise 1** - **??Ex 1 title if it has one??**
+**Exercise 1** - **Reading FastQs with ShortRead**
 
-- ??What is the first question??
+- Download fastq files for the second replicate of the Cut and Run from ENA. These are direct links for [Read1](ftp.sra.ebi.ac.uk/vol1/fastq/SRR201/017/SRR20110417/SRR20110417_1.fastq.gz) and [Read2](ftp.sra.ebi.ac.uk/vol1/fastq/SRR201/017/SRR20110417/SRR20110417_2.fastq.gz)).
+
+- Read in a subset of Read 1 (lets just try 1000000 to keep things snappy).
+
+```{r,echo=toMessage, eval=F}
+library(ShortRead)
+
+fqSample <- FastqSampler("~/Downloads/SRR20110417_1.fastq.gz",n=10^6)
+fastq <- yield(fqSample)
+fastq
+```
+
+```{r eval=T, echo=F}
+#writeFastq(fastq,file = "data/SRR20110417_1_sub.fastq.gz",mode = "w")
+fastq <- readFastq(dirPath = "data/SRR20110417_1_sub.fastq.gz")
+fastq
+```
+
+- Lets review the first 10 reads. Lets look at ids, quality and sequence for the first ten reads.
 ```{r,echo=toMessage}
-## Add the solution in here. This will only be included in the exercise sections. This is controlled by the echo=toMessage in the markdown header  ie:
+sread(fastq)[1:10]
+quality(fastq)[1:10]
+id(fastq)[1:10]
+```
+- Lets review the nucleotide frequency for each base in our read.
 
-cat("Hello World")
+```{r,echo=toMessage}
+library(ggplot2)
+readSequences <- sread(fastq)
+readSequences_AlpFreq <- alphabetFrequency(readSequences)
+summed__AlpFreq  <- colSums(readSequences_AlpFreq)
+summed__AlpFreq[c("A","C","G","T","N")]
+readSequences_AlpbyCycle <- alphabetByCycle(readSequences)
+AFreq <- readSequences_AlpbyCycle["A",]
+CFreq <- readSequences_AlpbyCycle["C",]
+GFreq <- readSequences_AlpbyCycle["G",]
+TFreq <- readSequences_AlpbyCycle["T",]
+toPlot <- data.frame(Count=c(AFreq,CFreq,GFreq,TFreq),
+                     Cycle=rep(1:40,4),
+                     Base=rep(c("A","C","G","T"),each=40))
 
-a<-1+2
-b<-3+4
 
-mean(a,b)
+ggplot(toPlot, aes(y=Count,x=Cycle,colour=Base)) + geom_line() +
+  theme_bw()
+```
+
+- Compare this to read 2.
+
+
+
+```{r,echo=toMessage, eval=F}
+library(ShortRead)
+
+fqSample <- FastqSampler("~/Downloads/SRR20110417_2.fastq.gz",n=10^6)
+fastq2 <- yield(fqSample)
+fastq2
+```
+
+```{r eval=T, echo=F}
+#writeFastq(fastq,file = "data/SRR20110417_2_sub.fastq.gz",mode = "w")
+fastq2 <- readFastq(dirPath = "data/SRR20110417_2_sub.fastq.gz")
+fastq2
 
 ```
 
-- ??What is the second question??
 ```{r,echo=toMessage}
-## If your questions are too labor intensive to actually do during compilation you can add eval=F to the markdown header.
 
-## A caveat of using eval=F is you cannot check the code is running accurately, so it is good to at elast double check it yourself first
+readSequences <- sread(fastq2)
+readSequences_AlpFreq <- alphabetFrequency(readSequences)
+summed__AlpFreq  <- colSums(readSequences_AlpFreq)
+summed__AlpFreq[c("A","C","G","T","N")]
+readSequences_AlpbyCycle <- alphabetByCycle(readSequences)
+AFreq <- readSequences_AlpbyCycle["A",]
+CFreq <- readSequences_AlpbyCycle["C",]
+GFreq <- readSequences_AlpbyCycle["G",]
+TFreq <- readSequences_AlpbyCycle["T",]
+toPlot <- data.frame(Count=c(AFreq,CFreq,GFreq,TFreq),
+                     Cycle=rep(1:40,4),
+                     Base=rep(c("A","C","G","T"),each=40))
 
-## If any subsequent chunks rely on answers from a chunk that is eval=F, you will need to load them back in. Ideally this will be done behind the scenes by setting echp=F for the chunk that just loads. 
 
+ggplot(toPlot, aes(y=Count,x=Cycle,colour=Base)) + geom_line() +
+  theme_bw()
 
 ```
 
+**Exercise 2** - **Run Rfastp**
 
-?? You can just keep adding questions in this format ??
+- Run Rfastp on our dataset with default settings.
+
+```{r,echo=toMessage, eval=F}
+library(Rfastp)
+
+rfastp(read1="/Users/mattpaul/Downloads/SRR20110417_1.fastq.gz", read2 = "/Users/mattpaul/Downloads/SRR20110417_2.fastq.gz",outputFastq = "SOX9CNR_D0_rep2_filtered")
+```
+
+The html is [here]("data/SOX9CNR_D0_rep2_filtered.html")
+
+- Try running Rfastp on our dataset with some extra parameters. Review the help page with ?rfastp. 
+
+You could try:
+* trimming from the front of the read
+* adding in over representation analysis (this will take a little longer)
+
+```{r,echo=toMessage, eval=F}
+
+rfastp(read1="/Users/mattpaul/Downloads/SRR20110417_1.fastq.gz", read2 = "/Users/mattpaul/Downloads/SRR20110417_2.fastq.gz",outputFastq = "SOX9CNR_D0_rep2_filtered2",
+       trimFrontRead1=10,
+       trimFrontRead2=10,
+       overrepresentationAnalysis=T)
+```
+
+The html is [here]("data/SOX9CNR_D0_rep2_filtered2.html")

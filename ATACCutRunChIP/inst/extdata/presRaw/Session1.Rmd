@@ -478,7 +478,7 @@ ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()
 
 In this case the distribution of reads quality scores is a little strange. Normally we see a wider range of scores. This is likely due to some kind of loss of information during some transfer/conversion. 
 
-For a more in-detail review of working with fastqs in R you can check [here](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/singlepage/FastQInBioconductor.html).
+For a more in-detail review of working with fastqs in R you can check [here](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/singlepage/FastQInBioconductor.html). This also includes how to run filters on the data based on quality. 
 
 Most of the time we will not read in our fastqs. We normally only do this if there is a clear issue that we need to take a deep dive on. Instead use software like FastP to do a comprehensive FastQ review in one simple command.
 
