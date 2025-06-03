@@ -437,13 +437,13 @@ toPlot <- data.frame(Count=c(AFreq,CFreq,GFreq,TFreq),
 Now we can plot the frequencies using ggplot2
 
 ```{r mycRep1ReadsAlpByCyclePlot2,cache=TRUE,eval=FALSE,dependson="mycRep1ReadsAlpByCyclePlot",fig.height=4,fig.width=8}
-
+library(ggplot2)
 ggplot(toPlot, aes(y=Count,x=Cycle,colour=Base)) + geom_line() +
   theme_bw()
 ```
 
 ```{r mycRep1ReadsAlpByCyclePlot3, warning=F, message=F, fig.width=5, fig.height=3}
-
+library(ggplot2)
 ggplot(toPlot,aes(y=Count,x=Cycle,colour=Base)) + geom_line() + ylim(150000,350000) +
   theme_bw()
 ```
@@ -468,7 +468,7 @@ readQualities[1:10]
 We can then produce a histogram of quality scores to get a better understanding of the distribution of scores.
 
 ```{r mycRep1ReadsQScoresPlot, warning=F, message=F, fig.width=5, fig.height=3}
-library(ggplot2)
+
 toPlot <- data.frame(ReadQ=readQualities)
 ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()
 ```
