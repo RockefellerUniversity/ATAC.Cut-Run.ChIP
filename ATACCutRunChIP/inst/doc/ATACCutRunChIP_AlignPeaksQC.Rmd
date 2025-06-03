@@ -295,7 +295,7 @@ qc_sox9_rep2 <- ChIPQCsample(sortedBAM,
 saveRDS(qc_sox9_rep2, "data/qc_sox9_rep2_chipqc.rds")
 ```
 
-```{r, echo=F, eval=F}
+```{r, echo=F, eval=T}
 
 qc_sox9_rep2 <- readRDS("data/qc_sox9_rep2_chipqc.rds")
 

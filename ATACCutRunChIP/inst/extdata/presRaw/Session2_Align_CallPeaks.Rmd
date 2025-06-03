@@ -672,9 +672,9 @@ fragLenPlot+
 ---
 ## Filter reads - CUT&RUN
 
-We will filter out fragments where either read has a MAPQ of 0 and reads shorter than 1000bp.
+We will filter out fragments where either read has a MAPQ of 0 and reads shorter than 1000bp. MAPQ of zero means a read mapped equally well to at least two places in the genome. 
 
-Note: For TF CUT&RUN where we expect binding in nucleosome free regions, sometimes it is common to only take reads shorter than 120bp. 
+Note: For TF CUT&RUN where we expect binding in nucleosome free regions, sometimes it is common to only take reads shorter than 120bp. In the exercises you have a chance to compare both strategies. 
 
 ```{r processData_createOpenRegionBAM, echo=TRUE,eval=TRUE,cache=FALSE}
 cnrReads_filter <- cnrReads[insertSizes < 1000 & (!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0)]
