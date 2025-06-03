@@ -1,0 +1,315 @@
+---
+title: "ATAC-CutRun-ChIP 2"
+author: "Rockefeller University, Bioinformatics Resource Centre"
+date: "https://rockefelleruniversity.github.io/RU_course_template/"
+output: 
+  html_document:
+    number_sections: false  ## if you want number sections at each table header
+    theme: united  # many options for theme, this one is my favorite.
+    highlight: tango  # specifies the syntax highlighting style
+params:
+  toMessage: true    
+---
+
+```{r, setup,include=FALSE}
+knitr::opts_chunk$set(message=F, warning=F) 
+toMessage <- ifelse(!is.null(params$toMessage),params$toMessage,FALSE)
+message(toMessage)
+```
+
+## CUT&RUN alignment, peak calling, and QC
+
+In these exercises we will review some of the functionality for alignment, peak calling, and QC of CUT&RUN data.
+
+We will be using the second replicate of the W6 CUT&RUN data from the test data set used in the lectures. For these exercises, use the QC-filtered FASTQ files for **only chromosome19** at [this link](https://www.dropbox.com/scl/fo/n9lv5q8y125wezag8hr7r/AG1QJGh2vDn4lali7BhbAyU?rlkey=tgitv1qgsfhqp3c6ufc9jiv47&st=vkilogoe&dl=0) on dropbox:
+
+  * W6_ATAC_rep2_QC_chr19_R1.fastq.gz
+  * W6_ATAC_rep2_QC_chr19_R2.fastq.gz
+
+<p>&nbsp;</p>
+## Exercises
+
+
+### 1. Align
+  
+Align the paired end FASTQ files from chromosome 19 to the mm10 genome to produce a sorted, indexed BAM file.
+
+HINT: Since our FASTQ files are only from chromosome 19, you can save a lot of time and computer memory by making an index only for chromosome 19. If you already made the index for the whole mm10 genome from the lecture, you can use that as well.
+
+```{r,echo=toMessage, results = 'hide', eval=F}
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(Rsubread)
+
+chr19Seq <- BSgenome.Mmusculus.UCSC.mm10[["chr19"]]
+chr19SeqSet <- DNAStringSet(chr19Seq)
+names(chr19SeqSet) <- "chr19"
+writeXStringSet(chr19SeqSet,
+                "BSgenome.Mmusculus.UCSC.mm10.chr19.fa")
+buildindex("mm10_chr19","BSgenome.Mmusculus.UCSC.mm10.chr19.fa", 
+           memory=8000,
+           indexSplit=TRUE)
+
+read1_toAlign <- "~/Downloads/W6_ATAC_rep2_QC_chr19_R1.fastq.gz"
+read2_toAlign <- "~/Downloads/W6_ATAC_rep2_QC_chr19_R2.fastq.gz"
+
+myMapped <- align("mm10_chr19", 
+                  readfile1 = read1_toAlign, 
+                  readfile2 = read2_toAlign, 
+                  type = "dna", 
+                  output_file = "SOX9CNR_W6_rep2_chr19.bam", 
+                  nthreads = 4, 
+                  minFragLength = 0, maxFragLength = 2000)
+
+# Sort and index.
+library(Rsamtools)
+
+sortBam("SOX9CNR_W6_rep2_chr19.bam","Sorted_SOX9CNR_W6_rep2_chr19")
+indexBam("Sorted_SOX9CNR_W6_rep2_chr19.bam")
+```
+
+### 2. Export bigwigs
+Produce a bigWig of coverage and another of coverage normalized to total reads (as Reads Per Million). Look at the bigwig files in IGV (remember it's only chromosome 19)
+
+```{r, eval=T, echo=F}
+sortedBAM <- "data/Sorted_SOX9CNR_W6_rep2_chr19.bam"
+```
+
+```{r, eval=F, echo=toMessage}
+sortedBAM <- "Sorted_SOX9CNR_W6_rep2_chr19.bam"
+```
+
+```{r instalssdflasaBSss2w,eval=F,echo=toMessage}
+library(Rsamtools)
+mappedReads <- idxstatsBam(sortedBAM)
+TotalMapped <- sum(mappedReads[,"mapped"])
+forBigWig <- coverage(sortedBAM)
+export.bw(forBigWig,con= gsub("\\.bam", "\\.bw", sortedBAM))
+
+forBigWigNorm <- coverage(sortedBAM,weight = (10^6)/TotalMapped)
+export.bw(forBigWigNorm,con=gsub("\\.bam", "_weighted.bw", sortedBAM))
+
+```
+
+<img src="imgs/weightedBW.png" alt="igv" height="250" width="700">
+
+### 3. Make a plot showing the distribution of MAPQ scores for the properly paired reads on chromosome 19. 
+
+```{r,echo=toMessage}
+
+library(GenomicAlignments)
+flags=scanBamFlag(isProperPair = TRUE)
+myParam=ScanBamParam(flag=flags,
+                   what=c("qname","mapq","isize", "flag"))
+cnrReads <- readGAlignmentPairs(sortedBAM,
+                                 param=myParam)
+
+read1 <- GenomicAlignments::first(cnrReads)
+read2 <- GenomicAlignments::second(cnrReads)
+
+read1MapQ <- mcols(read1)$mapq
+read2MapQ <- mcols(read2)$mapq
+
+read1MapQFreqs <- table(read1MapQ)
+read2MapQFreqs <- table(read2MapQ)
+
+library(ggplot2)
+toPlot <- data.frame(MapQ=c(names(read1MapQFreqs),names(read2MapQFreqs)),
+           Frequency=c(read1MapQFreqs,read2MapQFreqs),
+           Read=c(rep("Read1",length(read1MapQFreqs)),rep("Read2",length(read2MapQFreqs))))
+toPlot$MapQ <- factor(toPlot$MapQ,levels = unique(sort(as.numeric(toPlot$MapQ))))
+ggplot(toPlot,aes(x=MapQ,y=Frequency,fill=MapQ))+
+  geom_bar(stat="identity")+
+  facet_grid(~Read)
+
+```
+
+### 4. Make a plot showing the distribution of fragment sizes of only the properly paired reads 
+
+```{r,echo=toMessage}
+
+insertSizes <- abs(mcols(read1)$isize)
+fragLenSizes <- table(insertSizes)
+
+toPlot <- data.frame(InsertSize=as.numeric(names(fragLenSizes)),
+                            Count=as.numeric(fragLenSizes))
+fragLenPlot <- ggplot(toPlot,aes(x=InsertSize,y=Count))+geom_line()
+fragLenPlot+theme_bw()
+```
+
+
+### 5. Call peaks on chromosome 19 with SEACR but only with reads less than 120bp in fragment length
+
+  * Filter out reads > 120 bp and MAPQ = 0
+  * remove reads that overlap blacklist regions
+  * prep BAM file and make bedgraph required for SEACR.
+  * BONUS: repeat the peak calling without filtering out reads >120bp (use 1000 like the lecture). Look at both on IGV and see if there's much of a difference. 
+
+```{r,echo=toMessage, eval=F}
+
+# filter low quality reads and keep reads <120bp
+cnrReads_filter <- cnrReads[insertSizes < 120 & (!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0)]
+
+# remove reads overlapping blacklist
+library(rtracklayer)
+blacklist <- "data/mm10-blacklist.v2.bed"
+bl_regions <- rtracklayer::import(blacklist)
+fragment_spans <- granges(cnrReads_filter)
+bl_remove <- overlapsAny(fragment_spans, bl_regions)
+
+
+# write out filtered BAM files
+cnrReads_filter_noBL <- cnrReads_filter[!bl_remove]
+cnrReads_unlist <- unlist(cnrReads_filter_noBL)
+names(cnrReads_unlist) <- mcols(cnrReads_unlist)$qname
+
+filtered_bam <- gsub("Sorted", "Filtered", sortedBAM)
+rtracklayer::export(cnrReads_unlist, filtered_bam,format = "bam")
+
+# install samtools and bedtools in a conda environment with Herper
+library(Herper)
+dir.create("miniconda")
+macs_paths <- install_CondaTools(tools= c("samtools", "bedtools"), env="CnR_analysis_exercises", pathToMiniConda = "miniconda")
+
+# clean up BAM file
+forSEACR_bam <- gsub("Filtered", "forSEACR", filtered_bam)
+Herper::with_CondaEnv("CnR_analysis_exercises", pathToMiniConda = "miniconda",
+                      {
+                        tempBam <- paste0(tempfile(), ".bam")
+                        system(paste("samtools sort", "-n", "-o", tempBam, filtered_bam, sep = " "))
+                        system(paste("samtools fixmate", "-m", tempBam, forSEACR_bam, sep = " "))
+                      })
+
+# bamtobed requires name sorted, so the BAM file from Fixmate is in the right order
+# make bedpe file
+bedpe <- gsub("\\.bam", "\\.bedpe", forSEACR_bam)
+with_CondaEnv("CnR_analysis_exercises", pathToMiniConda = "miniconda",
+                system(paste("bedtools bamtobed -bedpe -i", 
+                             forSEACR_bam, 
+                             ">", bedpe, sep = " "))
+)
+
+# convert bedpe to bedgraph
+bedgraph <- gsub("\\.bedpe", "\\.bedgraph", bedpe)
+with_CondaEnv("CnR_analysis_exercises", pathToMiniConda = "miniconda",
+                system(paste("bedtools genomecov -bg -i", 
+                             bedpe, 
+                             "-g", "data/chrom.lengths.txt", 
+                             ">", bedgraph, sep = " "))
+)
+
+
+# if you haven't downloaded the SEACR script, do so
+download.file("https://github.com/FredHutch/SEACR/archive/refs/tags/v1.4-beta.2.zip", destfile = "~/Downloads/SEACR_v1.4.zip")
+unzip("~/Downloads/SEACR_v1.4.zip", exdir = "~/Downloads/SEACR_v1.4" )
+seacr_path <- "~/Downloads/SEACR_v1.4/SEACR-1.4-beta.2/SEACR_1.4.sh"
+# change permissions so you can run
+system(paste("chmod 777", seacr_path))
+
+# run SEACR
+system(paste(seacr_path, "-b", 
+             bedgraph, 
+             "-c 0.01", "-n non", "-m  stringent", 
+             "-o", "SOX9CNR_W6_rep2_chr19_top01"))
+
+```
+
+<img src="imgs/chr19_peakExample.png" alt="igv" height="300" width="700">
+
+
+
+```{r,echo=toMessage, eval=F}
+# repeat peak calling without strict size filter, keep reads <1000bp, not 120bp like above.
+
+cnrReads_f1K <- cnrReads[insertSizes < 1000 & (!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0)]
+
+library(rtracklayer)
+
+blacklist <- "data/mm10-blacklist.v2.bed"
+bl_regions <- rtracklayer::import(blacklist)
+fragment_spans <- granges(cnrReads_f1K)
+bl_remove <- overlapsAny(fragment_spans, bl_regions)
+
+
+cnrReads_f1K_noBL <- cnrReads_f1K[!bl_remove]
+cnrReads_f1K_unlist <- unlist(cnrReads_f1K_noBL)
+names(cnrReads_f1K_unlist) <- mcols(cnrReads_f1K_unlist)$qname
+
+filtered_bam_1k <- gsub("Sorted", "Filtered", sortedBAM)
+filtered_bam_1k <- gsub("\\.bam", "_f1K.bam", filtered_bam_1k)
+rtracklayer::export(cnrReads_f1K_unlist, filtered_bam_1k,format = "bam")
+
+library(Herper)
+forSEACR_bam_1k <- gsub("Filtered", "forSEACR", filtered_bam_1k)
+Herper::with_CondaEnv("CnR_analysis_exercises", pathToMiniConda = "miniconda",
+                      {
+                        tempBam <- paste0(tempfile(), ".bam")
+                        system(paste("samtools sort", "-n", "-o", tempBam, filtered_bam_1k, sep = " "))
+                        system(paste("samtools fixmate", "-m", tempBam, forSEACR_bam_1k, sep = " "))
+                      })
+
+# SEACR requires name sorted, so the BAM fix from Fixmate is in the right order
+bedpe_1k <- gsub("\\.bam", "\\.bedpe", forSEACR_bam_1k)
+with_CondaEnv("CnR_analysis_exercises", pathToMiniConda = "miniconda",
+                system(paste("bedtools bamtobed -bedpe -i", 
+                             forSEACR_bam_1k, 
+                             ">", bedpe_1k, sep = " "))
+)
+
+bedgraph_1k <- gsub("\\.bedpe", "\\.bedgraph", bedpe_1k)
+with_CondaEnv("CnR_analysis_exercises", pathToMiniConda = "miniconda",
+                system(paste("bedtools genomecov -bg -i", 
+                             bedpe_1k, 
+                             "-g", "data/chrom.lengths.txt", 
+                             ">", bedgraph_1k, sep = " "))
+)
+
+system(paste(seacr_path, "-b", 
+             bedgraph_1k, 
+             "-c 0.01", "-n non", "-m  stringent", 
+             "-o", "SOX9CNR_W6_rep2_chr19_f1K_top01"))
+
+```
+
+BONUS with both filter settings (1000bp vs 120bp):
+
+<img src="imgs/chr19_peakExample_with1K.png" alt="igv" height="350" width="700">
+
+### 6. Run ChIPQC and find the following information:
+  * percentage of reads in peaks and in blacklist regions
+  * percentage of duplicate reads
+  * distribution of reads across gene features (by making a heatmap)
+  * HINT make sure you use the BAM file before any filtering was performed (sorted BAM after alignment)
+
+```{r,echo=toMessage, eval=F}
+library(ChIPQC)
+blklist <- rtracklayer::import.bed("data/mm10-blacklist.v2.bed")
+qc_sox9_rep2 <- ChIPQCsample(sortedBAM,
+                             annotation = "mm10",
+                             peaks = "SOX9CNR_W6_rep2_chr19_top01.stringent.bed",
+                             blacklist = blklist,
+                             chromosomes = "chr19")
+```
+
+```{r, echo=F, eval=F}
+
+saveRDS(qc_sox9_rep2, "data/qc_sox9_rep2_chipqc.rds")
+```
+
+```{r, echo=F, eval=T}
+
+qc_sox9_rep2 <- readRDS("data/qc_sox9_rep2_chipqc.rds")
+```
+
+```{r,echo=toMessage, fig.width=9}
+library(ChIPQC)
+# see percentage of reads in peaks and in blacklist regions 
+QCmetrics(qc_sox9_rep2)
+
+# percentage of duplicate reads
+myFlags <- flagtagcounts(qc_sox9_rep2)
+myFlags["DuplicateByChIPQC"]/myFlags["Mapped"]
+
+# plot distribution across gene features 
+plotRegi(qc_sox9_rep2)
+```
+

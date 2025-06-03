@@ -466,7 +466,7 @@ We measure similarities between the various significant gene sets and group them
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, fig.height=4, fig.width=9}
 library(enrichplot)
 GO_result_plot <- pairwise_termsim(GO_result)
-emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.6)
+emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
 ```
 
 
@@ -653,7 +653,7 @@ We can convert our Reactome gene set table we previously generated to a list.
 ```{r,eval=T,echo=T, message=F, warning=FALSE,tidy=T}
 # convert to a list of gene sets
 reac_gene_sets <- split(msig_t2g_reac$entrez_gene, msig_t2g_reac$gs_name)
-reac_gene_sets <- lapply(reac_gene_sets, as.character)  # just to make sure gene IDs are all in character.
+reac_gene_sets <- lapply(reac_gene_sets, as.character)  
 
 reac_gene_sets[1:2]
 ```
@@ -706,13 +706,13 @@ great_genes[1:5]
 
 ## Time for an exercise!
 
-Exercise on CUT&RUN data can be found [here](../../exercises/exercises/CUT&RUN_part1_exercise.html)
+Exercise on CUT&RUN data can be found [here](../../exercises/exercises/ATACCutRunChIP_Annotation_exercise.html)
 
 ---
 ## Answers to exercise
 
-Answers can be found [here](../../exercises/answers/CUT&RUN_part1_answers.html)
+Answers can be found [here](../../exercises/answers/ATACCutRunChIP_Annotation_answers.html)
 
-R code for solutions can be found [here](../../exercises/answers/CUT&RUN_part1_answers.R)
+R code for solutions can be found [here](../../exercises/answers/ATACCutRunChIP_Annotation_answers.R)
 
 

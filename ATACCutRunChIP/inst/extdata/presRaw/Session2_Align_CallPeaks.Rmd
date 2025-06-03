@@ -51,9 +51,18 @@ You may navigate to the unarchived RU_Course_help folder in the Rstudio menu.
 or in the console.
 
 ```{r setwd_introtoR,eval=F} 
-setwd("/PathToMyDownload/RU_Course_template/r_course")
-# e.g. setwd("~/Downloads/Intro_To_R_1Day/r_course")
+setwd("~/Downloads/ATAC.Cut-Run.ChIP-master/r_course")
 ```
+
+---
+## What we will cover
+
+Earlier we learned how to asses the quality of a FASTQ file and filter the reads based on quality scores. 
+
+We will take these filtered FASTQ files and continue with the analysis:
+
+  * Align the FASTQ reads to the genome to generate BAM alignment files.
+  * Identify areas of read build up by calling peaks, or areas of significant enrichment
 
 
 ---
@@ -61,7 +70,7 @@ setwd("/PathToMyDownload/RU_Course_template/r_course")
 if(params$isSlides == "yes"){
   cat("class: inverse, center, middle
 
-# Aligning data
+# Aligning CUT&RUN and ATACseq reads
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
@@ -69,7 +78,7 @@ if(params$isSlides == "yes"){
 "    
   )
 }else{
-  cat("# Aligning data
+  cat("# Aligning CUT&RUN and ATACseq reads
 
 ---
 "    
@@ -84,23 +93,23 @@ if(params$isSlides == "yes"){
 
 Following assessment of read quality and any read filtering we applied, we will want to align our reads to the genome so as to identify any genomic locations showing enrichment for aligned reads above background.
 
-Since CUT&RUN and ATACseq reads will align continuously against our reference genome we can use [our genomic aligners we have seen in previous sessions.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignmentInBioconductor.html#7) The resulting BAM file will contain aligned sequence reads for use in further analysis.
+Since CUT&RUN and ATACseq reads will align continuously against our reference genome we can use [genomic aligners](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignmentInBioconductor.html#7), as opposed to aligners that account for splice junctions (e.g. for RNAseq).
+
+The resulting BAM file will contain aligned sequence reads for use in further analysis.
 
 <div align="center">
-<img src="imgs/sam2.png" alt="igv" height="200" width="600">
+<img src="imgs/sam2.png" alt="igv" height="200" width="700">
 </div>
 
 ---
 ## Creating a reference genome
 
-First we need to retrieve the sequence information for the genome of interest in [FASTA format](https://rockefelleruniversity.github.io/Genomic_Data/presentations/slides/GenomicsData.html#9)
-
-We can use the [BSgenome libraries to retrieve the full sequence information.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/SequencesInBioconductor.html#4)
+First we need to retrieve the sequence information for the genome of interest in [FASTA format](https://rockefelleruniversity.github.io/Genomic_Data/presentations/slides/GenomicsData.html#9). We can use the [BSgenome libraries to retrieve the full sequence information.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/SequencesInBioconductor.html#4)
 
 For the mouse mm10 genome we load the package **BSgenome.Mmusculus.UCSC.mm10**.
 
 
-```{r fa1, echo=TRUE}
+```{r fa1, echo=TRUE, message = F, warning=F}
 library(BSgenome.Mmusculus.UCSC.mm10)
 BSgenome.Mmusculus.UCSC.mm10
 ```
@@ -134,7 +143,7 @@ writeXStringSet(mainChrSeqSet,
 ---
 ## Creating an Rsubread index 
 
-We will be aligning using the **subjunc** algorithm from the folks behind subread. We can therefore use the **Rsubread** package. Before we attempt to align our FASTQ files, we will need to first build an index from our reference genome using the **buildindex()** function.
+We will be aligning using the **seed-and-vote** algorithm from the folks behind subread. We can therefore use the **Rsubread** package. Before we attempt to align our FASTQ files, we will need to first build an index from our reference genome using the **buildindex()** function.
 
 The [**buildindex()** function simply takes the parameters of our desired index name and the FASTA file to build index from.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/AlignmentInBioconductor.html#14)
 
@@ -173,7 +182,7 @@ The two matched paired-end read files will (most often) contain the same number 
 ---
 ## Aligning Sequence Reads
 
-Below we read in the first 1000 reads in replicate 1 of the Week 6 CUT&RUN FASTQ file and look at their IDs.
+Below we read in the first 1000 reads in replicate 1 of the Week 6 CUT&RUN FASTQ file.
 
 The read names will match across files for paired reads with the exception of a 1 or 2 in name to signify if the read was first or second in a pair.
 
@@ -193,7 +202,7 @@ require(ShortRead)
 
 # first 1000 reads in each file
 read1 <- readFastq("data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
-read2 <- readFastq("data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
+read2 <- readFastq("data/SOX9CNR_W6_rep1_1K_R2.fastq.gz")
 id(read1)[1:2]
 id(read2)[1:2]
 ```
@@ -223,11 +232,11 @@ The [**align()** function accepts arguments](https://rockefelleruniversity.githu
 
 We will go through alignment of the CUT&RUN.
 
-```{r, echo=F,eval=TRUE}
+```{r, echo=F,eval=TRUE, warning=F}
 library(Rsubread)
 ```
 
-```{r align, echo=TRUE,eval=F}
+```{r align, echo=TRUE,eval=F, warning=F}
 myMapped <- align("mm10_mainchrs", 
                   readfile1 = read1_toAlign, 
                   readfile2 = read2_toAlign, 
@@ -266,7 +275,19 @@ First we use the [**coverage()** function to create an **RLElist object** contai
 forBigWig <- coverage("SOX9CNR_W6_rep1_sorted.bam")
 forBigWig
 ```
+```
+RleList of length 22
+$chr1
+integer-Rle of length 195471971 with 1828459 runs
+  Lengths: 3004130      40     121      40    1365      34       6      34     113 ...      13       9       8       6       4      30       6  100490
+  Values :       0       1       0       1       0       1       2       1       0 ...       6       3       2       3       4       2       1       0
 
+$chr2
+integer-Rle of length 182113224 with 1855901 runs
+  Lengths: 3050000      31       4      71       9      30       1       3       3 ...     119      39       1      61       6      34       6  100214
+  Values :       0       3       2       0       1       2       1       2       1 ...       0       2       1       0       1       2       1       0
+
+```
 ---
 
 ## Create a bigWig
@@ -291,6 +312,10 @@ mappedReads <- idxstatsBam("SOX9CNR_W6_rep1_sorted.bam")
 TotalMapped <- sum(mappedReads[,"mapped"])
 
 TotalMapped
+```
+
+```
+[1] 24848310
 ```
 
 ---
@@ -340,7 +365,11 @@ if(params$isSlides == "yes"){
 
 To identify regions of SOX9 transcription factor binding we can use a **peak caller**.
 
-Although many peak callers are available in R and beyond, one the most popular and widely used peak caller remains **MACS**. Another peak caller, **SEACR**, was developed specificlly for CUT&RUN. We will use both.
+Although many peak callers are available in R and beyond, one the most popular and widely used peak caller remains [**MACS**](https://macs3-project.github.io/MACS/). 
+
+Another peak caller, [**SEACR**](https://github.com/FredHutch/SEACR), was developed specificlly for CUT&RUN. We will use both.
+
+<img src="imgs/krt5_signal_peakintro.png" alt="igv" height="300" width="700">
 
 ---
 
@@ -360,9 +389,11 @@ Differing conditions of same tissue may share common input.
 
 ## Install software with conda and Herper
 
-We will install a version of MACS that is not available in R. It is possible to install it on Mac and Linux using the [Anaconda](https://anaconda.org/bioconda/MACS3) package repository (unfortunately there is not a Windows implementation). Anaconda is a huge collection of version controlled packages that can be installed through the conda package management system. With conda it is easy to create and manage environments that have a variety of different packages in them. 
+We will install a version of MACS that is not available in R. It is possible to install it on Mac and Linux using the [Anaconda](https://anaconda.org/bioconda/MACS3) package repository (unfortunately there is not a Windows implementation). 
 
-We can interact with the anaconda package system using the R package [Herper](https://bioconductor.org/packages/release/bioc/html/Herper.html). This was created by us here at the BRC and is part of Bioconductor.
+Anaconda is a huge collection of version controlled packages that can be installed through the conda package management system. With conda it is easy to create and manage environments that have a variety of different packages in them. 
+
+We can interact with the Anaconda package system using the R package [Herper](https://bioconductor.org/packages/release/bioc/html/Herper.html). This was created by us here at the BRC and is part of Bioconductor.
 
 ```{r, eval=F}
 BiocManager::install("Herper")
@@ -488,7 +519,7 @@ With our aligned paired-end data we can assess other QC metrics, like alignment 
 
 Here we only want reads which are properly paired so we will use the **ScanBamParam()** and **scanBamFlag()** functions to control what will be read into R.
 
-We set the **scanBamFlag()** function parameters **isProperPair** to TRUE so as to only read in reads paired in alignment within our preset max fragment length (2000bpp)
+We set the **scanBamFlag()** function parameters **isProperPair** to TRUE so as to only read in reads paired in alignment within our preset max fragment length (2000bp)
 
 ```{r processData_readingInDatad, echo=TRUE,eval=TRUE,cache=FALSE}
 library(GenomicAlignments)
@@ -515,34 +546,23 @@ myParam
 
 ---
 
-## Proper pairs - CUT&RUN
+## GAlignmentPairs - CUT&RUN
 
 Now we have set up the **ScanBamParam** object, we can use the **readGAlignmentPairs()** function to read in our paired-end CUT&RUN data using the **readGAlignments()** function.
 
 In the *data* folder is a BAM file contianing the reads from only chromosome 18 that we will read into R. 
 
-The resulting object is a **GAlignmentPairs** object.
+The resulting object is a **GAlignmentPairs** object that contains information on our paired reads
 
 
 ```{r processData_readingInDataa, echo=TRUE,eval=T}
 sortedBAM <- "data/SOX9CNR_W6_rep1_chr18_sorted.bam"
 cnrReads <- readGAlignmentPairs(sortedBAM,
                                  param=myParam)
-class(cnrReads)
-
-```
-
-
----
-## GAlignmentPairs - CUT&RUN
-
-The **GAlignmentPairs** object contains information on our paired reads. 
-
-It stores information on each read in a pair in parallel **GAlignments** objects.
-
-```{r processData_readingInData, echo=TRUE,eval=TRUE,cache=FALSE}
 cnrReads[1:2,]
+
 ```
+
 
 ---
 ## GAlignmentPairs - CUT&RUN
@@ -557,7 +577,9 @@ read2[1:2,]
 ---
 ## Retrieve MapQ scores - CUT&RUN
 
-One of the first we can do is obtain the distribution of MapQ scores for our read1 and read2. We can access this for each read using **mcols()** function to access the mapq slot of the GAalignments object for each read.
+One of the first we can do is obtain the distribution of MapQ scores for our read1 and read2. We can access this for each read using **mcols()** function to access the mapq slot of the GAlignments object for each read.
+
+For Rsubread, a MAPQ of 0 means that a read maps equally well to multiple locations, we want to assess if this is common and potentially remove these reads.
 
 ```{r processData_readingInData3, echo=TRUE,eval=TRUE,cache=FALSE}
 read1MapQ <- mcols(read1)$mapq
@@ -597,20 +619,20 @@ ggplot(toPlot,aes(x=MapQ,y=Frequency,fill=MapQ))+
 
 ## Retrieving insert sizes - CUT&RUN
 
-Now we have reads in the paired aligned data into R, we can retrieve the insert sizes from the **elementMetadata()** attached to **GAlignments** objects of each read pair.
+Now we have reads in the paired aligned data into R, we can retrieve the insert sizes from the **mcols()** attached to **GAlignments** objects of each read pair.
+
+CUT&RUN should represent a mix of fragment lengths depending on the target. A TF will generally only be in nucleosome-free regions and will have small fragments, while a histone mark might have longer fragments.
 
 Since properly paired reads will have the same insert size length we extract insert sizes from read1.
 
 
-```{r processData_extractingRead1, echo=FALSE,eval=TRUE,cache=FALSE}
+```{r processData_extractingRead1, echo=T,eval=TRUE,cache=FALSE}
 insertSizes <- abs(mcols(read1)$isize)
 head(insertSizes)
 ```
 
 ---
 ## Plotting insert sizes - CUT&RUN
-
-CUT&RUN should represent a mix of fragment lengths depending on the target. A TF will generally only be in nucleosome free regions and will have small fragments, while a histone mark might have longer fragments.
 
 We can use the **table()** function to retrieve a vector of the occurrence of each fragment length.
 
@@ -1233,13 +1255,13 @@ with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 
 ## Time for an exercise!
 
-Exercise on CUT&RUN data can be found [here](../../exercises/exercises/CUT&RUN_part1_exercise.html)
+Exercise on CUT&RUN data can be found [here](../../exercises/exercises/ATACCutRunChIP_AlignPeaksQC_exercise.html)
 
 ---
 ## Answers to exercise
 
-Answers can be found [here](../../exercises/answers/CUT&RUN_part1_answers.html)
+Answers can be found [here](../../exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.html)
 
-R code for solutions can be found [here](../../exercises/answers/CUT&RUN_part1_answers.R)
+R code for solutions can be found [here](../../exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.R)
 
 
