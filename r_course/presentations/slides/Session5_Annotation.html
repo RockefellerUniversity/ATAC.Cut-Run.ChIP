@@ -94,16 +94,16 @@ peakAnno &lt;- annotatePeak(cnrPeaks_GR, tssRegion = c(-1000, 1000), TxDb = TxDb
 ```
 
 ```
-## &gt;&gt; preparing features information...		 2025-06-02 21:09:03 
-## &gt;&gt; identifying nearest features...		 2025-06-02 21:09:03 
-## &gt;&gt; calculating distance from peak to TSS...	 2025-06-02 21:09:04 
-## &gt;&gt; assigning genomic annotation...		 2025-06-02 21:09:04 
-## &gt;&gt; adding gene annotation...			 2025-06-02 21:09:14
+## &gt;&gt; preparing features information...		 2025-06-03 15:35:16 
+## &gt;&gt; identifying nearest features...		 2025-06-03 15:35:16 
+## &gt;&gt; calculating distance from peak to TSS...	 2025-06-03 15:35:17 
+## &gt;&gt; assigning genomic annotation...		 2025-06-03 15:35:17 
+## &gt;&gt; adding gene annotation...			 2025-06-03 15:35:27
 ```
 
 ```
-## &gt;&gt; assigning chromosome lengths			 2025-06-02 21:09:15 
-## &gt;&gt; done...					 2025-06-02 21:09:15
+## &gt;&gt; assigning chromosome lengths			 2025-06-03 15:35:27 
+## &gt;&gt; done...					 2025-06-03 15:35:27
 ```
 
 ``` r
@@ -299,9 +299,9 @@ We will go through two strategies:
 
 We will go through two strategies:
 
- * using the closest gene with **ChIPseeker** followed by gene set enrichment with **clusterProfiler**. This is typically done for peaks in promoters
+ 1. using the closest gene with **ChIPseeker** followed by gene set enrichment with **clusterProfiler**. This is typically done for peaks in promoters
  
- * allowing for annotation of one peak with multiple genes using toolset called **GREAT**. This is usually done to annotate enhancer peaks.
+ 2. allowing for annotation of one peak with multiple genes using toolset called **GREAT**. This is usually done to annotate enhancer or distal peaks.
  
 &lt;div align="center"&gt;
 &lt;img src="imgs/gene_example_enh.png" alt="offset" height="250" width="800"&gt;
@@ -313,6 +313,8 @@ We will go through two strategies:
 Our peak set is large (~72k peaks), which will result in many genes being annotated to peaks. 
 
 Even from the ChIPseeker annotation of the nearest gene, there are almost 17k genes, making it unlikely we will find any real specific enrichment of gene sets.
+
+We should choose a more specific set of peaks to test.
 
 
 
@@ -328,7 +330,7 @@ length(unique(annotatedPeaksGR$geneId))
 
 ## Using differential peaks for test
 
-The specific set of peaks we choose will depend on our question. In our case, we just performed differential analysis on our consensus peak set, so we can use the genes that go up in W6 vs W0.
+The specific set of peaks we choose will depend on our question. In our case, we just performed differential analysis on our consensus peak set, so we can use the peaks that go up in W6 vs W0.
 
 Here we read in the differential results and look at them.
 
@@ -381,7 +383,7 @@ W6MinusD0_gr[1:3, ]
 
 ## Using differential peaks for test
 
-We are going to look at the peaks that are increased in W6, so the Granges is subset to the peaks that have a fold change greater than 2 and an adjusted p-value less than 0.05.
+We are going to look at the peaks that are increased in W6, so the GRanges is subset to the peaks that have a fold change greater than 2 and an adjusted p-value less than 0.05.
 
 We also remove peaks that aren't on the main chromosomes (usually unplaced configs). 
 
@@ -459,15 +461,17 @@ allGeneIDs &lt;- allGeneGR$gene_id
 
 ## Enrichment with nearest gene
 
-Since transcription factors, as suggested in name, may regulate the transcription of their target genes, we used the **ChIPseeker package** to associate our peaks, representing potential transcription factor binding events, to their overlapping or closest mm10 genes.
-
-This will give us our gene list to test for functional enrichment.
+To get a list of potential target genes, we again use the **ChIPseeker package** to associate our peaks, representing potential transcription factor binding events, to their overlapping or closest mm10 genes.
 
 
 ``` r
 peakAnno_up &lt;- annotatePeak(W6MinusD0_gr_up, tssRegion = c(-1000, 1000), TxDb = TxDb.Mmusculus.UCSC.mm10.knownGene,
     annoDb = "org.Mm.eg.db")
 ```
+
+---
+
+## Enrichment with nearest gene
 
 
 ``` r
@@ -533,7 +537,7 @@ annotatedPeaksGR_up[1:3]
 
 The closest gene annotation approach works well when we subset to just the peaks localized to promoters as this leads to confident peak to gene annotations.  
 
-For this Sox9 CUT&amp;RUN dataset this is is not many peaks, resulting in a small gene list. 
+For this Sox9 CUT&amp;RUN dataset there are not many promoter-bound peaks, resulting in a small gene list. This might be okay if certain gene sets are enriched in these genes.
 
 ``` r
 annotatedPeaksGR_up_prom &lt;- annotatedPeaksGR_up[grepl("Promoter", annotatedPeaksGR_up$annotation)]
@@ -557,63 +561,21 @@ For the **ont** argument, we can choose between the "BP", "MF", and "CC" subonto
 
 ``` r
 library(clusterProfiler)
-```
-
-```
-## Warning: package 'clusterProfiler' was built under R version 4.4.1
-```
-
-```
-## clusterProfiler v4.12.6 Learn more at https://yulab-smu.top/contribution-knowledge-mining/
-## 
-## Please cite:
-## 
-## T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, W Tang, L Zhan,
-## X Fu, S Liu, X Bo, and G Yu. clusterProfiler 4.0: A universal
-## enrichment tool for interpreting omics data. The Innovation. 2021,
-## 2(3):100141
-```
-
-```
-## 
-## Attaching package: 'clusterProfiler'
-```
-
-```
-## The following object is masked from 'package:AnnotationDbi':
-## 
-##     select
-```
-
-```
-## The following object is masked from 'package:XVector':
-## 
-##     slice
-```
-
-```
-## The following object is masked from 'package:IRanges':
-## 
-##     slice
-```
-
-```
-## The following object is masked from 'package:S4Vectors':
-## 
-##     rename
-```
-
-```
-## The following object is masked from 'package:stats':
-## 
-##     filter
-```
-
-``` r
 library(org.Mm.eg.db)
 
 GO_result_prom &lt;- enrichGO(gene = up_promGenes_uniq, universe = allGeneIDs, OrgDb = org.Mm.eg.db,
     ont = "BP")
+```
+
+---
+## Analysis of promoter peaks 
+
+In our case, this results in no enriched terms. This suggests the Sox9 is not likely not enacting its main regulatory effect by binding to promoters.
+
+This is not surprising given how few peaks overlapped with promoters 
+
+
+``` r
 GO_result_prom
 ```
 
@@ -635,10 +597,6 @@ GO_result_prom
 
 ---
 ## Nearest gene approach with all genes
-
-In our case, this results in no enriched terms. This suggests the Sox9 is not likely not enacting its main regulatory effect by binding to promoters.
-
-This is not surprising given how few peaks overlapped with promoters 
 
 We can try to use the whole set of Sox9 peaks that go up in the week 6 time point. 
 
@@ -733,18 +691,18 @@ We measure similarities between the various significant gene sets and group them
 ``` r
 library(enrichplot)
 GO_result_plot &lt;- pairwise_termsim(GO_result)
-emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.7)
+emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.6)
 ```
 
-![](Session5_Annotation_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
+![](Session5_Annotation_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
 
 
 ---
 ## Using MSigDB gene sets
 
-In addition to gene ontology, we can test our gene list against custom gene sets that we import using the clusterProfiler **enricher** function. Similar to the enrichGO function, this will produce an enrichResult object that can be used for visualization. 
+In addition to gene ontology, we can test our gene list against custom gene sets that we import using the clusterProfiler `enricher` function. Similar to the enrichGO function, this will produce an enrichResult object that can be used for visualization. 
 
-Here we will get gene sets from MSigDB using the **msigdbr** package. We can use this package to pull out specific gene sets, which can be seen [at this link](http://software.broadinstitute.org/gsea/msigdb/). We can also run the **msigdbr_collections** function to see the categories and subcategory codes that will be used for accessing the gene sets. 
+Here we will get gene sets from MSigDB using the **msigdbr** package. We can use this package to pull out specific gene sets, which can be seen [at this link](http://software.broadinstitute.org/gsea/msigdb/). We can also run the `msigdbr_collections` function to see the categories and subcategory codes that will be used for accessing the gene sets. 
 
 
 ``` r
@@ -773,7 +731,7 @@ msigdbr_collections()
 
 ## Using MSigDB gene sets
 
-From the data frame on the previous slide we can identify the category/subcategory we want, and use those in the **msigdbr** function. Here we will use "C2" as the category, and "REACTOME" as the subcategory to access the [Reactome](https://reactome.org/) gene sets, and in the end we need to get a data frame where the first column contains the name of the gene sets and the second column contains the gene ID. 
+From the data frame on the previous slide we can identify the category/subcategory we want, and use those in the `msigdbr` function. Here we will use "C2" as the category, and "REACTOME" as the subcategory to access the [Reactome](https://reactome.org/) gene sets, and in the end we need to get a data frame where the first column contains the name of the gene sets and the second column contains the gene ID. 
 
 
 ``` r

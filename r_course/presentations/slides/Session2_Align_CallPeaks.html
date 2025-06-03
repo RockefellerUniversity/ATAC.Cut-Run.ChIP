@@ -34,7 +34,6 @@ class: center, middle, inverse, title-slide
 
 
 
----
 ## Set the Working directory
 
 
@@ -220,14 +219,18 @@ buildindex("mm10_mainchrs", "BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa", memory =
 
 In the following slides we will focus on aligning the CUT&amp;RUN data, but alignment of ATACseq data will be the same. In the post processing and peak calling section there are some considerations for each method that we will cover. 
 
-CUT&amp;RUN and ATACseq data are typically paired-end sequencing, and most often comes as two files typically with *_1* and *_2* or *_R1* and *_R2* in the file name to denote which number in pair a file is.  The two matched paired-end read files will (most often) contain the same number of reads and the reads will be ordered the same in both files. 
+CUT&amp;RUN and ATACseq data are typically paired-end sequencing, and most often comes as two files typically with *_1* and *_2* or *_R1* and *_R2* in the file name to denote which number in pair a file is.  
 
-The read names will match across files for paired reads with the exception of a 1 or 2 in name to signify if the read was first or second in a pair.
+The two matched paired-end read files will (most often) contain the same number of reads and the reads will be ordered the same in both files. 
+
+
 
 ---
 ## Aligning Sequence Reads
 
 Below we read in the first 1000 reads in replicate 1 of the Week 6 CUT&amp;RUN FASTQ file and look at their IDs.
+
+The read names will match across files for paired reads with the exception of a 1 or 2 in name to signify if the read was first or second in a pair.
 
 
 
@@ -473,7 +476,7 @@ After the software are installed, we can then use them using the `with_CondaEnv`
 
 
 ``` r
-Herper::with_CondaEnv("CnR_analysis", system("samtools sort -h"))
+Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", system("samtools sort -h"))
 ```
 
 ```
@@ -740,18 +743,10 @@ Now we can use the newly acquired insert lengths for chromosome 18 to plot the d
 library(ggplot2)
 toPlot &lt;- data.frame(InsertSize = as.numeric(names(fragLenSizes)), Count = as.numeric(fragLenSizes))
 fragLenPlot &lt;- ggplot(toPlot, aes(x = InsertSize, y = Count)) + geom_line()
-```
-
----
-## Plotting insert sizes - CUT&amp;RUN
-
-
-
-``` r
 fragLenPlot + theme_bw()
 ```
 
-![](Session2_Align_CallPeaks_files/figure-html/processData_plottfingFragmentLengths2-1.png)&lt;!-- --&gt;
+![](Session2_Align_CallPeaks_files/figure-html/processData_plottingFrdagmentLengths-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -875,7 +870,7 @@ We can use brackets {} to run multiple lines of code, and we also utilize the `t
 
 ``` r
 forPeak_bam &lt;- gsub("_filter.bam", "_forPeak.bam", filter_bam)
-Herper::with_CondaEnv("CnR_analysis", {
+Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", {
     tempBam &lt;- paste0(tempfile(), ".bam")
     system(paste("samtools sort", "-n", "-o", tempBam, filter_bam, sep = " "))
     system(paste("samtools fixmate", "-m", tempBam, forPeak_bam, sep = " "))
@@ -939,8 +934,9 @@ We have to simply tell MACS that the data is paired using the format argument. T
 
 ``` r
 peaks_name &lt;- gsub("_macs.bam", "", basename(forMacs_bam))
-with_CondaEnv("CnR_analysis", system2(command = "macs3", args = c("callpeak", "-t",
-    forMacs_bam, "-f", "BAMPE", "--outdir", ".", "-n", peaks_name)))
+with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", system2(command = "macs3",
+    args = c("callpeak", "-t", forMacs_bam, "-f", "BAMPE", "--outdir", ".", "-n",
+        peaks_name)))
 ```
 
 ---
@@ -952,7 +948,7 @@ Following MACS peak calling we would get 3 files.
 * {name}.peaks.xls -- Peak table suitable for review in excel.(not actually a xls but a tsv)
 * {name}.summits.bed -- Summit positions for peaks useful for finding motifs and plotting
 
-&lt;img src="imgs/macsIGV.png" alt="igv" height="400" width="800"&gt;
+&lt;img src="imgs/macsIGV.png" alt="igv" height="450" width="800"&gt;
 
 
 ---
@@ -969,8 +965,8 @@ SEACR is built for paired end data, and first we make a bedpe file using the fun
 ``` r
 # use the BAM with blacklist reads removed (from MACS section)
 bedpe &lt;- gsub("\\.bam", "\\.bed", forPeak_bam)
-with_CondaEnv("CnR_analysis", system(paste("bedtools bamtobed -bedpe -i", forPeak_bam,
-    "&gt;", bedpe, sep = " ")))
+with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", system(paste("bedtools bamtobed -bedpe -i",
+    forPeak_bam, "&gt;", bedpe, sep = " ")))
 ```
 
 
@@ -981,7 +977,9 @@ with_CondaEnv("CnR_analysis", system(paste("bedtools bamtobed -bedpe -i", forPea
 
 Lastly we make a bedgraph file with the `genomecov` function from bedtools.  
 
-First we need to extract the chromosome lengths from the fasta file. The 'chrom.lengths.txt' is available in the 'data' folder of the course. 
+A key input to this function is a file with chromosome lengths, and we can extract this from the FASTA file. 
+
+NOTE: The **chrom.lengths.txt** is already available in the 'data' folder of the course. 
 
 
 
@@ -1001,12 +999,15 @@ seqlengths(Rsamtools::FaFile("BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa")) %&gt;%
 
 ## CUT&amp;RUN peak calling with SEACR
 
-Then we make the bedgraph file with `genomecov` using the file containing chromosome lengths in the '-g' argument. 
+Then we make the bedgraph file with `genomecov` using the file containing chromosome lengths in the '-g' argument and the bedpe file in the '-i' argument.
+
+The result is written to a file that is our bedgraph. 
+
 
 ``` r
 bedgraph &lt;- gsub("\\.bed", "\\.bedgraph", bedpe)
-with_CondaEnv("CnR_analysis", system(paste("bedtools genomecov -bg -i", bedpe, "-g",
-    "data/chrom.lengths.txt", "&gt;", bedgraph, sep = " ")))
+with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", system(paste("bedtools genomecov -bg -i",
+    bedpe, "-g", "data/chrom.lengths.txt", "&gt;", bedgraph, sep = " ")))
 ```
 
 ---
@@ -1260,7 +1261,7 @@ Similar to CUT&amp;RUN, the BAM file needs to be cleaned up and prepared for MAC
 
 ``` r
 forPeak_bam_atac &lt;- gsub("_filter.bam", "_macs.bam", filter_bam_atac)
-Herper::with_CondaEnv("CnR_analysis", {
+Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", {
     tempBam &lt;- paste0(tempfile(), ".bam")
     tempBam2 &lt;- paste0(tempfile(), ".bam")
     system(paste("samtools sort", "-n", "-o", tempBam, filter_bam_atac, sep = " "))
@@ -1278,8 +1279,9 @@ While its not common to perform ATAC-seq using single end sequencing, there are 
 
 ``` r
 peaks_name_atac &lt;- gsub("_macs.bam", "", basename(forPeak_bam_atac))
-with_CondaEnv("CnR_analysis", system2(command = "macs3", args = c("callpeak", "-t",
-    forPeak_bam_atac, "--format", "BAMPE", "--outdir", ".", "--name", peaks_name_atac)))
+with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", system2(command = "macs3",
+    args = c("callpeak", "-t", forPeak_bam_atac, "--format", "BAMPE", "--outdir",
+        ".", "--name", peaks_name_atac)))
 ```
 
 ---
@@ -1316,7 +1318,7 @@ As before, the BAM file needs to be cleaned up and prepared for MACS3.
 
 ``` r
 forPeak_NFbam_atac &lt;- gsub("_filterNF.bam", "_macsNF.bam", NF_bam_atac)
-Herper::with_CondaEnv("CnR_analysis", {
+Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", {
     tempBam &lt;- paste0(tempfile(), ".bam")
     tempBam2 &lt;- paste0(tempfile(), ".bam")
     system(paste("samtools sort", "-n", "-o", tempBam, NF_bam_atac, sep = " "))
@@ -1333,8 +1335,9 @@ Then we call peaks  for the nucleosome free regions with MACS3 using the BAMPE s
 
 ``` r
 peaksNF_name_atac &lt;- gsub("_macsNF.bam", "_macsNF", basename(forPeak_NFbam_atac))
-with_CondaEnv("CnR_analysis", system2(command = "macs3", args = c("callpeak", "-t",
-    forPeak_NFbam_atac, "--format", "BAMPE", "--outdir", ".", "--name", peaksNF_name_atac)))
+with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", system2(command = "macs3",
+    args = c("callpeak", "-t", forPeak_NFbam_atac, "--format", "BAMPE", "--outdir",
+        ".", "--name", peaksNF_name_atac)))
 ```
 
 &lt;img src="imgs/atac_with_NF.png" alt="igv" height="400" width="800"&gt;

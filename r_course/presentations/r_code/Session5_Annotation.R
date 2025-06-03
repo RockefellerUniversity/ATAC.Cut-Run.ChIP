@@ -190,7 +190,7 @@ up_promGenes_uniq <- unique(annotatedPeaksGR_up_prom$geneId)
 length(up_promGenes_uniq)
 
 
-## -----------------------------------------------------------------------------
+## ----message = F, warning=F, results = 'hide'---------------------------------
 library(clusterProfiler)
 library(org.Mm.eg.db)
 
@@ -198,6 +198,11 @@ GO_result_prom <- enrichGO(gene = up_promGenes_uniq,
                       universe = allGeneIDs,
                       OrgDb = org.Mm.eg.db,
                       ont = "BP")
+
+
+
+## ----message = F, warning=F---------------------------------------------------
+
 GO_result_prom
 
 
@@ -222,10 +227,10 @@ GO_result_df <- data.frame(GO_result, row.names = NULL)
 GO_result_df[1:3, ]
 
 
-## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, fig.height=4, fig.width=8----
+## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, fig.height=4, fig.width=9----
 library(enrichplot)
 GO_result_plot <- pairwise_termsim(GO_result)
-emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.7)
+emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.6)
 
 
 ## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T----------------------

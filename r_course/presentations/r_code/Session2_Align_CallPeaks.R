@@ -211,7 +211,7 @@ if(params$isSlides == "yes"){
 
 
 ## ----testCondaEnv, echo=T, eval=F---------------------------------------------
-# Herper::with_CondaEnv("CnR_analysis",
+# Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       system("samtools sort -h"))
 
 
@@ -282,21 +282,15 @@ fragLenSizes[1:5]
 
 
 
-## ----processData_plottingFrdagmentLengths, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=5, fig.width=7----
+## ----processData_plottingFrdagmentLengths, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=4, fig.width=8----
 library(ggplot2)
 toPlot <- data.frame(InsertSize=as.numeric(names(fragLenSizes)),
                             Count=as.numeric(fragLenSizes))
 fragLenPlot <- ggplot(toPlot,aes(x=InsertSize,y=Count))+geom_line()
-
-
-
-## ----processData_plottfingFragmentLengths2, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=5, fig.width=7----
-
 fragLenPlot+theme_bw()
 
 
-
-## ----processData_plottingFragmentLengths24, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=5, fig.width=7----
+## ----processData_plottingFragmentLengths24, echo=TRUE,eval=TRUE,cache=FALSE, fig.height=4.5, fig.width=8----
 fragLenPlot+ 
   geom_vline(xintercept = c(120),colour="darkgreen")+theme_bw()
 
@@ -335,7 +329,7 @@ table(bl_remove)
 ## ----fixmate, echo=T, eval=F--------------------------------------------------
 # 
 # forPeak_bam <- gsub("_filter.bam", "_forPeak.bam", filter_bam)
-# Herper::with_CondaEnv("CnR_analysis",
+# Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       {
 #                         tempBam <- paste0(tempfile(), ".bam")
 #                         system(paste("samtools sort", "-n", "-o", tempBam, filter_bam, sep = " "))
@@ -376,7 +370,7 @@ if(params$isSlides == "yes"){
 
 ## ----callMacs, echo=TRUE,eval=F, warning=F------------------------------------
 # peaks_name <- gsub("_macs.bam", "", basename(forMacs_bam))
-# with_CondaEnv("CnR_analysis",
+# with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       system2(command="macs3",args =c("callpeak",
 #                       "-t", forMacs_bam,
 #                       "-f", "BAMPE",
@@ -388,7 +382,7 @@ if(params$isSlides == "yes"){
 ## ----makeBedpe, echo=TRUE,eval=F, warning=F-----------------------------------
 # # use the BAM with blacklist reads removed (from MACS section)
 # bedpe <- gsub("\\.bam", "\\.bed", forPeak_bam)
-# with_CondaEnv("CnR_analysis",
+# with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                 system(paste("bedtools bamtobed -bedpe -i", forPeak_bam, ">", bedpe, sep = " "))
 # )
 # 
@@ -408,7 +402,7 @@ if(params$isSlides == "yes"){
 ## ----makeBedgraph, echo=T,eval=F, warning=F-----------------------------------
 # 
 # bedgraph <- gsub("\\.bed", "\\.bedgraph", bedpe)
-# with_CondaEnv("CnR_analysis",
+# with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                 system(paste("bedtools genomecov -bg -i", bedpe, "-g", "data/chrom.lengths.txt", ">", bedgraph, sep = " "))
 # )
 
@@ -514,7 +508,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 ## ----fixmate_atac, echo=T, eval=F---------------------------------------------
 # 
 # forPeak_bam_atac <- gsub("_filter.bam", "_macs.bam", filter_bam_atac)
-# Herper::with_CondaEnv("CnR_analysis",
+# Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       {
 #                         tempBam <- paste0(tempfile(), ".bam")
 #                         tempBam2 <- paste0(tempfile(), ".bam")
@@ -527,7 +521,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 
 ## ----callMacs_atac, echo=TRUE,eval=F, warning=F-------------------------------
 # peaks_name_atac <- gsub("_macs.bam", "", basename(forPeak_bam_atac))
-# with_CondaEnv("CnR_analysis",
+# with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       system2(command="macs3",args =c("callpeak",
 #                       "-t", forPeak_bam_atac,
 #                       "--format", "BAMPE",
@@ -552,7 +546,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 ## ----fixmate_atacNF, echo=T, eval=F-------------------------------------------
 # 
 # forPeak_NFbam_atac <- gsub("_filterNF.bam", "_macsNF.bam", NF_bam_atac)
-# Herper::with_CondaEnv("CnR_analysis",
+# Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       {
 #                         tempBam <- paste0(tempfile(), ".bam")
 #                         tempBam2 <- paste0(tempfile(), ".bam")
@@ -565,7 +559,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 
 ## ----callMacs_atacNF, echo=TRUE,eval=F, warning=F-----------------------------
 # peaksNF_name_atac <- gsub("_macsNF.bam", "_macsNF", basename(forPeak_NFbam_atac))
-# with_CondaEnv("CnR_analysis",
+# with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda",
 #                       system2(command="macs3",args =c("callpeak",
 #                       "-t", forPeak_NFbam_atac,
 #                       "--format", "BAMPE",
