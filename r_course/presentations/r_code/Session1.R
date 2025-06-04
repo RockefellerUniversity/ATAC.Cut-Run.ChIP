@@ -163,7 +163,7 @@ toPlot <- data.frame(Count=c(AFreq,CFreq,GFreq,TFreq),
 #   theme_bw()
 
 
-## ----mycRep1ReadsAlpByCyclePlot3, warning=F, message=F, fig.width=5, fig.height=3----
+## ----mycRep1ReadsAlpByCyclePlot3, warning=F, message=F, fig.width=6, fig.height=4----
 library(ggplot2)
 ggplot(toPlot,aes(y=Count,x=Cycle,colour=Base)) + geom_line() + ylim(150000,350000) +
   theme_bw()
@@ -175,7 +175,7 @@ readQualities <- alphabetScore(readQuality)
 readQualities[1:10]
 
 
-## ----mycRep1ReadsQScoresPlot, warning=F, message=F, fig.width=5, fig.height=3----
+## ----mycRep1ReadsQScoresPlot, warning=F, message=F, fig.width=6, fig.height=4----
 
 toPlot <- data.frame(ReadQ=readQualities)
 ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()

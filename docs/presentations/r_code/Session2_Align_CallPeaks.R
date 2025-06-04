@@ -1,10 +1,9 @@
 params <-
 list(isSlides = "no")
 
-## ----include=FALSE------------------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 suppressPackageStartupMessages(require(knitr))
-knitr::opts_chunk$set(echo = TRUE, tidy = T) # delete cache before any merging 
-
+knitr::opts_chunk$set(echo = TRUE, tidy = T)
 
 
 ## ----results='asis',include=TRUE,echo=FALSE-----------------------------------
