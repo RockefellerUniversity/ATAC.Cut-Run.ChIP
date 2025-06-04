@@ -12,7 +12,9 @@ Depends: methods, ggplot2, rmarkdown, rio, ShortRead, Rfastp, msigdbr, ggupset,
   BSgenome.Mmusculus.UCSC.mm10, Rsubread, Rsamtools, rtracklayer, Herper, 
   GenomicAlignments, ChIPQC, ATACseqQC, soGGi, limma, DESeq2, tracktables,
   TxDb.Mmusculus.UCSC.mm10.knownGene, EnhancedVolcano, clusterProfiler, rGREAT, 
-  org.Mm.eg.db, GenomeInfoDb, motifmatchr, memes, ChIPseeker, enrichplot 
+  org.Mm.eg.db, GenomeInfoDb, motifmatchr, memes, ChIPseeker, enrichplot, 
+  MotifDb, JASPAR2024, RSQLite, TFBSTools, seqLogo, ggseqlogo, universalmotif, 
+  Biostrings
 Suggests: knitr,
     rmarkdown,
     testthat,
