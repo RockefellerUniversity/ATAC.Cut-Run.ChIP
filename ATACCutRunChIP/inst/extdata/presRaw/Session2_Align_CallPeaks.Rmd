@@ -1271,6 +1271,4 @@ Exercise on CUT&RUN data can be found [here](../../exercises/exercises/ATACCutRu
 
 Answers can be found [here](../../exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.html)
 
-R code for solutions can be found [here](../../exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.R)
-
 

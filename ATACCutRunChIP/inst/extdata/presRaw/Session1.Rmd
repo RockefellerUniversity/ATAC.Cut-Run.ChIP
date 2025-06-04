@@ -46,8 +46,7 @@ if(params$isSlides != "yes"){
 - [Set up](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#set-up)
 - [Epigenomic Approaches](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#epigenomic-approaches)
 - [Fastq QC](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#fastq-qc)
-- [FastP](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#fastp
-)
+- [FastP](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#fastp)
 
 ---
 ```{r, results='asis',include=TRUE,echo=FALSE}
@@ -531,11 +530,11 @@ Running RfastP creates several files:
 2. XXX.html - HTML file contains a QC report
 3. XXX.json - JSON file with all the summary statistics
 
-We can review the QC of our samples by checking out the *html* file. We have uploaded the result for this [here]("data/SOX9CNR_D0_rep1_filtered.html") 
+We can review the QC of our samples by checking out the *html* file. We have uploaded the result for this [here](data/SOX9CNR_D0_rep1_filtered.html) 
 
 You can also review the samples computationally using the *.json* file. 
 
-[Here]("data/myc.html") is a second example report from a ChIPseq experiment of Myc from [ENCODE](https://www.encodeproject.org/experiments/ENCSR000EUA/).
+[Here](data/myc.html) is a second example report from a ChIPseq experiment of Myc from [ENCODE](https://www.encodeproject.org/experiments/ENCSR000EUA/).
 
 ---
 ## What to check?

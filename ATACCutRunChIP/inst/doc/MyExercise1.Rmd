@@ -22,7 +22,7 @@ These exercises are about [fastq quality control](https://rockefelleruniversity.
 
 **Exercise 1** - **Reading FastQs with ShortRead**
 
-- Download fastq files for the second replicate of the Cut and Run from ENA. These are direct links for [Read1](ftp.sra.ebi.ac.uk/vol1/fastq/SRR201/017/SRR20110417/SRR20110417_1.fastq.gz) and [Read2](ftp.sra.ebi.ac.uk/vol1/fastq/SRR201/017/SRR20110417/SRR20110417_2.fastq.gz)).
+- Download fastq files for the second replicate of the Cut and Run from [ENA](https://www.ebi.ac.uk/ena/browser/view/SRR20110417). There are direct links for Read1 and Read2.
 
 - Read in a subset of Read 1 (lets just try 1000000 to keep things snappy).
 
