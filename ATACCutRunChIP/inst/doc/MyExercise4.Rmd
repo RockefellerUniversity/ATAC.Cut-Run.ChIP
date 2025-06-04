@@ -1,0 +1,206 @@
+---
+title: "My Exercise 4"
+author: "Rockefeller University, Bioinformatics Resource Centre"
+date: "https://rockefelleruniversity.github.io/RU_course_template/"
+output: 
+  html_document:
+    number_sections: false  ## if you want number sections at each table header
+    theme: united  # many options for theme, this one is my favorite.
+    highlight: tango  # specifies the syntax highlighting style
+params:
+  toMessage: false    
+---
+
+```{r, setup,include=FALSE}
+toMessage <- ifelse(!is.null(params$toMessage),params$toMessage,FALSE)
+message(toMessage)
+```
+
+
+<p>&nbsp;</p>
+These exercises are about [consensus peaks and differentials](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session4.html). 
+
+**Exercise 1** - **Consensus ATAC Peaks**
+
+- Lets read in the ATAC peaks from MACS. They are contained in *data/atac_peaks*.
+
+```{r,echo=toMessage, eval=T}
+library(rtracklayer)
+peakFiles <- dir("data/atac_peaks",pattern="narrowPeak",
+                 full.names = TRUE)
+peakFiles
+macsPeaks_list <- lapply(peakFiles, import)
+```
+
+- Compare W6 peaks for each replicate. How many peaks are unique to each replicate and how many are in common? Export the unique peaks.
+
+```{r,echo=toMessage, eval=T}
+macsPeaks_GRL <- GRangesList(macsPeaks_list)
+names(macsPeaks_GRL) <- c("D0_rep1","D0_rep2","W6_rep1","W6_rep2")
+
+W6_rep1_unique.Peaks <- macsPeaks_GRL[[3]][!macsPeaks_GRL[[3]] %over% macsPeaks_GRL[[4]]]
+
+W6_rep2_unique.Peaks <- macsPeaks_GRL[[4]][!macsPeaks_GRL[[4]] %over% macsPeaks_GRL[[3]]]
+
+my_tots <- c(length(W6_rep1_unique.Peaks),
+  length(W6_rep2_unique.Peaks),
+  length(macsPeaks_GRL[[3]]) - length(W6_rep1_unique.Peaks))
+names(my_tots) <- c("Rep1_Unique", "Rep2_Unique", "Common")
+my_tots
+
+rtracklayer::export(W6_rep1_unique.Peaks, "ATAC_W6_rep1_unique.Peaks.bed")
+
+rtracklayer::export(W6_rep2_unique.Peaks, "ATAC_W6_rep2_unique.Peaks.bed")
+
+```
+
+- Build a nonredundant peak set across all 4 samples.
+
+```{r,echo=toMessage, eval=T}
+allPeaksSet_Overlapping <- unlist(macsPeaks_GRL)
+allPeaksSet_nR <- reduce(allPeaksSet_Overlapping)
+allPeaksSet_nR
+```
+
+- Add metadata to our nonredundant peak set that contains the presence/absence of peaks from each sample. Summarize this with a venn diagram.
+
+```{r,echo=toMessage, eval=T, warning=F, error=F}
+overlap <- list()
+for(i in 1:length(macsPeaks_GRL)){
+  overlap[[i]] <- allPeaksSet_nR %over% macsPeaks_GRL[[i]]
+}
+
+overlapMatrix <- do.call(cbind,overlap)
+colnames(overlapMatrix) <- names(macsPeaks_GRL)
+
+mcols(allPeaksSet_nR) <- overlapMatrix
+allPeaksSet_nR[1:3,]
+
+library(limma)
+vennDiagram(mcols(allPeaksSet_nR))
+
+```
+
+- Make high confidence consensus peaks. Export the result.
+
+```{r,echo=toMessage}
+HC_Peaks <- allPeaksSet_nR[
+  rowSums(as.data.frame(
+    mcols(allPeaksSet_nR)[,c("D0_rep1","D0_rep2")])) >= 2 |
+  rowSums(as.data.frame(
+    mcols(allPeaksSet_nR)[,c("W6_rep1","W6_rep2")])) >= 2  
+  ]
+export.bed(HC_Peaks,"ATAC_HC_Peaks.bed")
+```
+
+**Exercise 2** - **Generate counts**
+
+- Count the reads that overlap with the consensus peaks. Save the counts object. [*NOTE: this can take some time. If you want to skip ahead to differentials, we have provided a counts object*]
+
+You can grab the bam files from [DropBox](https://www.dropbox.com/scl/fo/djmhor06m81834htwoyjq/ABJceYBLkW6c3lRr3du5-G8?rlkey=ekvoe21gjn70cf9ak5yuqn12t&st=uu1hppq3&dl=0)
+
+```{r, eval=F, echo=F, warning=FALSE}
+
+library(Rsamtools)
+
+datasets <- rbind(
+c("ATAC_D0_rep1",	"WMVPNEXUHSFKALQZGOJD"),
+c("ATAC_D0_rep2",	"AJUTISKQHGLPWOMBVYDE"),
+  c("ATAC_W6_rep1",	"FOHZKJLBPGQUWNYMVSTC"),
+    c("ATAC_W6_rep2",	"AFSWRTMKPEIDZBQLNHGY"))
+
+bams <- sapply(1:4, function(x){
+
+path <- dir(file.path("/rugpfs/fs0/brc/scratch/brc_pipeline/analysis/testBRC_Shiny/",datasets[x,2],"workflow_data","BAM"), pattern=".bam$", full.names=T)
+
+return(path)
+})
+
+bamFL <- BamFileList(bams,yieldSize = 5000000)
+bamFL
+```
+
+```{r, eval=F, warning=FALSE,echo=toMessage}
+
+library(Rsamtools)
+
+bams <- c("ATAC_D0_rep1.bam",
+          "ATAC_D0_rep2.bam",
+          "ATAC_W6_rep1.bam",
+          "ATAC_W6_rep2.bam")
+
+bamFL <- BamFileList(bams,yieldSize = 5000000)
+bamFL
+```
+
+```{r,eval=F, warning=FALSE,echo=toMessage}
+HC_Peaks <- rtracklayer::import("ATAC_HC_Peaks.bed")
+library(GenomicAlignments)
+MyCounts <- summarizeOverlaps(HC_Peaks,
+                              reads = bamFL,
+                              ignore.strand = TRUE)
+save(MyCounts,file="ATAC_Counts.RData")
+
+```
+
+
+**Exercise 3** - **Differentials with DESeq2**
+
+- Load in the counts object. If you did not complete the counts section you can just load it from the data directory: *data/ATAC_Counts.RData*. 
+
+```{r,echo=toMessage, eval=T}
+load("data/ATAC_Counts.RData")
+
+class(MyCounts)
+
+MyCounts
+```
+
+- Generate metadata data frame
+
+```{r, echo=toMessage, eval=T}
+metaDataFrame <- data.frame(DevStage=c("D0","D0","W6","W6"))
+rownames(metaDataFrame) <- colnames(MyCounts)
+metaDataFrame
+```
+
+- Run DESeq2 and get results GRange. Order this object by padj value.
+
+```{r,eval=T,echo=T, echo=toMessage, warning=FALSE}
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix(countData = assay(MyCounts),
+                              colData = metaDataFrame,
+                              design = ~ DevStage,
+                              rowRanges= HC_Peaks)
+dds <- DESeq(dds)
+W6MinusD0 <- results(dds,
+                        contrast = c("DevStage","W6","D0"),
+                        format="GRanges")
+W6MinusD0 <- W6MinusD0[order(W6MinusD0$padj),]
+W6MinusD0
+```
+
+- Export the results to a dataframe.
+
+```{r,eval=T,echo=T, echo=toMessage, warning=FALSE}
+
+rio::export(as.data.frame(W6MinusD0), "data/ATAC_W6MinusD0.xlsx")
+```
+
+- Plot a PCA of our samples
+
+```{r,eval=T,echo=T, echo=toMessage, warning=FALSE}
+myrlog <- rlog(dds)
+plotPCA(myrlog, intgroup="DevStage")
+```
+
+- Make a volcano plot
+
+```{r,eval=T,echo=T, echo=toMessage, warning=FALSE}
+library(EnhancedVolcano)
+W6MinusD0.Filt <- W6MinusD0[!is.na(W6MinusD0$pvalue) | !is.na(W6MinusD0$padj)]
+EnhancedVolcano(as.data.frame(W6MinusD0.Filt),
+                lab=paste0(seqnames(W6MinusD0.Filt), ranges(W6MinusD0.Filt)),
+                x = "log2FoldChange",
+                y="padj", selectLab = "")
+```
