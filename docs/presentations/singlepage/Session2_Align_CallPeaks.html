@@ -1817,6 +1817,8 @@ enrichment across samples.</p>
 parameter in the <strong>coverage()</strong></a> to scale our reads to
 the number of mapped reads multiplied by a million (reads per
 million).</p>
+<p>This bigwig is available <a href="https://www.dropbox.com/scl/fo/zsxaw6uv19ar8k0svcq4a/ABBTWY3xEREQrKGU3hnaMuQ?rlkey=gk7zdl27xagl5nhz6k8amz5yy&amp;st=2hmzbrvp&amp;dl=0">here
+on dropbox</a> for download if you want to check it out.</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>forBigWig <span class="ot">&lt;-</span> <span class="fu">coverage</span>(<span class="st">&quot;SOX9CNR_W6_rep1_sorted.bam&quot;</span>, <span class="at">weight =</span> (<span class="dv">10</span><span class="sc">^</span><span class="dv">6</span>)<span class="sc">/</span>TotalMapped)</span>
 <span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>forBigWig</span>
 <span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="fu">export.bw</span>(forBigWig, <span class="at">con =</span> <span class="st">&quot;SOX9CNR_W6_rep1_weighted.bw&quot;</span>)</span></code></pre></div>
