@@ -325,6 +325,7 @@ TotalMapped
 
 To make the normalized bigwig we can use the [**weight** parameter in the **coverage()**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/Summarising_Scores_In_Bioconductor.html#20) to scale our reads to the number of mapped reads multiplied by a million (reads per million).
 
+This bigwig is available [here on dropbox](https://www.dropbox.com/scl/fo/zsxaw6uv19ar8k0svcq4a/ABBTWY3xEREQrKGU3hnaMuQ?rlkey=gk7zdl27xagl5nhz6k8amz5yy&st=2hmzbrvp&dl=0) for download if you want to check it out. 
 ```{r weightedCover2, echo=TRUE,eval=FALSE}
 
 forBigWig <- coverage("SOX9CNR_W6_rep1_sorted.bam",
