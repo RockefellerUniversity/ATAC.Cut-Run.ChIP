@@ -494,21 +494,44 @@ There are many ways to customize including trimming options, barcodes and string
 ---
 ## Rfastp
 
+- Trims low-quality bases from the 5′ and 3′ ends using a sliding window approach
+
+- Automatically detects and removes adapters
+
+- Corrects mismatched bases in overlapping regions of paired-end reads (based on quality)
+
+- Trims polyA/polyX tails from the 3′ ends, depending on library type
+
+- Filters out low-quality reads based on user-defined thresholds
+
+---
+## Rfastp
+
 To run Rfastp we simply provide our two fastq files (or just one if we are running single end). We will also provide a name for the filtered Fastq file which is output. 
 
 
 ```{R, eval=F}
 library(Rfastp)
 
-rfastp(read1="/Users/mattpaul/Downloads/SRR20110418_1.fastq.gz",
+rfastp_res <- rfastp(read1="/Users/mattpaul/Downloads/SRR20110418_1.fastq.gz",
        read2 = "/Users/mattpaul/Downloads/SRR20110418_2.fastq.gz",
        outputFastq = "SOX9CNR_D0_rep1_filtered")
+```
+
+```{r, eval=FALSE, echo=F}
+save(rfastp_res, file = "data/fastp_res.RData")
 ```
 
 ---
 ## Rfastp QC results
 
-We can review the QC of our samples by checking out the the output *html* file. We have uploaded the result for this [here]("data/SOX9CNR_D0_rep1_filtered.html") 
+Running RfastP creates several files:
+
+1. XXX_R1.fastq.gz - FASTQ with poor quality reads filtered out
+2. XXX.html - HTML file contains a QC report
+3. XXX.json - JSON file with all the summary statistics
+
+We can review the QC of our samples by checking out the *html* file. We have uploaded the result for this [here]("data/SOX9CNR_D0_rep1_filtered.html") 
 
 You can also review the samples computationally using the *.json* file. 
 
@@ -528,9 +551,106 @@ Whenever considering QC we rarely rule samples out at this early stage. But we k
 Always also consider your experiment, and previous experiments that may be similar. 
 
 ---
+## Rfastp QC plots
+
+We can also look at some of the plots and QC metrics in R using the assigned object.
+
+We have saved this in the data folder for you to load in *data/fastp_res.RData*.
+
+```{r}
+load("data/fastp_res.RData")
+```
+
+```{r}
+qcSummary(rfastp_res)
+
+```
+
+---
+## Rfastp QC plots
+
+```{r}
+
+curvePlot(rfastp_res, curve = "content_curves")
+
+```
+
+---
 ## Rfastp options
 
 We typically use the default settings, but there are lots of options to control Rfastp. Specifically this could help more stringent filtering if you observe any QC problems i.e. minReadLength or qualityFilterPercent.
+
+---
+## Example of custom filter usage
+
+- Data from: ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR458/ERR458755/ERR458755.fastq.gz or load from data folder.
+
+*NOTE - this is single-end RNAseq, but for this example it doesn't matter*
+
+```{r}
+
+rfastp_res <- rfastp(read1 = "data/ERR458755.fastq.gz", outputFastq = "ERR458755_rfastp")
+```
+
+---
+
+## Rfastp - Base Quality
+
+The quality score dips pretty low at the start of our reads.
+
+```{r}
+
+curvePlot(rfastp_res)
+```
+
+---
+## Rfastp - GC content
+ 
+- N content indicates low confidence when calling bases
+- GC content is higher at the front end of the read
+
+```{r}
+curvePlot(rfastp_res, curve="content_curves")
+
+```
+
+---
+
+## Adding filters
+
+- Let's filter out the first 10 bases using "trimFrontRead1"
+
+```{r}
+
+json_report <- rfastp(read1 = "data/ERR458755.fastq.gz", outputFastq = "ERR458755_rfastp", trimFrontRead1 = 10)
+```
+
+---
+
+## Rfastp - Base Quality
+
+- Notice low quality bases are eliminated at the start
+
+```{r}
+
+curvePlot(json_report)
+```
+
+---
+## Rfastp - GC content
+ 
+Trimming removes low-quality bases and ambiguous N bases, which can skew GC content at the 5′ end of reads
+
+  - This can normalize GC distribution, improving downstream alignment and quantification
+
+What threshold defines abnormal GC content?
+  - No strict cutoff — depends on organism, library prep, and sequencing platform
+
+
+```{r}
+curvePlot(json_report, curve="content_curves")
+
+```
 
 ---
 ## Time for an exercise!
