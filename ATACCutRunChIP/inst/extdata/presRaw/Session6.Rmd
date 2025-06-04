@@ -44,16 +44,6 @@ if(params$isSlides != "yes"){
 
 ##  Recap
 
-?? can add a recap to link to keypoints in first session??
-Session 1 covered introduction to R data types and import/export of data.
-
-- [Background to R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#background-to-r)
-- [Data types in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#data_types_in_r)
-- [Reading and writing in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#reading-and-writing-data-in-r)
-
----
-##  Recap
-
 1) Fastq QC
 2) Alignment
 3) Peak calling
@@ -62,6 +52,15 @@ Session 1 covered introduction to R data types and import/export of data.
 6) Counting
 7) Differentials
 8) Annotation and enrichment
+
+---
+##  This Session
+
+- [Motif Databases](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#motif-databases)
+- [Visualizing motifs](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#visualizing-motifs)
+- [Motif enrichment analysis](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#motif-enrichment-analysis)
+- [De novo motif analysis](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#de-novo-motif-analysis)
+- [Finding Motifs](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#finding-motifs)
 
 ---
 ## Our Data
