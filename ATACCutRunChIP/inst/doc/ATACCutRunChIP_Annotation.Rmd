@@ -21,7 +21,7 @@ message(toMessage)
 
 In these exercises we will review some of the functionality for genomic and functional annotation of peaks.
 
-We will be using output from the differential peak analysis of ATACse Week 6 vs Week 0. The starting table can be found in the 'data' folder of the course.  
+We will be using output from the differential peak analysis of ATACseq Week 6 vs Week 0. The starting table can be found in the 'data' folder of the course.  
 
 <p>&nbsp;</p>
 ## Exercises
@@ -29,7 +29,7 @@ We will be using output from the differential peak analysis of ATACse Week 6 vs 
 
 ### 1. Peak annotation with ChIPseeker
   
-Read in the differential output table 'data/W6MinusD0.xlsx', make a GRanges and do the following:
+Read in the differential output table 'ATAC_W6MinusD0.xlsx', make a GRanges and do the following:
 
   * map all of the consensus peak regions to genomic features (e.g. promoter, intron, exon, intergenic, etc.)
   * subset the peaks to those that increase in the W6 time point, and map these peaks to genomic features
@@ -41,7 +41,7 @@ Read in the differential output table 'data/W6MinusD0.xlsx', make a GRanges and 
 library(ChIPseeker)
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 
-W6MinusD0 <- rio::import("data/W6MinusD0.xlsx")
+W6MinusD0 <- rio::import("data/ATAC_W6MinusD0.xlsx")
 W6MinusD0_gr <- GRanges(seqnames = W6MinusD0$seqnames,
                         IRanges(start = W6MinusD0$start, end = W6MinusD0$end),
                         log2FoldChange = W6MinusD0$log2FoldChange,
