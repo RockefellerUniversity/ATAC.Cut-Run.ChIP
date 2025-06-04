@@ -104,7 +104,7 @@ reactome_result_prom <- enricher(gene = up_promGenes_uniq,
 ```
 
 GO BP output
-```{r, eval=F,echo=toMessage}
+```{r, eval=T,echo=toMessage}
 data.frame(GO_result_prom, row.names = NULL)[1:3, 1:10]
 GO_result_plot <- pairwise_termsim(GO_result_prom)
 emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
@@ -112,11 +112,12 @@ emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0
 ```
 
 Reactome output:
-```{r, eval=F,echo=toMessage}
+
+  * no enriched terms!
+```{r, eval=T,echo=toMessage}
 
 data.frame(reactome_result_prom, row.names = NULL)[1:3, 1:10]
-reactome_result_plot <- pairwise_termsim(reactome_result_prom)
-emapplot(reactome_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
+# no enriched terms!
 ```
 
 
@@ -137,7 +138,7 @@ great_gobp <- great(W6MinusD0_gr_up,
 great_gobp_tab <- getEnrichmentTables(great_gobp)
 great_gobp_tab10 <- great_gobp_tab[1:10, ]
 great_gobp_tab10$description <- ordered(great_gobp_tab10$description, levels = rev(great_gobp_tab10$description))
-ggplot(great_gobp_tab10, aes(x = description, y = fold_enrichment, fill = observed_region_hits)) + geom_col() + coord_flip()
+
 
 reac_gene_sets <- split(msig_t2g_reac$entrez_gene, msig_t2g_reac$gs_name)
 reac_gene_sets <- lapply(reac_gene_sets, as.character)
@@ -149,19 +150,19 @@ great_reac_tab10 <- great_reac_tab10[order(great_reac_tab10$fold_enrichment, dec
 great_reac_tab10$name_for_plot <- gsub("REACTOME_" ,"", great_reac_tab10$id)
 great_reac_tab10$name_for_plot <- substr(great_reac_tab10$name_for_plot, 1, 50)
 great_reac_tab10$name_for_plot <- ordered(great_reac_tab10$name_for_plot, levels = rev(great_reac_tab10$name_for_plot))
-ggplot(great_reac_tab10, aes(x = name_for_plot, y = fold_enrichment, fill = observed_region_hits)) + geom_col() + coord_flip()
+
 ```
 
 
 GO BP output:
-```{r, eval=T,echo=toMessage}
-great_gobp_tab10[1,3, ]
+```{r, eval=T,echo=toMessage, fig.width=8}
+great_gobp_tab10[1:3, ]
 ggplot(great_gobp_tab10, aes(x = description, y = fold_enrichment, fill = observed_region_hits)) + geom_col() + coord_flip()
 
 ```
 
 Reactome output:
-```{r, eval=T,echo=toMessage}
+```{r, eval=T,echo=toMessage, fig.width=8}
 great_reac_tab10[1:3, ]
 ggplot(great_reac_tab10, aes(x = name_for_plot, y = fold_enrichment, fill = observed_region_hits)) + geom_col() + coord_flip()
 ```
