@@ -826,8 +826,6 @@ We can review the full functionality by reading the help for matchMotifs, ?match
 motifmatchr needs some search space. Though we could run this genome-wide, for efficiency and speeds sake we normally just run it on regions of interest i.e. our W6-specific peaks. 
 
 Specifically we need the sequence associated with these peaks. Luckily we generated all this while running MEME. 
-
-
 ```{r}
 peaksSequences
 ```
@@ -871,6 +869,7 @@ MA1152.2hits <- motif_positions$MA1152.2
 names(MA1152.2hits) <- names(peaksSequences[1:100])
 unlist(MA1152.2hits, use.names = TRUE)
 ```
+
 ---
 ## Using motif positions
 
@@ -945,7 +944,7 @@ We have focussed primarily on using MEME to conduct our analysis, there are seve
 
 * [*Homer*](http://homer.ucsd.edu/homer/motif/) has some motif detection tools that are conceptually similar to MEME.
 
-* [*chromVAR*](https://github.com/GreenleafLab/chromVAR) continues on from what we have done with motifmatchr and checks for differential accessibility of peaks that do/don't contain motifs.
+* [*chromVAR*](https://github.com/GreenleafLab/chromVAR) continues on from what we have done with motifmatchr and checks for differential accessibility of peaks that do/don't contain motifs. This package is designed for ATAC and we have a guide on rnning this [here](https://rockefelleruniversity.github.io/RU_ATACseq/presentations/singlepage/RU_ATAC_part3.html#summarizing_ATAC_signal_to_Motifs)
 
 ---
 ## Time for an exercise!

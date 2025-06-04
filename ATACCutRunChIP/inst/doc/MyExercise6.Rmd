@@ -1,0 +1,312 @@
+---
+title: "My Exercise 6"
+author: "Rockefeller University, Bioinformatics Resource Centre"
+date: "https://rockefelleruniversity.github.io/RU_course_template/"
+output: 
+  html_document:
+    number_sections: false  ## if you want number sections at each table header
+    theme: united  # many options for theme, this one is my favorite.
+    highlight: tango  # specifies the syntax highlighting style
+params:
+  toMessage: false    
+---
+
+```{r, setup,include=FALSE}
+toMessage <- ifelse(!is.null(params$toMessage),params$toMessage,FALSE)
+message(toMessage)
+```
+
+
+<p>&nbsp;</p>
+These exercises are about [motifs](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session6.html). 
+
+**Exercise 1** - **Motif Databases**
+
+- Lets look at MotifDb and grab the SMAD3 motifs. How many different motifs are there? Look at the Position Matrix for the first motif. 
+
+```{r,echo=toMessage, eval=T}
+
+library(MotifDb)
+SMAD3Motifs <- query(MotifDb,"SMAD3")
+length(SMAD3Motifs )
+SMAD3Motifs[[1]]
+```
+
+- Grab the SMAD3 motifs from JASPAR2024 instead. How many different motifs are there? Look at the Position Matrix for the first motif. 
+
+```{r,echo=toMessage, eval=T}
+
+library(JASPAR2024)
+library(RSQLite)
+library(TFBSTools)
+
+JASPAR2024 <- JASPAR2024()
+sq24 <- RSQLite::dbConnect(RSQLite::SQLite(), db(JASPAR2024))
+SMAD3mat <- getMatrixByName(sq24,"SMAD3")
+SMAD3mat
+```
+
+**Exercise 2** - **Visualizing motifs**
+
+- Lets draw the seqlogo for SMAD3 using the first motif from MotifDb. Lets do this using two scales: probability and information content.
+
+```{r,echo=toMessage, eval=T}
+
+seqLogo::seqLogo(SMAD3Motifs[[1]],ic.scale = FALSE)
+seqLogo::seqLogo(SMAD3Motifs[[1]])
+```
+- Lets compare this to the motif from JASPAR2024. Are these equivalent motifs?
+
+```{r,echo=toMessage, eval=T}
+ppm <-SMAD3mat/colSums(SMAD3mat)
+seqLogo::seqLogo(ppm)
+```
+
+**Exercise 3** - **Motif enrichment analysis**
+
+- Prepare for AME by setting up MEME software and loading JASPAR2024 motifs.
+
+```{r,echo=toMessage, eval=F}
+library(Herper)
+install_CondaTools("meme","motif_analysis", channels="bioconda", pathToMiniConda = "miniconda")
+```
+
+```{r,echo=toMessage}
+library(universalmotif)
+
+opts <- list()
+opts[["tax_group"]] <- "vertebrates"
+opts[["collection"]] <- "CORE"
+opts[["all_versions"]] <- FALSE
+
+jaspar <- JASPAR2024()
+sq24 <- RSQLite::dbConnect(RSQLite::SQLite(), db(jaspar))
+
+motifs <- getMatrixSet(sq24, opts)
+motifs_um <- convert_motifs(motifs)
+class(motifs_um)
+class(motifs_um[[1]])
+```
+
+- Prepare for AME by generating GRanges of peaks of interest (Significantly Up in W6) and background peaks. You can read in the differential results from the data folder
+
+```{r,echo=toMessage}
+
+library(rio)
+library(Biostrings)
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+dge <- rio::import("data/ATAC_W6MinusD0.xlsx")
+dge_up <- dge[dge$padj < 0.05 & dge$log2FoldChange > 0,]
+dge_up_gr <- GRanges(dge_up$seqnames, IRanges(dge_up$start, dge_up$end))
+
+
+
+peaksSequences <- getSeq(BSgenome.Mmusculus.UCSC.mm10, dge_up_gr)
+names(peaksSequences) <- paste0("peak_", 1:length(dge_up_gr))
+
+HC_peaks <- rtracklayer::import("data/ATAC_HC_Peaks.bed")
+background_peaksSequences <- getSeq(BSgenome.Mmusculus.UCSC.mm10, HC_peaks)
+names(background_peaksSequences) <- paste0("peak_", 1:length(HC_peaks))
+```
+
+- Run AME. Draw a heatmap of top hits.
+*NOTE: This will take some time. You can also read in the results object and review output html in data folder: "data/ATAC_ame_results.RData"*
+
+
+
+```{r,echo=toMessage, eval=F}
+library(memes)
+
+meme_path_id="miniconda/envs/motif_analysis/bin"
+ame_results <- runAme(peaksSequences,
+                          control = background_peaksSequences,
+                          outdir = "ATAC_ame_diff",
+                          meme_path = meme_path_id,
+                          database = motifs_um)
+
+```
+
+```{r,echo=toMessage}
+load(file = "data/ATAC_ame_results.RData")
+ame_results %>% 
+  dplyr::filter(rank %in% 1:10) %>% 
+  plot_ame_heatmap()  +
+    ggtitle("Top 10 AME Hits")
+```
+
+- Draw seqlogos of the top 3 hits.
+
+```{R}
+top_res_motif <- getMatrixByID(sq24,ame_results$motif_alt_id[1])
+top_res_motif_mat <- Matrix(top_res_motif)
+ggseqlogo(top_res_motif_mat)+theme_minimal()
+
+top_res_motif <- getMatrixByID(sq24,ame_results$motif_alt_id[2])
+top_res_motif_mat <- Matrix(top_res_motif)
+ggseqlogo(top_res_motif_mat)+theme_minimal()
+
+top_res_motif <- getMatrixByID(sq24,ame_results$motif_alt_id[3])
+top_res_motif_mat <- Matrix(top_res_motif)
+ggseqlogo(top_res_motif_mat)+theme_minimal()
+
+```
+
+
+**Exercise 4** - **De novo motif analysis**
+
+- Run DREME to find novel motifs. Show seqlogos for top 3 hits. *NOTE: This will take some time. You can also read in the results object and review output html in data folder: "ATAC_data/dreme_results.RData"*
+
+```{r,echo=toMessage, eval=F}
+dreme_results <- runDreme(peaksSequences,
+                          control = background_peaksSequences,
+                          outdir = "ATAC_dreme",
+                          meme_path = meme_path_id)
+
+```
+
+```{r, eval=F, echo=F}
+
+save(dreme_results, file = "data/ATAC_dreme_results.RData")
+
+```
+
+```{r echo=toMessage}
+load(file = "data/dreme_results.RData")
+dreme_results[2:4,] %>% 
+  to_list() %>% 
+  view_motifs()
+
+```
+
+- Run TOMTOM to match our novel motifs to known motifs. Show seqlogos for the best matches for the the top 3 hits. 
+
+```{r,echo=toMessage}
+
+tomtom_results <- runTomTom(dreme_results[2:nrow(dreme_results),],
+            meme_path = meme_path_id,
+            database = motifs_um,
+            outdir = "ATAC_tomtom_from_dreme"
+            )
+
+view_motifs(tomtom_results$best_match_motif[1:3])
+
+```
+
+```{r, echo=F, eval=F}
+
+  # thresh = 10
+  # min_overlap = 5
+  # dist = "ed"
+  # evalue = TRUE
+  # silent = TRUE
+  # 
+  # input <- dreme_results[1,]
+  # input <- memes:::motif_input(input)
+  # 
+  # command <- memes:::search_meme_path(path = meme_path_id, util = "tomtom")
+  # 
+  # database <- memes:::search_meme_database_path(path = motifs_um)
+  # 
+  # user_flags <- memes:::prepareTomTomFlags(outdir = "ATAC_tomtom_from_dreme2",
+  #                                  thresh = thresh,
+  #                                  min_overlap = min_overlap,
+  #                                  dist = dist,
+  #                                  evalue = evalue)
+  # flags <- c(user_flags, input$path, database)
+  # 
+  # ps_out <- processx::run(command, flags, spinner = TRUE, error_on_status = FALSE)
+  # 
+  # # Print any messages to user This will cause double-printing stderr if
+  # # non-zero exit status, but at that point, who cares?
+  # if (!silent) {
+  #   message(ps_out$stderr)
+  # } else {
+  #   memes:::print_tomtom_messages(ps_out$stderr)
+  # }
+  # 
+  # ps_out %>%
+  #   memes:::process_check_error(help_fun = ~{tomtom_help(command)},
+  #                       user_flags = cmdfun::cmd_help_parse_flags(user_flags),
+  #                       flags_fun = ~{gsub("-", "_", .)},
+  #                       default_help_fun = TRUE)
+  # 
+  # tomtom_out <- cmdfun::cmd_file_expect("tomtom", c("tsv", "xml", "html"), outdir = "ATAC_tomtom_from_dreme2")
+  # 
+  # tomtom_results <- memes:::parseTomTom(tomtom_out$xml, query_metadata = input$metadata)
+  # 
+  # suppressMessages(universalmotif::update_motifs(tomtom_results, extrainfo = TRUE))
+
+
+
+```
+
+- Review the top 5 hits for the first three novel motifs.
+
+```{r,echo=toMessage}
+tomtom_results[1,] %>% 
+  view_tomtom_hits(top_n = 5)
+
+tomtom_results[2,] %>% 
+  view_tomtom_hits(top_n = 5)
+
+tomtom_results[3,] %>% 
+  view_tomtom_hits(top_n = 5)
+
+```
+
+**Exercise 5** - **Finding Motifs**
+
+- Check which peaks have a motif for the top hit from AME.
+
+```{r,echo=toMessage, eval=F}
+opts <- list()
+opts[["tax_group"]] <- "vertebrates"
+opts[["collection"]] <- "CORE"
+opts[["all_versions"]] <- FALSE
+
+jaspar <- JASPAR2024()
+sq24 <- RSQLite::dbConnect(RSQLite::SQLite(), db(jaspar))
+motifs <- getMatrixSet(sq24, opts)
+
+motifs_subset <- motifs[names(motifs) %in% ame_results$motif_alt_id[1]]
+
+motifHits <- matchMotifs(motifs, peaksSequences, out="matches")
+
+motifHits
+
+```
+
+- Make a histogram showing frequency of motifs in peaks. Which motif is present in the most peaks?
+
+```{r}
+mmMatrix <- motifMatches(motifHits)
+mat_sums <- colSums(mmMatrix)
+hist(mat_sums)
+mat_sums[which.max(mat_sums)]
+
+# meis1 = MA0498.3
+```
+- Look for SOX9 motif
+
+```{r,eval=T}
+UpinW6_peaksWithSox9 <- dge_up_gr[mmMatrix[,"MA0077.2"] == 1]
+UpinW6_peaksWithSox9
+```
+
+
+- Create a ranged object containing the location in upregulated in W6 peaks for each motif from the top hit from AME. 
+
+```{r,echo=toMessage, eval=F}
+
+motif_positions <- matchMotifs(motifs_subset, peaksSequences, out="positions")
+
+motif_positions <- motif_positions$MA1152.2
+
+names(motif_positions) <- names(peaksSequences)
+my_motifs <- unlist(motif_positions, use.names = TRUE)
+my_motifs
+```
+
+
+
