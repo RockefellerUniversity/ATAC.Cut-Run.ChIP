@@ -1,15 +1,18 @@
 ---
-title: "CUT&RUN In Bioconductor (part3) <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html>"
-author: "Rockefeller University, Bioinformatics Resource Centre"
-date: "http://rockefelleruniversity.github.io/RU_CUT&RUN/"
+title: "Epigenomics, Session 3"
+subtitle: " <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html> Bioinformatics Resource Center - Rockefeller University"
+author: 
+  - "http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/"
+  - "brc@rockefeller.edu"
 output: 
   xaringan::moon_reader:
-    css: ["default", "metropolisCustom.css", "metropolis-fontsCustom.css"]
+    css: ["default.css", "metropolisCustom.css", "metropolis-fontsCustom.css"]
     lib_dir: libs
     nature:
       highlightStyle: github
       highlightLines: true
       countIncrementalSlides: false
+      titleSlideClass: [middle, inverse]
   html_document:
     toc: true # table of content true
     toc_float: yes
@@ -18,7 +21,7 @@ output:
     theme: united  # many options for theme, this one is my favorite.
     highlight: tango  # specifies the syntax highlighting style
 params:
-  isSlides: "no" 
+  isSlides: "no"
 ---
 
 ```{r,include=FALSE}
@@ -590,7 +593,6 @@ Meta-plots average or sum signal over sets of regions to identify trends in data
 </div>
 
 ---
-
 ##  Plotting signal over regions in R
 
 To produce meta-plots of signal over regions we can use the **soGGi** bioconductor package. We can load in **soGGi** with the BiocManager::install and library function, as we have done before.
