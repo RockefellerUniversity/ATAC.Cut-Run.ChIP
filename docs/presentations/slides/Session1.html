@@ -350,7 +350,7 @@ readSequences
 
 
 ---
-## Base frequency with raw epigenomics data
+## Base frequency with raw data
 
 We can review the occurrence of DNA bases within reads and well as the occurrence of DNA bases across sequencing cycles using the [**alphabetFrequency()**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#18) and [**alphabetByCycle()**](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#30) functions respectively.
 
@@ -372,7 +372,7 @@ readSequences_AlpFreq[1:3, ]
 
 
 ---
-## Base frequency with raw epigenomics data
+## Base frequency with raw data
 
 Once we have the frequency of DNA bases in our sequence reads we can retrieve the sum across all reads.
 
@@ -388,7 +388,7 @@ summed__AlpFreq[c("A", "C", "G", "T", "N")]
 ```
 
 ---
-## Assess by cycle with raw epigenomics data
+## Assess by cycle with raw data
 
 We can review DNA base occurrence by cycle using the [**alphabetByCycle()** function.](https://rockefelleruniversity.github.io/Bioconductor_Introduction/presentations/slides/FastQInBioconductor.html#30)
 
@@ -411,7 +411,7 @@ readSequences_AlpbyCycle[1:4, 1:10]
 
 ## Assess by cycle with raw epigenomics data
 
-We often plot this to visualise the base occurrence over cycles to observe any bias.
+We often plot this to visualize the base occurrence over cycles to observe any bias.
 First we arrange the base frequency into a data frame.
 
 
@@ -478,7 +478,7 @@ ggplot(toPlot, aes(x = ReadQ)) + geom_histogram() + theme_minimal()
 ![](Session1_files/figure-html/mycRep1ReadsQScoresPlot-1.png)&lt;!-- --&gt;
 
 ---
-## Assess by cycle with raw epigenomics data
+## Quality Assessment
 
 In this case the distribution of reads quality scores is a little strange. Normally we see a wider range of scores. This is likely due to some kind of loss of information during some transfer/conversion. 
 
@@ -539,12 +539,14 @@ We typically use the default settings, but there are lots of options to control 
 ---
 ## Time for an exercise!
 
-Exercises for working with fastqs can be found [here](../exercises/exercises/MyExercise1_exercises.html)
+Exercises for working with fastqs can be found [here](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/exercises/exercises/MyExercise1_exercise.html)
+
+
 
 ---
 ## Answers to exercise
 
-Answers can be found [here](../exercises/answers/MyExercise1_answers.html)
+Answers can be found [here](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/exercises/answers/MyExercise1_answers.html)
 
 
 ---
