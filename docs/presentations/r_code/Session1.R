@@ -181,10 +181,62 @@ toPlot <- data.frame(ReadQ=readQualities)
 ggplot(toPlot,aes(x=ReadQ))+geom_histogram()+theme_minimal()
 
 
+## ----eval=T-------------------------------------------------------------------
+library(Rfastp)
+
+
 ## ----eval=F-------------------------------------------------------------------
-# library(Rfastp)
 # 
-# rfastp(read1="/Users/mattpaul/Downloads/SRR20110418_1.fastq.gz",
+# rfastp_res <- rfastp(read1="/Users/mattpaul/Downloads/SRR20110418_1.fastq.gz",
 #        read2 = "/Users/mattpaul/Downloads/SRR20110418_2.fastq.gz",
 #        outputFastq = "SOX9CNR_D0_rep1_filtered")
+
+
+## ----eval=FALSE, echo=F-------------------------------------------------------
+# save(rfastp_res, file = "data/fastp_res.RData")
+
+
+## -----------------------------------------------------------------------------
+load("data/fastp_res.RData")
+
+
+## -----------------------------------------------------------------------------
+qcSummary(rfastp_res)
+
+
+
+## -----------------------------------------------------------------------------
+
+curvePlot(rfastp_res, curve = "content_curves")
+
+
+
+## -----------------------------------------------------------------------------
+
+rfastp_res <- rfastp(read1 = "data/ERR458755.fastq.gz", outputFastq = "ERR458755_rfastp")
+
+
+## -----------------------------------------------------------------------------
+
+curvePlot(rfastp_res)
+
+
+## -----------------------------------------------------------------------------
+curvePlot(rfastp_res, curve="content_curves")
+
+
+
+## -----------------------------------------------------------------------------
+
+json_report <- rfastp(read1 = "data/ERR458755.fastq.gz", outputFastq = "ERR458755_rfastp", trimFrontRead1 = 10)
+
+
+## -----------------------------------------------------------------------------
+
+curvePlot(json_report)
+
+
+## -----------------------------------------------------------------------------
+curvePlot(json_report, curve="content_curves")
+
 

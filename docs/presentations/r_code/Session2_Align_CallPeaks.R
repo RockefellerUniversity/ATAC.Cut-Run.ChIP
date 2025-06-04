@@ -454,6 +454,7 @@ head(atacReads, 2)
 
 ## ----processData_plottingFrffagmentLengths_atac, echo=TRUE,eval=TRUE,cache=FALSE,fig.width=6,fig.height=4----
 atacReads_read1 <- GenomicAlignments::first(atacReads)
+atacReads_read2 <- GenomicAlignments::second(atacReads)
 insertSizes_atac <- abs(elementMetadata(atacReads_read1)$isize)
 fragLenSizes_atac <- table(insertSizes_atac)
 
@@ -476,7 +477,7 @@ fragLenPlot_atac+ scale_y_continuous(trans='log2')+
 
 
 ## ----processData_createOpenRegionBAM_atac, echo=TRUE,eval=TRUE,cache=FALSE----
-atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
+atacReads_filter <- atacReads[!mcols(atacReads_read1)$mapq == 0 | !mcols(atacReads_read2)$mapq == 0]
 
 
 
@@ -489,7 +490,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 
 
 ## ----writeFilteredBAM_atac, echo=T, eval=F------------------------------------
-# atacReads_filter_noBL <- atacReads_filter[!bl_remove]
+# atacReads_filter_noBL <- atacReads_filter[!bl_remove_atac]
 # atacReads_unlist <- unlist(atacReads_filter_noBL)
 # names(atacReads_unlist) <- mcols(atacReads_unlist)$qname
 # 
@@ -506,8 +507,8 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 #                         tempBam <- paste0(tempfile(), ".bam")
 #                         tempBam2 <- paste0(tempfile(), ".bam")
 #                         system(paste("samtools sort", "-n", "-o", tempBam, filter_bam_atac, sep = " "))
-#                         system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
-#                         system(paste("samtools sort", "-n", "-o", forPeak_bam_atac, tempBam2, sep = " "))
+#                         system(paste("samtools fixmate", "-m", tempBam, forPeak_bam_atac, sep = " "))
+#                         system(paste("samtools sort -o", forPeak_bam_atac, tempBam2, sep = " "))
 #                       })
 # 
 
@@ -545,7 +546,7 @@ atacReads_filter <- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
 #                         tempBam2 <- paste0(tempfile(), ".bam")
 #                         system(paste("samtools sort", "-n", "-o", tempBam, NF_bam_atac, sep = " "))
 #                         system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
-#                         system(paste("samtools sort", "-n", "-o", forPeak_NFbam_atac, tempBam2, sep = " "))
+#                         system(paste("samtools sort -o", forPeak_NFbam_atac, tempBam2, sep = " "))
 #                       })
 # 
 

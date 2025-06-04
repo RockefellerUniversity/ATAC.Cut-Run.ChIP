@@ -2458,12 +2458,13 @@ fragements.</p>
 <p>We can use the <strong>table()</strong> function to retrieve a vector
 of the occurrence of each fragment length.</p>
 <div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" tabindex="-1"></a>atacReads_read1 <span class="ot">&lt;-</span> GenomicAlignments<span class="sc">::</span><span class="fu">first</span>(atacReads)</span>
-<span id="cb67-2"><a href="#cb67-2" tabindex="-1"></a>insertSizes_atac <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">elementMetadata</span>(atacReads_read1)<span class="sc">$</span>isize)</span>
-<span id="cb67-3"><a href="#cb67-3" tabindex="-1"></a>fragLenSizes_atac <span class="ot">&lt;-</span> <span class="fu">table</span>(insertSizes_atac)</span>
-<span id="cb67-4"><a href="#cb67-4" tabindex="-1"></a></span>
-<span id="cb67-5"><a href="#cb67-5" tabindex="-1"></a>toPlot_atac <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">InsertSize =</span> <span class="fu">as.numeric</span>(<span class="fu">names</span>(fragLenSizes_atac)), <span class="at">Count =</span> <span class="fu">as.numeric</span>(fragLenSizes_atac))</span>
-<span id="cb67-6"><a href="#cb67-6" tabindex="-1"></a>fragLenPlot_atac <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(toPlot_atac, <span class="fu">aes</span>(<span class="at">x =</span> InsertSize, <span class="at">y =</span> Count)) <span class="sc">+</span> <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb67-7"><a href="#cb67-7" tabindex="-1"></a>    <span class="fu">theme_bw</span>()</span></code></pre></div>
+<span id="cb67-2"><a href="#cb67-2" tabindex="-1"></a>atacReads_read2 <span class="ot">&lt;-</span> GenomicAlignments<span class="sc">::</span><span class="fu">second</span>(atacReads)</span>
+<span id="cb67-3"><a href="#cb67-3" tabindex="-1"></a>insertSizes_atac <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">elementMetadata</span>(atacReads_read1)<span class="sc">$</span>isize)</span>
+<span id="cb67-4"><a href="#cb67-4" tabindex="-1"></a>fragLenSizes_atac <span class="ot">&lt;-</span> <span class="fu">table</span>(insertSizes_atac)</span>
+<span id="cb67-5"><a href="#cb67-5" tabindex="-1"></a></span>
+<span id="cb67-6"><a href="#cb67-6" tabindex="-1"></a>toPlot_atac <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">InsertSize =</span> <span class="fu">as.numeric</span>(<span class="fu">names</span>(fragLenSizes_atac)), <span class="at">Count =</span> <span class="fu">as.numeric</span>(fragLenSizes_atac))</span>
+<span id="cb67-7"><a href="#cb67-7" tabindex="-1"></a>fragLenPlot_atac <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(toPlot_atac, <span class="fu">aes</span>(<span class="at">x =</span> InsertSize, <span class="at">y =</span> Count)) <span class="sc">+</span> <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb67-8"><a href="#cb67-8" tabindex="-1"></a>    <span class="fu">theme_bw</span>()</span></code></pre></div>
 </div>
 <div id="plotting-insert-sizes---atacseq-1" class="section level2">
 <h2>Plotting insert sizes - ATACseq</h2>
@@ -2488,7 +2489,8 @@ patterning.</p>
 <p>We will filter out fragments where either read has a MAPQ of 0. For
 CUT&amp;RUN we also filtered out longer fragments, we will not do that
 here to get a full picture of the chromatin structure.</p>
-<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a>atacReads_filter <span class="ot">&lt;-</span> atacReads[<span class="sc">!</span><span class="fu">mcols</span>(read1)<span class="sc">$</span>mapq <span class="sc">==</span> <span class="dv">0</span> <span class="sc">|</span> <span class="sc">!</span><span class="fu">mcols</span>(read2)<span class="sc">$</span>mapq <span class="sc">==</span> <span class="dv">0</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a>atacReads_filter <span class="ot">&lt;-</span> atacReads[<span class="sc">!</span><span class="fu">mcols</span>(atacReads_read1)<span class="sc">$</span>mapq <span class="sc">==</span> <span class="dv">0</span> <span class="sc">|</span> <span class="sc">!</span><span class="fu">mcols</span>(atacReads_read2)<span class="sc">$</span>mapq <span class="sc">==</span></span>
+<span id="cb70-2"><a href="#cb70-2" tabindex="-1"></a>    <span class="dv">0</span>]</span></code></pre></div>
 </div>
 <div id="remove-blacklist-regions---atacseq" class="section level2">
 <h2>Remove blacklist regions - ATACseq</h2>
@@ -2511,7 +2513,7 @@ the peak callers, so we unlist the GAlignmentPairs object so each read
 now has its own row, and then the names are set from the metadata of the
 object.</p>
 <p>Lastly, the BAM file is written to file.</p>
-<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" tabindex="-1"></a>atacReads_filter_noBL <span class="ot">&lt;-</span> atacReads_filter[<span class="sc">!</span>bl_remove]</span>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" tabindex="-1"></a>atacReads_filter_noBL <span class="ot">&lt;-</span> atacReads_filter[<span class="sc">!</span>bl_remove_atac]</span>
 <span id="cb72-2"><a href="#cb72-2" tabindex="-1"></a>atacReads_unlist <span class="ot">&lt;-</span> <span class="fu">unlist</span>(atacReads_filter_noBL)</span>
 <span id="cb72-3"><a href="#cb72-3" tabindex="-1"></a><span class="fu">names</span>(atacReads_unlist) <span class="ot">&lt;-</span> <span class="fu">mcols</span>(atacReads_unlist)<span class="sc">$</span>qname</span>
 <span id="cb72-4"><a href="#cb72-4" tabindex="-1"></a></span>
@@ -2529,8 +2531,8 @@ lastly sort by coordinate.</p>
 <span id="cb73-3"><a href="#cb73-3" tabindex="-1"></a>    tempBam <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">tempfile</span>(), <span class="st">&quot;.bam&quot;</span>)</span>
 <span id="cb73-4"><a href="#cb73-4" tabindex="-1"></a>    tempBam2 <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">tempfile</span>(), <span class="st">&quot;.bam&quot;</span>)</span>
 <span id="cb73-5"><a href="#cb73-5" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools sort&quot;</span>, <span class="st">&quot;-n&quot;</span>, <span class="st">&quot;-o&quot;</span>, tempBam, filter_bam_atac, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
-<span id="cb73-6"><a href="#cb73-6" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools fixmate&quot;</span>, <span class="st">&quot;-m&quot;</span>, tempBam, tempBam2, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
-<span id="cb73-7"><a href="#cb73-7" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools sort&quot;</span>, <span class="st">&quot;-n&quot;</span>, <span class="st">&quot;-o&quot;</span>, forPeak_bam_atac, tempBam2, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
+<span id="cb73-6"><a href="#cb73-6" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools fixmate&quot;</span>, <span class="st">&quot;-m&quot;</span>, tempBam, forPeak_bam_atac, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
+<span id="cb73-7"><a href="#cb73-7" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools sort -o&quot;</span>, forPeak_bam_atac, tempBam2, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
 <span id="cb73-8"><a href="#cb73-8" tabindex="-1"></a>})</span></code></pre></div>
 </div>
 <div id="atacseq-peak-calling-with-macs" class="section level2">
@@ -2576,7 +2578,7 @@ MACS3.</p>
 <span id="cb76-4"><a href="#cb76-4" tabindex="-1"></a>    tempBam2 <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="fu">tempfile</span>(), <span class="st">&quot;.bam&quot;</span>)</span>
 <span id="cb76-5"><a href="#cb76-5" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools sort&quot;</span>, <span class="st">&quot;-n&quot;</span>, <span class="st">&quot;-o&quot;</span>, tempBam, NF_bam_atac, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
 <span id="cb76-6"><a href="#cb76-6" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools fixmate&quot;</span>, <span class="st">&quot;-m&quot;</span>, tempBam, tempBam2, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
-<span id="cb76-7"><a href="#cb76-7" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools sort&quot;</span>, <span class="st">&quot;-n&quot;</span>, <span class="st">&quot;-o&quot;</span>, forPeak_NFbam_atac, tempBam2, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
+<span id="cb76-7"><a href="#cb76-7" tabindex="-1"></a>    <span class="fu">system</span>(<span class="fu">paste</span>(<span class="st">&quot;samtools sort -o&quot;</span>, forPeak_NFbam_atac, tempBam2, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>))</span>
 <span id="cb76-8"><a href="#cb76-8" tabindex="-1"></a>})</span></code></pre></div>
 </div>
 <div id="call-nf-peaks-with-macs" class="section level2">

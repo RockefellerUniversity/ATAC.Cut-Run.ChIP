@@ -1159,6 +1159,7 @@ We can use the **table()** function to retrieve a vector of the occurrence of ea
 
 ``` r
 atacReads_read1 &lt;- GenomicAlignments::first(atacReads)
+atacReads_read2 &lt;- GenomicAlignments::second(atacReads)
 insertSizes_atac &lt;- abs(elementMetadata(atacReads_read1)$isize)
 fragLenSizes_atac &lt;- table(insertSizes_atac)
 
@@ -1203,7 +1204,8 @@ We will filter out fragments where either read has a MAPQ of 0. For CUT&amp;RUN 
 
 
 ``` r
-atacReads_filter &lt;- atacReads[!mcols(read1)$mapq == 0 | !mcols(read2)$mapq == 0]
+atacReads_filter &lt;- atacReads[!mcols(atacReads_read1)$mapq == 0 | !mcols(atacReads_read2)$mapq ==
+    0]
 ```
 
 ---
@@ -1231,7 +1233,7 @@ Lastly, the BAM file is written to file.
 
 
 ``` r
-atacReads_filter_noBL &lt;- atacReads_filter[!bl_remove]
+atacReads_filter_noBL &lt;- atacReads_filter[!bl_remove_atac]
 atacReads_unlist &lt;- unlist(atacReads_filter_noBL)
 names(atacReads_unlist) &lt;- mcols(atacReads_unlist)$qname
 
@@ -1251,8 +1253,8 @@ Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", {
     tempBam &lt;- paste0(tempfile(), ".bam")
     tempBam2 &lt;- paste0(tempfile(), ".bam")
     system(paste("samtools sort", "-n", "-o", tempBam, filter_bam_atac, sep = " "))
-    system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
-    system(paste("samtools sort", "-n", "-o", forPeak_bam_atac, tempBam2, sep = " "))
+    system(paste("samtools fixmate", "-m", tempBam, forPeak_bam_atac, sep = " "))
+    system(paste("samtools sort -o", forPeak_bam_atac, tempBam2, sep = " "))
 })
 ```
 
@@ -1309,7 +1311,7 @@ Herper::with_CondaEnv("CnR_analysis", pathToMiniConda = "miniconda", {
     tempBam2 &lt;- paste0(tempfile(), ".bam")
     system(paste("samtools sort", "-n", "-o", tempBam, NF_bam_atac, sep = " "))
     system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
-    system(paste("samtools sort", "-n", "-o", forPeak_NFbam_atac, tempBam2, sep = " "))
+    system(paste("samtools sort -o", forPeak_NFbam_atac, tempBam2, sep = " "))
 })
 ```
 
