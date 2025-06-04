@@ -1590,8 +1590,9 @@ analysis:</p>
 <ul>
 <li>Align the FASTQ reads to the genome to generate BAM alignment
 files.</li>
-<li>Identify areas of read build up by calling peaks, or areas of
-significant enrichment</li>
+<li>Identify areas of significant read build up by calling peaks.</li>
+<li>These steps are very similar for CUT&amp;RUN and ATACseq, but there
+are some differences we will highlight.</li>
 </ul>
 </div>
 </div>
@@ -1693,8 +1694,8 @@ to 8GB. This may be too large for your laptop or Desktop.</em></p>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">buildindex</span>(<span class="st">&quot;mm10_mainchrs&quot;</span>, <span class="st">&quot;BSgenome.Mmusculus.UCSC.mm10.mainChrs.fa&quot;</span>, <span class="at">memory =</span> <span class="dv">8000</span>,</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    <span class="at">indexSplit =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </div>
-<div id="aligning-sequence-reads" class="section level2">
-<h2>Aligning Sequence Reads</h2>
+<div id="aligning-cutrun-reads" class="section level2">
+<h2>Aligning CUT&amp;RUN Reads</h2>
 <p>In the following slides we will focus on aligning the CUT&amp;RUN
 data, but alignment of ATACseq data will be the same. In the post
 processing and peak calling section there are some considerations for
@@ -1706,7 +1707,7 @@ most often comes as two files typically with *_1* and *_2* or *_R1* and
 same number of reads and the reads will be ordered the same in both
 files.</p>
 </div>
-<div id="aligning-sequence-reads-1" class="section level2">
+<div id="aligning-sequence-reads" class="section level2">
 <h2>Aligning Sequence Reads</h2>
 <p>Below we read in the first 1000 reads in replicate 1 of the Week 6
 CUT&amp;RUN FASTQ file.</p>
@@ -1729,13 +1730,12 @@ in a pair.</p>
 ## [1]    17 SRR20110409.9 9/2
 ## [2]    19 SRR20110409.10 10/2</code></pre>
 </div>
-<div id="aligning-sequence-reads-2" class="section level2">
+<div id="aligning-sequence-reads-1" class="section level2">
 <h2>Aligning Sequence Reads</h2>
-<p>Now we have an index and our FASTQ files, we can perform the
+<p>Now that we have an index and our FASTQ files, we can perform the
 alignment.</p>
-<p>We have our two FASTQ files that have been filtered with rfastp for
-QC metrics.</p>
-<p>These are <a href="https://www.dropbox.com/scl/fo/ktmtrypv57tpckk7ehmow/AN-f1t17gbBtFpxjdFK8WRY?rlkey=3dnog47inu8y0giqct1g0xy4q&amp;st=zq28gbmj&amp;dl=0">available
+<p>Our two FASTQ files that have been filtered with rfastp for QC
+metrics, and are <a href="https://www.dropbox.com/scl/fo/ktmtrypv57tpckk7ehmow/AN-f1t17gbBtFpxjdFK8WRY?rlkey=3dnog47inu8y0giqct1g0xy4q&amp;st=zq28gbmj&amp;dl=0">available
 on dropbox</a> if you have built the index and want to try the alignment
 on your own.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>read1_toAlign <span class="ot">&lt;-</span> <span class="st">&quot;~/Downloads/SOX9CNR_W6_rep1_QC_R1.fastq.gz&quot;</span></span>
@@ -1872,26 +1872,30 @@ This was created by us here at the BRC and is part of Bioconductor.</p>
 <div id="install-software-with-conda-and-herper-1" class="section level2">
 <h2>Install software with conda and Herper</h2>
 <p>First, we will use Herper to install MACS with the
-<em>install_CondaTools</em> function. We just need to tell
-<em>install_CondaTools</em> what tool/s you want and the name of the
-environment you want to build.</p>
+<code>install_CondaTools</code> function. This will automatically
+install miniconda, a lightweight version of Anaconda.</p>
+<p>We just need to tell <code>install_CondaTools</code> the
+following:</p>
+<ul>
+<li>what tool/s you want</li>
+<li>the name of the environment you want to build.</li>
+<li>path where the miniconda currently is or should be installed</li>
+<li>whether you are updating a current environment (optional)</li>
+</ul>
 <p>We will install MACS (version 3), in addition to samtools and
 bedtools, which will be used to prepare our BAM files for use by MACS
 and SEACR.</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;miniconda&quot;</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>macs_paths <span class="ot">&lt;-</span> <span class="fu">install_CondaTools</span>(<span class="at">tools =</span> <span class="fu">c</span>(<span class="st">&quot;macs3&quot;</span>, <span class="st">&quot;samtools&quot;</span>, <span class="st">&quot;bedtools&quot;</span>), <span class="at">env =</span> <span class="st">&quot;CnR_analysis&quot;</span>,</span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>    <span class="at">pathToMiniConda =</span> <span class="st">&quot;miniconda&quot;</span>)</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>macs_paths</span></code></pre></div>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>    <span class="at">pathToMiniConda =</span> <span class="st">&quot;miniconda&quot;</span>)</span></code></pre></div>
 </div>
 <div id="install-software-with-conda-and-herper-2" class="section level2">
 <h2>Install software with conda and Herper</h2>
 <p>Behind the scenes, Herper will install the most minimal version of
 conda (called miniconda), and then will create a new environment into
 which MACS, bedtools, and samtools will be installed.</p>
-<p>When you run the function it prints out where MACS is installed.
-There are additional arguments to control where miniconda is installed
-using <em>pathToMiniConda</em> and also update an existing environment
-with <em>updateEnv</em>.</p>
+<p>When you run the function it returns and prints out where the
+software is installed.</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>macs_paths</span></code></pre></div>
 <pre><code>$pathToConda
 [1] &quot;miniconda/bin/conda&quot;
@@ -1950,15 +1954,17 @@ Options:
 </div>
 <div id="proper-pairs---cutrun" class="section level2">
 <h2>Proper pairs - CUT&amp;RUN</h2>
-<p>With our aligned paired-end data we can assess other QC metrics, like
-alignment quality and fragment length. We read our newly aligned data
-using the GenomicAlignments package.</p>
+<p>Now that we have our aligned paired-end data contained in BAM files,
+and the software installed to eventually call peaks, we can assess some
+initial QC metrics like alignment quality and fragment length.</p>
+<p>We will read our newly aligned data using the GenomicAlignments
+package.</p>
 <p>Here we only want reads which are properly paired so we will use the
 <strong>ScanBamParam()</strong> and <strong>scanBamFlag()</strong>
 functions to control what will be read into R.</p>
 <p>We set the <strong>scanBamFlag()</strong> function parameters
 <strong>isProperPair</strong> to TRUE so as to only read in reads paired
-in alignment within our preset max fragment length (2000bp)</p>
+in alignment.</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">library</span>(GenomicAlignments)</span>
 <span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>flags <span class="ot">=</span> <span class="fu">scanBamFlag</span>(<span class="at">isProperPair =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </div>

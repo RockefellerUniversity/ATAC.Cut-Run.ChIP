@@ -187,7 +187,6 @@ if(params$isSlides == "yes"){
 ## ----makeCondaEnv, echo=T, eval=F---------------------------------------------
 # dir.create("miniconda")
 # macs_paths <- install_CondaTools(tools= c("macs3", "samtools", "bedtools"), env="CnR_analysis", pathToMiniConda = "miniconda")
-# macs_paths
 
 
 ## ----eval=F, echo=F-----------------------------------------------------------
