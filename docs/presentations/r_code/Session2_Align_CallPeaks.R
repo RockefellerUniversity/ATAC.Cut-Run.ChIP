@@ -20,15 +20,14 @@ if(params$isSlides != "yes"){
 
 
 ## ----setwd_introtoR,eval=F----------------------------------------------------
-# setwd("/PathToMyDownload/RU_Course_template/r_course")
-# # e.g. setwd("~/Downloads/Intro_To_R_1Day/r_course")
+# setwd("~/Downloads/ATAC.Cut-Run.ChIP-master/r_course")
 
 
 ## ----results='asis',include=TRUE,echo=FALSE-----------------------------------
 if(params$isSlides == "yes"){
   cat("class: inverse, center, middle
 
-# Aligning data
+# Aligning CUT&RUN and ATACseq reads
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
@@ -36,7 +35,7 @@ if(params$isSlides == "yes"){
 "    
   )
 }else{
-  cat("# Aligning data
+  cat("# Aligning CUT&RUN and ATACseq reads
 
 ---
 "    
@@ -46,7 +45,7 @@ if(params$isSlides == "yes"){
 
 
 
-## ----fa1, echo=TRUE-----------------------------------------------------------
+## ----fa1, echo=TRUE, message = F, warning=F-----------------------------------
 library(BSgenome.Mmusculus.UCSC.mm10)
 BSgenome.Mmusculus.UCSC.mm10
 
@@ -100,7 +99,7 @@ require(ShortRead)
 
 # first 1000 reads in each file
 read1 <- readFastq("data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
-read2 <- readFastq("data/SOX9CNR_W6_rep1_1K_R1.fastq.gz")
+read2 <- readFastq("data/SOX9CNR_W6_rep1_1K_R2.fastq.gz")
 id(read1)[1:2]
 id(read2)[1:2]
 
@@ -110,11 +109,11 @@ read1_toAlign <- "~/Downloads/SOX9CNR_W6_rep1_QC_R1.fastq.gz"
 read2_toAlign <- "~/Downloads/SOX9CNR_W6_rep1_QC_R2.fastq.gz"
 
 
-## ----echo=F,eval=TRUE---------------------------------------------------------
+## ----echo=F,eval=TRUE, warning=F----------------------------------------------
 library(Rsubread)
 
 
-## ----align, echo=TRUE,eval=F--------------------------------------------------
+## ----align, echo=TRUE,eval=F, warning=F---------------------------------------
 # myMapped <- align("mm10_mainchrs",
 #                   readfile1 = read1_toAlign,
 #                   readfile2 = read2_toAlign,
@@ -188,7 +187,6 @@ if(params$isSlides == "yes"){
 ## ----makeCondaEnv, echo=T, eval=F---------------------------------------------
 # dir.create("miniconda")
 # macs_paths <- install_CondaTools(tools= c("macs3", "samtools", "bedtools"), env="CnR_analysis", pathToMiniConda = "miniconda")
-# macs_paths
 
 
 ## ----eval=F, echo=F-----------------------------------------------------------
@@ -232,12 +230,8 @@ myParam
 sortedBAM <- "data/SOX9CNR_W6_rep1_chr18_sorted.bam"
 cnrReads <- readGAlignmentPairs(sortedBAM,
                                  param=myParam)
-class(cnrReads)
-
-
-
-## ----processData_readingInData, echo=TRUE,eval=TRUE,cache=FALSE---------------
 cnrReads[1:2,]
+
 
 
 ## ----processData_readingInData2, echo=TRUE,eval=TRUE,cache=FALSE--------------
@@ -270,7 +264,7 @@ ggplot(toPlot,aes(x=MapQ,y=Frequency,fill=MapQ))+
   facet_grid(~Read)
 
 
-## ----processData_extractingRead1, echo=FALSE,eval=TRUE,cache=FALSE------------
+## ----processData_extractingRead1, echo=T,eval=TRUE,cache=FALSE----------------
 insertSizes <- abs(mcols(read1)$isize)
 head(insertSizes)
 

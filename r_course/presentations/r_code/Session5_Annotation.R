@@ -230,7 +230,7 @@ GO_result_df[1:3, ]
 ## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, fig.height=4, fig.width=9----
 library(enrichplot)
 GO_result_plot <- pairwise_termsim(GO_result)
-emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.6)
+emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
 
 
 ## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T----------------------
@@ -303,7 +303,7 @@ great_gobp_tab[1:5, ]
 ## ----eval=T,echo=T, message=F, warning=FALSE,tidy=T---------------------------
 # convert to a list of gene sets
 reac_gene_sets <- split(msig_t2g_reac$entrez_gene, msig_t2g_reac$gs_name)
-reac_gene_sets <- lapply(reac_gene_sets, as.character)  # just to make sure gene IDs are all in character.
+reac_gene_sets <- lapply(reac_gene_sets, as.character)  
 
 reac_gene_sets[1:2]
 

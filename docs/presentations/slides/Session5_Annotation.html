@@ -94,16 +94,16 @@ peakAnno &lt;- annotatePeak(cnrPeaks_GR, tssRegion = c(-1000, 1000), TxDb = TxDb
 ```
 
 ```
-## &gt;&gt; preparing features information...		 2025-06-03 15:35:16 
-## &gt;&gt; identifying nearest features...		 2025-06-03 15:35:16 
-## &gt;&gt; calculating distance from peak to TSS...	 2025-06-03 15:35:17 
-## &gt;&gt; assigning genomic annotation...		 2025-06-03 15:35:17 
-## &gt;&gt; adding gene annotation...			 2025-06-03 15:35:27
+## &gt;&gt; preparing features information...		 2025-06-04 03:02:43 
+## &gt;&gt; identifying nearest features...		 2025-06-04 03:02:43 
+## &gt;&gt; calculating distance from peak to TSS...	 2025-06-04 03:02:44 
+## &gt;&gt; assigning genomic annotation...		 2025-06-04 03:02:44 
+## &gt;&gt; adding gene annotation...			 2025-06-04 03:02:54
 ```
 
 ```
-## &gt;&gt; assigning chromosome lengths			 2025-06-03 15:35:27 
-## &gt;&gt; done...					 2025-06-03 15:35:27
+## &gt;&gt; assigning chromosome lengths			 2025-06-04 03:02:54 
+## &gt;&gt; done...					 2025-06-04 03:02:54
 ```
 
 ``` r
@@ -691,7 +691,7 @@ We measure similarities between the various significant gene sets and group them
 ``` r
 library(enrichplot)
 GO_result_plot &lt;- pairwise_termsim(GO_result)
-emapplot(GO_result_plot, showCategory = 20, cex_label_category = 0.6)
+emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
 ```
 
 ![](Session5_Annotation_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
@@ -949,7 +949,7 @@ We can convert our Reactome gene set table we previously generated to a list.
 ``` r
 # convert to a list of gene sets
 reac_gene_sets &lt;- split(msig_t2g_reac$entrez_gene, msig_t2g_reac$gs_name)
-reac_gene_sets &lt;- lapply(reac_gene_sets, as.character)  # just to make sure gene IDs are all in character.
+reac_gene_sets &lt;- lapply(reac_gene_sets, as.character)
 
 reac_gene_sets[1:2]
 ```
@@ -1047,14 +1047,14 @@ great_genes[1:5]
 
 ## Time for an exercise!
 
-Exercise on CUT&amp;RUN data can be found [here](../../exercises/exercises/CUT&amp;RUN_part1_exercise.html)
+Exercise on CUT&amp;RUN data can be found [here](../../exercises/exercises/ATACCutRunChIP_Annotation_exercise.html)
 
 ---
 ## Answers to exercise
 
-Answers can be found [here](../../exercises/answers/CUT&amp;RUN_part1_answers.html)
+Answers can be found [here](../../exercises/answers/ATACCutRunChIP_Annotation_answers.html)
 
-R code for solutions can be found [here](../../exercises/answers/CUT&amp;RUN_part1_answers.R)
+R code for solutions can be found [here](../../exercises/answers/ATACCutRunChIP_Annotation_answers.R)
 
 
     </textarea>
