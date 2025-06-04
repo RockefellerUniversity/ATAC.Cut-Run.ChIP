@@ -62,7 +62,8 @@ Earlier we learned how to asses the quality of a FASTQ file and filter the reads
 We will take these filtered FASTQ files and continue with the analysis:
 
   * Align the FASTQ reads to the genome to generate BAM alignment files.
-  * Identify areas of read build up by calling peaks, or areas of significant enrichment
+  * Identify areas of significant read build up by calling peaks.
+  * These steps are very similar for CUT&RUN and ATACseq, but there are some differences we will highlight.
 
 
 ---
@@ -169,7 +170,7 @@ buildindex("mm10_chr18","BSgenome.Mmusculus.UCSC.mm10.chr18.fa",
 ```
 
 ---
-## Aligning Sequence Reads
+## Aligning CUT&RUN Reads
 
 In the following slides we will focus on aligning the CUT&RUN data, but alignment of ATACseq data will be the same. In the post processing and peak calling section there are some considerations for each method that we will cover. 
 
@@ -210,11 +211,9 @@ id(read2)[1:2]
 ---
 ## Aligning Sequence Reads
 
-Now we have an index and our FASTQ files, we can perform the alignment.
+Now that we have an index and our FASTQ files, we can perform the alignment.
 
-We have our two FASTQ files that have been filtered with rfastp for QC metrics. 
-
-These are [available on dropbox](https://www.dropbox.com/scl/fo/ktmtrypv57tpckk7ehmow/AN-f1t17gbBtFpxjdFK8WRY?rlkey=3dnog47inu8y0giqct1g0xy4q&st=zq28gbmj&dl=0) if you have built the index and want to try the alignment on your own. 
+Our two FASTQ files that have been filtered with rfastp for QC metrics, and are [available on dropbox](https://www.dropbox.com/scl/fo/ktmtrypv57tpckk7ehmow/AN-f1t17gbBtFpxjdFK8WRY?rlkey=3dnog47inu8y0giqct1g0xy4q&st=zq28gbmj&dl=0) if you have built the index and want to try the alignment on your own. 
 
 ```{r}
 read1_toAlign <- "~/Downloads/SOX9CNR_W6_rep1_QC_R1.fastq.gz"
@@ -406,14 +405,20 @@ library(Herper)
 
 ## Install software with conda and Herper
 
-First, we will use Herper to install MACS with the *install_CondaTools* function. We just need to tell *install_CondaTools* what tool/s you want and the name of the environment you want to build. 
+First, we will use Herper to install MACS with the `install_CondaTools` function. This will automatically install miniconda, a lightweight version of Anaconda. 
+
+We just need to tell `install_CondaTools` the following:
+
+  * what tool/s you want
+  * the name of the environment you want to build. 
+  * path where the miniconda currently is or should be installed
+  * whether you are updating a current environment (optional)
 
 We will install MACS (version 3), in addition to samtools and bedtools, which will be used to prepare our BAM files for use by MACS and SEACR.
 
 ```{r makeCondaEnv, echo=T, eval=F}
 dir.create("miniconda")
 macs_paths <- install_CondaTools(tools= c("macs3", "samtools", "bedtools"), env="CnR_analysis", pathToMiniConda = "miniconda")
-macs_paths
 ```
 
 
@@ -440,7 +445,7 @@ install_CondaTools(tools=c("macs3", "samtools", "bedtools"), env="CnR_analysis",
 
 Behind the scenes, Herper will install the most minimal version of conda (called miniconda), and then will create a new environment into which MACS, bedtools, and samtools will be installed. 
 
-When you run the function it prints out where MACS is installed. There are additional arguments to control where miniconda is installed using *pathToMiniConda* and also update an existing environment with *updateEnv*. 
+When you run the function it returns and prints out where the software is installed.
 
 ```{r makeCondaEnv2, echo=T, eval=F}
 macs_paths
@@ -515,11 +520,13 @@ Options:
 
 ## Proper pairs - CUT&RUN
 
-With our aligned paired-end data we can assess other QC metrics, like alignment quality and fragment length. We read our newly aligned data using the GenomicAlignments package. 
+Now that we have our aligned paired-end data contained in BAM files, and the software installed to eventually call peaks, we can assess some initial QC metrics like alignment quality and fragment length. 
+
+We will read our newly aligned data using the GenomicAlignments package. 
 
 Here we only want reads which are properly paired so we will use the **ScanBamParam()** and **scanBamFlag()** functions to control what will be read into R.
 
-We set the **scanBamFlag()** function parameters **isProperPair** to TRUE so as to only read in reads paired in alignment within our preset max fragment length (2000bp)
+We set the **scanBamFlag()** function parameters **isProperPair** to TRUE so as to only read in reads paired in alignment.
 
 ```{r processData_readingInDatad, echo=TRUE,eval=TRUE,cache=FALSE}
 library(GenomicAlignments)
