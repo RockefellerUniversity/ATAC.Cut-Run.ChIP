@@ -508,9 +508,11 @@ There are many ways to customize including trimming options, barcodes and string
 
 To run Rfastp we simply provide our two fastq files (or just one if we are running single end). We will also provide a name for the filtered Fastq file which is output. 
 
+```{r, eval=T}
+library(Rfastp)
+```
 
 ```{R, eval=F}
-library(Rfastp)
 
 rfastp_res <- rfastp(read1="/Users/mattpaul/Downloads/SRR20110418_1.fastq.gz",
        read2 = "/Users/mattpaul/Downloads/SRR20110418_2.fastq.gz",
