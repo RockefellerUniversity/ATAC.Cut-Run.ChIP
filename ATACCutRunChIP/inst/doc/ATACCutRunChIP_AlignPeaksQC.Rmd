@@ -142,7 +142,7 @@ fragLenPlot+theme_bw()
   * Filter out reads > 120 bp and MAPQ = 0
   * remove reads that overlap blacklist regions
   * prep BAM file and make bedgraph required for SEACR.
-  * BONUS: repeat the peak calling without filtering out reads >120bp (use 1000 like the lecture). Look at both on IGV and see if there's much of a difference. 
+  * BONUS: repeat the peak calling without filtering out reads >120bp (use 1000 like the lecture). Look at both on IGV and see if there's a difference. 
 
 ```{r,echo=toMessage, eval=F}
 
@@ -213,7 +213,7 @@ system(paste(seacr_path, "-b",
 
 ```
 
-<img src="imgs/chr19_peakExample.png" alt="igv" height="300" width="700">
+<img src="imgs/chr19_peakExample.png" alt="igv" height="400" width="800">
 
 
 
@@ -272,7 +272,7 @@ system(paste(seacr_path, "-b",
 
 BONUS with both filter settings (1000bp vs 120bp):
 
-<img src="imgs/chr19_peakExample_with1K.png" alt="igv" height="350" width="700">
+<img src="imgs/chr19_peakExample_with1K.png" alt="igv" height="400" width="800">
 
 ### 6. Run ChIPQC and find the following information:
   * percentage of reads in peaks and in blacklist regions
@@ -295,7 +295,7 @@ qc_sox9_rep2 <- ChIPQCsample(sortedBAM,
 saveRDS(qc_sox9_rep2, "data/qc_sox9_rep2_chipqc.rds")
 ```
 
-```{r, echo=F, eval=F}
+```{r, echo=F, eval=T}
 
 qc_sox9_rep2 <- readRDS("data/qc_sox9_rep2_chipqc.rds")
 
