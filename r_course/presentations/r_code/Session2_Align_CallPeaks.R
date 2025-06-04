@@ -507,7 +507,7 @@ atacReads_filter <- atacReads[!mcols(atacReads_read1)$mapq == 0 | !mcols(atacRea
 #                         tempBam <- paste0(tempfile(), ".bam")
 #                         tempBam2 <- paste0(tempfile(), ".bam")
 #                         system(paste("samtools sort", "-n", "-o", tempBam, filter_bam_atac, sep = " "))
-#                         system(paste("samtools fixmate", "-m", tempBam, forPeak_bam_atac, sep = " "))
+#                         system(paste("samtools fixmate", "-m", tempBam, tempBam2, sep = " "))
 #                         system(paste("samtools sort -o", forPeak_bam_atac, tempBam2, sep = " "))
 #                       })
 # 
