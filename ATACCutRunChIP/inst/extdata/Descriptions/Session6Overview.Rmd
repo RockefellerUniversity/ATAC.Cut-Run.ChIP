@@ -1,0 +1,10 @@
+<br>
+
+#### **Epigenomics , Session 6**
+
+This section focuses on motif analysis
+
+* Motif databases and making seqlogos
+* Motif enrichment analysis with MEME
+* De novo motif analysis with MEME
+* Finding motifs with motifmatchr
