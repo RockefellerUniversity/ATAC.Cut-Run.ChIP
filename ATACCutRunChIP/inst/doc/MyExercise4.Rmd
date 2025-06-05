@@ -29,7 +29,7 @@ library(rtracklayer)
 peakFiles <- dir("data/atac_peaks",pattern="narrowPeak",
                  full.names = TRUE)
 peakFiles
-macsPeaks_list <- lapply(peakFiles, import)
+macsPeaks_list <- lapply(peakFiles, rtracklayer::import)
 ```
 
 - Compare W6 peaks for each replicate. How many peaks are unique to each replicate and how many are in common? Export the unique peaks.
@@ -134,7 +134,7 @@ bamFL
 ```
 
 ```{r,eval=F, warning=FALSE,echo=toMessage}
-HC_Peaks <- rtracklayer::import("ATAC_HC_Peaks.bed")
+HC_Peaks <- rtracklayer::import("data/ATAC_HC_Peaks.bed")
 library(GenomicAlignments)
 MyCounts <- summarizeOverlaps(HC_Peaks,
                               reads = bamFL,
@@ -168,9 +168,10 @@ metaDataFrame
 
 ```{r,eval=T,echo=T, echo=toMessage, warning=FALSE}
 library(DESeq2)
+HC_Peaks <- rtracklayer::import("data/ATAC_HC_Peaks.bed")
 dds <- DESeqDataSetFromMatrix(countData = assay(MyCounts),
                               colData = metaDataFrame,
-                              design = ~ DevStage,
+                              design = ~DevStage,
                               rowRanges= HC_Peaks)
 dds <- DESeq(dds)
 W6MinusD0 <- results(dds,

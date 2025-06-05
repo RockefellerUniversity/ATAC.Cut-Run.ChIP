@@ -3,7 +3,7 @@
   <head>
     <title>Epigenomics, Session 4</title>
     <meta charset="utf-8" />
-    <meta name="author" content="http://rockefelleruniversity.github.io/RU_course_template/" />
+    <meta name="author" content="http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/" />
     <meta name="author" content="brc@rockefeller.edu" />
     <script src="libs/header-attrs-2.29/header-attrs.js"></script>
     <link rel="stylesheet" href="default.css" type="text/css" />
@@ -25,7 +25,7 @@ class: middle, inverse, title-slide
 Bioinformatics Resource Center - Rockefeller University
 ]
 .author[
-### <a href="http://rockefelleruniversity.github.io/RU_course_template/" class="uri">http://rockefelleruniversity.github.io/RU_course_template/</a>
+### <a href="http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/" class="uri">http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/</a>
 ]
 .author[
 ### <a href="mailto:brc@rockefeller.edu" class="email">brc@rockefeller.edu</a>
@@ -41,22 +41,18 @@ Bioinformatics Resource Center - Rockefeller University
 
 ##  Recap
 
-?? can add a recap to link to keypoints in first session??
-Session 1 covered introduction to R data types and import/export of data.
+1. Fastq QC
+2. Alignment
+3. Peak calling
+4. Technique QC
 
-- [Background to R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#background-to-r)
-- [Data types in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#data_types_in_r)
-- [Reading and writing in R](https://rockefelleruniversity.github.io/Intro_To_R_1Day/r_course/presentations/singlepage/introToR_Session1.html#reading-and-writing-data-in-r)
 
-1) Fastq QC
-2) Alignment
-3) Peak calling
-4) Technique QC
-5) Consensus Building
-6) Counting
-7) Differentials
+---
+## This Session
 
-Consensus and counts and differentials (Tom)
+- [Consensus Peaks](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#consensus-peaks)
+
+- [Differential Peaks](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#differential-peaks)
 
 ----
 ## TF binding and epigenetic states
@@ -542,20 +538,6 @@ One very useful function is the **vennDiagram** function which allows us to plot
 
 ``` r
 library(limma)
-```
-
-```
-## 
-## Attaching package: 'limma'
-```
-
-```
-## The following object is masked from 'package:BiocGenerics':
-## 
-##     plotMA
-```
-
-``` r
 vennDiagram(mcols(allPeaksSet_nR))
 ```
 
@@ -751,14 +733,15 @@ We will count from our aligned BAM files to quantify IP fragments.
 
 We can use the **BamFileList()** function to specify which BAMs to count and importantly, to control memory we specify the number of reads to be held in memory at one time using the **yield()** parameter.
 
+The BAM files are on [DropBox](https://www.dropbox.com/scl/fo/djmhor06m81834htwoyjq/ABJceYBLkW6c3lRr3du5-G8?rlkey=ekvoe21gjn70cf9ak5yuqn12t&amp;st=uu1hppq3&amp;dl=0) if you want to try counting yourself, but it will be time consuming. 
+
 
 
 
 ``` r
 library(Rsamtools)
 
-bams &lt;- c("SOX9CNR_D0_rep1.fastq.gz", "SOX9CNR_D0_rep2.fastq.gz", "SOX9CNR_W6_rep1.fastq.gz",
-    "SOX9CNR_W6_rep2.fastq.gz")
+bams &lt;- c("SOX9CNR_D0_rep1.bam", "SOX9CNR_D0_rep2.bam", "SOX9CNR_W6_rep1.bam", "SOX9CNR_W6_rep2.bam")
 
 bamFL &lt;- BamFileList(bams, yieldSize = 5e+06)
 bamFL
@@ -1080,17 +1063,7 @@ Volcano Plots can also be a nice way to show the amount of changes and reveal an
 
 ``` r
 library(EnhancedVolcano)
-```
 
-```
-## Warning: package 'EnhancedVolcano' was built under R version 4.4.1
-```
-
-```
-## Loading required package: ggrepel
-```
-
-``` r
 EnhancedVolcano(as.data.frame(W6MinusD0.Filt), lab = paste0(seqnames(W6MinusD0.Filt),
     ranges(W6MinusD0.Filt)), x = "log2FoldChange", y = "padj", selectLab = "")
 ```
@@ -1102,15 +1075,14 @@ EnhancedVolcano(as.data.frame(W6MinusD0.Filt), lab = paste0(seqnames(W6MinusD0.F
 ## Time for an exercise!
 
 
-Exercise on functions can be found [here](../..//exercises/exercises/MyExercise3_exercise.html)
+Exercise on functions can be found [here](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/exercises/exercises/MyExercise4_exercise.html)
 
 ---
-## Answers to exercise.
+## Answers to exercise
 
 
-Answers can be found here  [here](../..//exercises/answers/MyExercise3_answers.html)
+Answers can be found here  [here](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/exercises/answers/MyExercise4_answers.html)
 
-Rcode for answers can be found here  [here](../..//exercises/answers//answers/MyExercise3_Answers.R)
 
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>

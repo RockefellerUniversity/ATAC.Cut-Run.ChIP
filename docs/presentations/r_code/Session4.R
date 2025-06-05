@@ -3,6 +3,9 @@ list(isSlides = "no")
 
 ## ----setup, include=FALSE-----------------------------------------------------
 suppressPackageStartupMessages(require(knitr))
+suppressPackageStartupMessages(require(limma))
+suppressPackageStartupMessages(require(EnhancedVolcano))
+
 knitr::opts_chunk$set(echo = TRUE, tidy = T)
 
 
@@ -224,10 +227,10 @@ HC_Peaks
 # 
 # library(Rsamtools)
 # 
-# bams <- c("SOX9CNR_D0_rep1.fastq.gz",
-#           "SOX9CNR_D0_rep2.fastq.gz",
-#           "SOX9CNR_W6_rep1.fastq.gz",
-#           "SOX9CNR_W6_rep2.fastq.gz")
+# bams <- c("SOX9CNR_D0_rep1.bam",
+#           "SOX9CNR_D0_rep2.bam",
+#           "SOX9CNR_W6_rep1.bam",
+#           "SOX9CNR_W6_rep2.bam")
 # 
 # bamFL <- BamFileList(bams,yieldSize = 5000000)
 # bamFL
@@ -316,7 +319,7 @@ export.bed(DowninW6,"DowninW6.bed")
 # browseURL(myReport)
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=5,fig.width=5-------------------------------------------------
 myrlog <- rlog(dds)
 plotPCA(myrlog, intgroup="DevStage")
 
@@ -328,6 +331,4 @@ EnhancedVolcano(as.data.frame(W6MinusD0.Filt),
                 lab=paste0(seqnames(W6MinusD0.Filt), ranges(W6MinusD0.Filt)),
                 x = "log2FoldChange",
                 y="padj", selectLab = "")
-
-
 

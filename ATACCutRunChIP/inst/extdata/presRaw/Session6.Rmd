@@ -2,7 +2,7 @@
 title: "Epigenomics, Session 6"
 subtitle: " <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html> Bioinformatics Resource Center - Rockefeller University"
 author: 
-  - "http://rockefelleruniversity.github.io/RU_course_template/"
+  - "http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/"
   - "brc@rockefeller.edu"
 output: 
   xaringan::moon_reader:
@@ -493,7 +493,7 @@ UpinW6_peaks <- rtracklayer::import("data/UpinW6.bed")
 
 Next we need to grab the corresponding sequence from under these ranges. Where you are grabbing sequences from needs to match your alignment reference. If you have updated your BSGenome or are using a different build you can grab the sequence ifnromation from any fasta using *readDNAStringSet*
 
-```{r, eval=F}
+```{r, eval=T}
 library(Biostrings)
 library(BSgenome.Mmusculus.UCSC.mm10)
 
@@ -515,7 +515,7 @@ names(peaksSequences) <- paste0("peak_", 1:length(UpinW6_peaks))
 
 The last thing we need is background sequences. Though you can use a random shuffled background it is often better to give something a little more representative of your data i.e. consensus peaks. Otherwise common motifs found in regions like promoters may seem enriched, even if they are not enriched in the specific promoters you care about.
 
-```{r, eval=F}
+```{r, eval=T}
 HC_peaks <- rtracklayer::import("data/HC_Peaks.bed")
 background_peaksSequences <- getSeq(BSgenome.Mmusculus.UCSC.mm10, HC_peaks)
 names(background_peaksSequences) <- paste0("peak_", 1:length(HC_peaks))
@@ -715,7 +715,7 @@ dreme_results[1:3,] %>%
 
 Once you have derived a list of de novo motifs, the next step is then to compare them to a list of known motifs. We can use the [*TomTom*](https://meme-suite.org/meme/tools/tomtom) algorithm from MEME to do this.  
 
-```{r}
+```{r, eval=F}
 
 tomtom_results <- runTomTom(dreme_results,
             meme_path = meme_path_id,
@@ -725,12 +725,19 @@ tomtom_results <- runTomTom(dreme_results,
 
 ```
 
+```{r, eval=F, echo=F}
+
+save(tomtom_results, file = "data/tomtom_results.RData")
+
+```
+
 ---
 ## Reviewing TOMTOM results
 
 The *best_match_motif* column contains all the top hits from TOMTOM for each de novo motif. 
 
 ```{r}
+load(file = "data/tomtom_results.RData")
 view_motifs(tomtom_results$best_match_motif[1:3])
 
 ```
@@ -839,6 +846,7 @@ As we saw in its help, The matchMotifs function can provide output of motif matc
 Here we scan for the top 3 motifs from our AME results using the sequence under the first 100 peaks and specify the out as **positions**.
 
 ```{r}
+library(motifmatchr)
 motifs_subset <- motifs[names(motifs) %in% ame_results$motif_alt_id[1:3]] 
 
 motif_positions <- matchMotifs(motifs_subset, peaksSequences[1:100],out="positions")
