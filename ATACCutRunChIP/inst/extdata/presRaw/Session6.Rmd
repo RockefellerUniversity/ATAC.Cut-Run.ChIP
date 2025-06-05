@@ -493,7 +493,7 @@ UpinW6_peaks <- rtracklayer::import("data/UpinW6.bed")
 
 Next we need to grab the corresponding sequence from under these ranges. Where you are grabbing sequences from needs to match your alignment reference. If you have updated your BSGenome or are using a different build you can grab the sequence ifnromation from any fasta using *readDNAStringSet*
 
-```{r, eval=F}
+```{r, eval=T}
 library(Biostrings)
 library(BSgenome.Mmusculus.UCSC.mm10)
 
@@ -515,7 +515,7 @@ names(peaksSequences) <- paste0("peak_", 1:length(UpinW6_peaks))
 
 The last thing we need is background sequences. Though you can use a random shuffled background it is often better to give something a little more representative of your data i.e. consensus peaks. Otherwise common motifs found in regions like promoters may seem enriched, even if they are not enriched in the specific promoters you care about.
 
-```{r, eval=F}
+```{r, eval=T}
 HC_peaks <- rtracklayer::import("data/HC_Peaks.bed")
 background_peaksSequences <- getSeq(BSgenome.Mmusculus.UCSC.mm10, HC_peaks)
 names(background_peaksSequences) <- paste0("peak_", 1:length(HC_peaks))
