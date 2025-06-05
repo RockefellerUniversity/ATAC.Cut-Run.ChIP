@@ -92,16 +92,17 @@ Peaks are typically annotated to a gene if
 
 A useful package for annotation of peaks to genes is **ChIPseeker**. 
 
-By using pre-defined annotation in the from of a **TXDB** object for mouse (mm10 genome), ChIPseeker will provide us with an overview of where peaks land in the gene and distance to TSS sites.
+By using pre-defined annotation in the form of a **TXDB** object for mouse (mm10 genome), ChIPseeker will provide us with an overview of where peaks land in the gene and distance to TSS sites.
 
 First load the libraries we require for the next part and read in our SOX9 CUT&amp;RUN peaks. 
+
+
 
 
 
 ``` r
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 library(org.Mm.eg.db)
-library(GenomeInfoDb)
 library(ChIPseeker)
 library(rtracklayer)
 
@@ -123,16 +124,16 @@ peakAnno &lt;- annotatePeak(cnrPeaks_GR, tssRegion = c(-1000, 1000), TxDb = TxDb
 ```
 
 ```
-## &gt;&gt; preparing features information...		 2025-06-05 13:55:13 
-## &gt;&gt; identifying nearest features...		 2025-06-05 13:55:14 
-## &gt;&gt; calculating distance from peak to TSS...	 2025-06-05 13:55:14 
-## &gt;&gt; assigning genomic annotation...		 2025-06-05 13:55:14 
-## &gt;&gt; adding gene annotation...			 2025-06-05 13:55:25
+## &gt;&gt; preparing features information...		 2025-06-05 14:26:18 
+## &gt;&gt; identifying nearest features...		 2025-06-05 14:26:18 
+## &gt;&gt; calculating distance from peak to TSS...	 2025-06-05 14:26:19 
+## &gt;&gt; assigning genomic annotation...		 2025-06-05 14:26:19 
+## &gt;&gt; adding gene annotation...			 2025-06-05 14:26:30
 ```
 
 ```
-## &gt;&gt; assigning chromosome lengths			 2025-06-05 13:55:25 
-## &gt;&gt; done...					 2025-06-05 13:55:25
+## &gt;&gt; assigning chromosome lengths			 2025-06-05 14:26:30 
+## &gt;&gt; done...					 2025-06-05 14:26:30
 ```
 
 ``` r
@@ -253,7 +254,7 @@ Now we have the annotated peaks from ChIPseeker we can use some of ChIPseeker's 
 plotAnnoBar(peakAnno)
 ```
 
-![](Session5_Annotation_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+![](Session5_Annotation_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
 
 ---
 ## Vizualising peak annotation
@@ -266,7 +267,7 @@ Similarly we can plot the distribution of peaks around TSS sites.
 plotDistToTSS(peakAnno)
 ```
 
-![](Session5_Annotation_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+![](Session5_Annotation_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
 
 
 
@@ -718,7 +719,7 @@ GO_result_plot &lt;- pairwise_termsim(GO_result)
 emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
 ```
 
-![](Session5_Annotation_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
+![](Session5_Annotation_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
 
 
 ---

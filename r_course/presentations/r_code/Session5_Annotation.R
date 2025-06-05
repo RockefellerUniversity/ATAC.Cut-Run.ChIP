@@ -45,10 +45,13 @@ if(params$isSlides == "yes"){
 
 
 
+## ----echo=F, eval=T, warning=FALSE,tidy=T,message=FALSE-----------------------
+library(GenomeInfoDb)
+
+
 ## ----echo=T, eval=T, echo=T, warning=FALSE,tidy=T,message=FALSE---------------
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 library(org.Mm.eg.db)
-library(GenomeInfoDb)
 library(ChIPseeker)
 library(rtracklayer)
 
