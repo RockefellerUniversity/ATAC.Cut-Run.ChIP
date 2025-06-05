@@ -2,7 +2,7 @@
 title: "Epigenomics, Session 6"
 subtitle: " <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html> Bioinformatics Resource Center - Rockefeller University"
 author: 
-  - "http://rockefelleruniversity.github.io/RU_course_template/"
+  - "http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/"
   - "brc@rockefeller.edu"
 output: 
   xaringan::moon_reader:
@@ -846,6 +846,7 @@ As we saw in its help, The matchMotifs function can provide output of motif matc
 Here we scan for the top 3 motifs from our AME results using the sequence under the first 100 peaks and specify the out as **positions**.
 
 ```{r}
+library(motifmatchr)
 motifs_subset <- motifs[names(motifs) %in% ame_results$motif_alt_id[1:3]] 
 
 motif_positions <- matchMotifs(motifs_subset, peaksSequences[1:100],out="positions")

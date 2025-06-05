@@ -265,6 +265,7 @@ tomtom_results[3,] %>%
 - Check which peaks have a motif for the top hit from AME.
 
 ```{r,echo=toMessage, eval=F}
+library(motifmatchr)
 opts <- list()
 opts[["tax_group"]] <- "vertebrates"
 opts[["collection"]] <- "CORE"
