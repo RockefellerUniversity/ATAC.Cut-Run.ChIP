@@ -110,15 +110,18 @@ Peaks are typically annotated to a gene if
 
 A useful package for annotation of peaks to genes is **ChIPseeker**. 
 
-By using pre-defined annotation in the from of a **TXDB** object for mouse (mm10 genome), ChIPseeker will provide us with an overview of where peaks land in the gene and distance to TSS sites.
+By using pre-defined annotation in the form of a **TXDB** object for mouse (mm10 genome), ChIPseeker will provide us with an overview of where peaks land in the gene and distance to TSS sites.
 
 First load the libraries we require for the next part and read in our SOX9 CUT&RUN peaks. 
 
 
+```{r,echo=F, eval=T, warning=FALSE,tidy=T,message=FALSE}
+library(GenomeInfoDb)
+```
+
 ```{r,echo=T, eval=T, echo=T, warning=FALSE,tidy=T,message=FALSE}
 library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 library(org.Mm.eg.db)
-library(GenomeInfoDb)
 library(ChIPseeker)
 library(rtracklayer)
 
