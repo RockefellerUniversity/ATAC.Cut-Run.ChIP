@@ -39,6 +39,34 @@ if(params$isSlides != "yes"){
 
 ```
 
+## Set the Working directory
+
+
+Before running any of the code in the practicals or slides we need to set the working directory to the folder we unarchived. 
+
+You may navigate to the unarchived RU_Course_help folder in the Rstudio menu.
+
+**Session -> Set Working Directory -> Choose Directory**
+
+or in the console.
+
+```{r setwd_introtoR,eval=F} 
+setwd("~/Downloads/ATAC.Cut-Run.ChIP-master/r_course")
+```
+
+---
+## What we will cover
+
+We have now called peaks and then built a consensus peak set that we have counted over and determined differential peaks between W6 and W0 for our CUT&RUN data. 
+
+In this section we will:
+
+  * Overlap these peak sets to genomic features
+  * Annotate peaks to genes
+  * Perform functional enrichment for pathways and biological gene sets with the annotated peaks
+
+
+---
 
 ```{r, results='asis',include=TRUE,echo=FALSE}
 if(params$isSlides == "yes"){
@@ -169,17 +197,6 @@ plotDistToTSS(peakAnno)
 ```
 
 
----
-# Vizualising peak annotation
-
-ChIPseeker can also offer a succinct plot to describe the overlap between annotations.
-
-
-```{r, eval=T, echo=T, fig.height=5, fig.width=15, warning=FALSE, tidy=T}
-library(ggupset)
-upsetplot(peakAnno, vennpie=F)
-```
-
 
 ---
 ```{r, results='asis',include=TRUE,echo=FALSE}
@@ -297,7 +314,7 @@ We are going to look at the peaks that are increased in W6, so the GRanges is su
 We also remove peaks that aren't on the main chromosomes (usually unplaced configs). 
 ```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE}
 W6MinusD0_gr_main <- W6MinusD0_gr[as.vector(seqnames(W6MinusD0_gr)) %in% paste0("chr", c(1:19, "X", "Y", "M"))]
-W6MinusD0_gr_up <- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange > 1 & W6MinusD0_gr_main$padj < 0.05, ]
+W6MinusD0_gr_up <- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange > 1 & W6MinusD0_gr_main$padj < 0.05]
 
 W6MinusD0_gr_up
 ```
@@ -331,18 +348,15 @@ To perform gene set using the closest gene to each peak, we will use the **clust
 
 clusterProfiler provides multiple enrichment functions that allow for comparison of your gene list to known (e.g. GO, KEGG) or custom gene sets. Detailed information about all of the functionality within this package is available [here](http://yulab-smu.top/clusterProfiler-book/).
 
-The functions in clusterProfiler take a list of genes, which we can obtain from the ChIPseeker result. 
-
 ---
-## Identify universe of genes
 
-Pathway enrichment requires a 'universe' of genes. We can extract all genes which are included in the TxDb object to use as our universe.
+## Enrichment with nearest gene
 
-```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, message = F}
-allGeneGR <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
-allGeneGR[1:2,]
-allGeneIDs <- allGeneGR$gene_id
-```
+The functions we will use in clusterProfiler take a vector of genes, which we can obtain from the ChIPseeker result.
+
+It then calculates a p-value based on a hypergeometric distribution to determine if a gene set is over represented in our vector of genes. 
+
+<img src="imgs/hypergeo.png" alt="offset" height="300" width="800">
 
 ---
 
@@ -393,6 +407,18 @@ length(up_promGenes_uniq)
 
 
 ---
+## Identify universe of genes
+
+Pathway enrichment requires a 'universe' of genes. We can extract all genes which are included in the TxDb object to use as our universe.
+
+```{r,eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, message = F}
+allGeneGR <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+allGeneGR[1:2,]
+allGeneIDs <- allGeneGR$gene_id
+```
+
+---
+
 ## Analysis of promoter peaks 
 
 Once we have our gene list and the universe of genes in the same format, we can use them in the `enrichGO` function to perform gene ontology analysis
@@ -574,11 +600,22 @@ A peak is then annotated by any gene regulatory region the peak overlaps. This m
 
 ## GREAT for GO and functional testing
 
+.pull-left[
 After defining regulatory regions for each individual gene, GREAT then compares the proportion of peaks mapping to an entire gene set's regulatory regions to the proportion of the genome occupied by gene set's regulatory regions.
 
 i.e. If a gene set's regulatory regions account for 1% of the genome then one might expect 1% of peaks to overlap these regions by chance.
 
 This will help reduce bias towards gene sets that have many genes with large regulatory domains (i.e. more distal, few surrounding genes)
+
+[(McClean, 2010)](https://pmc.ncbi.nlm.nih.gov/articles/PMC4840234/)
+]
+
+.pull-right[
+
+<img src="imgs/great_explanation.png"height="500" width="325">
+
+]
+
 ---
 
 
