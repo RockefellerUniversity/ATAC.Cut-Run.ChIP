@@ -68,12 +68,24 @@ navbar:
         href: exercises/exercises/ATACCutRunChIP_AlignPeaksQC_exercise.html
       - text: Solution
         href: exercises/answers/ATACCutRunChIP_AlignPeaksQC_answers.html
+    - text: MyExercise4
+      menu:
+      - text: Exercise
+        href: exercises/exercises/MyExercise4_exercise.html
+      - text: Solution
+        href: exercises/answers/MyExercise4_answers.html
     - text: ATACCutRunChIP_Annotation
       menu:
       - text: Exercise
         href: exercises/exercises/ATACCutRunChIP_Annotation_exercise.html
       - text: Solution
         href: exercises/answers/ATACCutRunChIP_Annotation_answers.html
+    - text: MyExercise6
+      menu:
+      - text: Exercise
+        href: exercises/exercises/MyExercise6_exercise.html
+      - text: Solution
+        href: exercises/answers/MyExercise6_answers.html
   right:
   - text: Getting help!
     href: https://github.com//RockefellerUniversity/ATAC.Cut-Run.ChIP/issues
