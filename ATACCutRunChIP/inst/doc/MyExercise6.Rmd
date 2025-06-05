@@ -286,7 +286,7 @@ motifHits
 
 - Make a histogram showing frequency of motifs in peaks. Which motif is present in the most peaks?
 
-```{r}
+```{r,eval=F}
 mmMatrix <- motifMatches(motifHits)
 mat_sums <- colSums(mmMatrix)
 hist(mat_sums)
@@ -294,9 +294,10 @@ mat_sums[which.max(mat_sums)]
 
 # meis1 = MA0498.3
 ```
+
 - Look for SOX9 motif
 
-```{r,eval=T}
+```{r,eval=F}
 UpinW6_peaksWithSox9 <- dge_up_gr[mmMatrix[,"MA0077.2"] == 1]
 UpinW6_peaksWithSox9
 ```
