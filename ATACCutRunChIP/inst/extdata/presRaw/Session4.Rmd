@@ -60,7 +60,7 @@ if(params$isSlides != "yes"){
 
 - [Differential Peaks](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#differential-peaks)
 
-----
+---
 ## TF binding and epigenetic states
 
 A common goal in Cut&Run or ATACseq is to characterize genome wide transcription factor binding sites or epigenetic states. 
