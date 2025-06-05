@@ -173,7 +173,7 @@ save(dreme_results, file = "data/ATAC_dreme_results.RData")
 ```
 
 ```{r echo=toMessage}
-load(file = "data/dreme_results.RData")
+load(file = "data/ATAC_dreme_results.RData")
 dreme_results[2:4,] %>% 
   to_list() %>% 
   view_motifs()
@@ -182,7 +182,7 @@ dreme_results[2:4,] %>%
 
 - Run TOMTOM to match our novel motifs to known motifs. Show seqlogos for the best matches for the the top 3 hits. 
 
-```{r,echo=toMessage}
+```{r,echo=toMessage, eval=F}
 
 tomtom_results <- runTomTom(dreme_results[2:nrow(dreme_results),],
             meme_path = meme_path_id,
@@ -190,6 +190,10 @@ tomtom_results <- runTomTom(dreme_results[2:nrow(dreme_results),],
             outdir = "ATAC_tomtom_from_dreme"
             )
 
+```
+
+```{r,echo=toMessage, eval=F}
+load(file = "data/ATAC_tomtom_results.RData")
 view_motifs(tomtom_results$best_match_motif[1:3])
 
 ```

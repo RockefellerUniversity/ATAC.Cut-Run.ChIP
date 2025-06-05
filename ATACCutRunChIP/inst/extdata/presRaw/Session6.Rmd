@@ -715,7 +715,7 @@ dreme_results[1:3,] %>%
 
 Once you have derived a list of de novo motifs, the next step is then to compare them to a list of known motifs. We can use the [*TomTom*](https://meme-suite.org/meme/tools/tomtom) algorithm from MEME to do this.  
 
-```{r}
+```{r, eval=F}
 
 tomtom_results <- runTomTom(dreme_results,
             meme_path = meme_path_id,
@@ -725,12 +725,19 @@ tomtom_results <- runTomTom(dreme_results,
 
 ```
 
+```{r, eval=F, echo=F}
+
+save(tomtom_results, file = "data/tomtom_results.RData")
+
+```
+
 ---
 ## Reviewing TOMTOM results
 
 The *best_match_motif* column contains all the top hits from TOMTOM for each de novo motif. 
 
 ```{r}
+load(file = "data/tomtom_results.RData")
 view_motifs(tomtom_results$best_match_motif[1:3])
 
 ```
