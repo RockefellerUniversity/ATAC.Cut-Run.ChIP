@@ -2,7 +2,7 @@
 title: "Epigenomics, Session 4"
 subtitle: " <html><div style='float:left'></div><hr color='#EB811B' size=1px width=796px></html> Bioinformatics Resource Center - Rockefeller University"
 author: 
-  - "http://rockefelleruniversity.github.io/RU_course_template/"
+  - "http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/"
   - "brc@rockefeller.edu"
 output: 
   xaringan::moon_reader:
@@ -26,6 +26,9 @@ params:
 
 ```{r setup, include=FALSE}
 suppressPackageStartupMessages(require(knitr))
+suppressPackageStartupMessages(require(limma))
+suppressPackageStartupMessages(require(EnhancedVolcano))
+
 knitr::opts_chunk$set(echo = TRUE, tidy = T)
 ```
 
@@ -44,13 +47,14 @@ if(params$isSlides != "yes"){
 
 ##  Recap
 
-1) Fastq QC
-2) Alignment
-3) Peak calling
-4) Technique QC
+1. Fastq QC
+2. Alignment
+3. Peak calling
+4. Technique QC
+
 
 ---
-##  This Session
+## This Session
 
 - [Consensus Peaks](https://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/presentations/singlepage/Session1.html#consensus-peaks)
 
@@ -670,7 +674,7 @@ To assess global levels of changes between samples PCA can be a very useful plot
 
 To do this we want the normalized count values. We can get this from our dds object using the *rlog()* function. 
 
-```{R}
+```{R,fig.height=5,fig.width=5}
 myrlog <- rlog(dds)
 plotPCA(myrlog, intgroup="DevStage")
 ```
