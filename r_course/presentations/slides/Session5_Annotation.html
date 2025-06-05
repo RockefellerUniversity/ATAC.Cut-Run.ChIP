@@ -34,6 +34,35 @@ class: center, middle, inverse, title-slide
 
 
 
+## Set the Working directory
+
+
+Before running any of the code in the practicals or slides we need to set the working directory to the folder we unarchived. 
+
+You may navigate to the unarchived RU_Course_help folder in the Rstudio menu.
+
+**Session -&gt; Set Working Directory -&gt; Choose Directory**
+
+or in the console.
+
+
+``` r
+setwd("~/Downloads/ATAC.Cut-Run.ChIP-master/r_course")
+```
+
+---
+## What we will cover
+
+We have now called peaks and then built a consensus peak set that we have counted over and determined differential peaks between W6 and W0 for our CUT&amp;RUN data. 
+
+In this section we will:
+
+  * Overlap these peak sets to genomic features
+  * Annotate peaks to genes
+  * Perform functional enrichment for pathways and biological gene sets with the annotated peaks
+
+
+---
 
 class: inverse, center, middle
 
@@ -94,16 +123,16 @@ peakAnno &lt;- annotatePeak(cnrPeaks_GR, tssRegion = c(-1000, 1000), TxDb = TxDb
 ```
 
 ```
-## &gt;&gt; preparing features information...		 2025-06-04 15:00:29 
-## &gt;&gt; identifying nearest features...		 2025-06-04 15:00:29 
-## &gt;&gt; calculating distance from peak to TSS...	 2025-06-04 15:00:30 
-## &gt;&gt; assigning genomic annotation...		 2025-06-04 15:00:30 
-## &gt;&gt; adding gene annotation...			 2025-06-04 15:00:41
+## &gt;&gt; preparing features information...		 2025-06-05 12:30:39 
+## &gt;&gt; identifying nearest features...		 2025-06-05 12:30:39 
+## &gt;&gt; calculating distance from peak to TSS...	 2025-06-05 12:30:40 
+## &gt;&gt; assigning genomic annotation...		 2025-06-05 12:30:40 
+## &gt;&gt; adding gene annotation...			 2025-06-05 12:30:50
 ```
 
 ```
-## &gt;&gt; assigning chromosome lengths			 2025-06-04 15:00:41 
-## &gt;&gt; done...					 2025-06-04 15:00:41
+## &gt;&gt; assigning chromosome lengths			 2025-06-05 12:30:51 
+## &gt;&gt; done...					 2025-06-05 12:30:51
 ```
 
 ``` r
@@ -239,20 +268,6 @@ plotDistToTSS(peakAnno)
 
 ![](Session5_Annotation_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
 
-
----
-# Vizualising peak annotation
-
-ChIPseeker can also offer a succinct plot to describe the overlap between annotations.
-
-
-
-``` r
-library(ggupset)
-upsetplot(peakAnno, vennpie = F)
-```
-
-![](Session5_Annotation_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -391,7 +406,7 @@ We also remove peaks that aren't on the main chromosomes (usually unplaced confi
 W6MinusD0_gr_main &lt;- W6MinusD0_gr[as.vector(seqnames(W6MinusD0_gr)) %in% paste0("chr",
     c(1:19, "X", "Y", "M"))]
 W6MinusD0_gr_up &lt;- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange &gt; 1 &amp; W6MinusD0_gr_main$padj &lt;
-    0.05, ]
+    0.05]
 
 W6MinusD0_gr_up
 ```
@@ -430,32 +445,15 @@ To perform gene set using the closest gene to each peak, we will use the **clust
 
 clusterProfiler provides multiple enrichment functions that allow for comparison of your gene list to known (e.g. GO, KEGG) or custom gene sets. Detailed information about all of the functionality within this package is available [here](http://yulab-smu.top/clusterProfiler-book/).
 
-The functions in clusterProfiler take a list of genes, which we can obtain from the ChIPseeker result. 
-
 ---
-## Identify universe of genes
 
-Pathway enrichment requires a 'universe' of genes. We can extract all genes which are included in the TxDb object to use as our universe.
+## Enrichment with nearest gene
 
+The functions we will use in clusterProfiler take a vector of genes, which we can obtain from the ChIPseeker result.
 
-``` r
-allGeneGR &lt;- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
-allGeneGR[1:2, ]
-```
+It then calculates a p-value based on a hypergeometric distribution to determine if a gene set is over represented in our vector of genes. 
 
-```
-## GRanges object with 2 ranges and 1 metadata column:
-##             seqnames            ranges strand |     gene_id
-##                &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
-##   100009600     chr9 21062393-21073096      - |   100009600
-##   100009609     chr7 84935565-84964115      - |   100009609
-##   -------
-##   seqinfo: 66 sequences (1 circular) from mm10 genome
-```
-
-``` r
-allGeneIDs &lt;- allGeneGR$gene_id
-```
+&lt;img src="imgs/hypergeo.png" alt="offset" height="300" width="800"&gt;
 
 ---
 
@@ -552,6 +550,32 @@ length(up_promGenes_uniq)
 
 
 ---
+## Identify universe of genes
+
+Pathway enrichment requires a 'universe' of genes. We can extract all genes which are included in the TxDb object to use as our universe.
+
+
+``` r
+allGeneGR &lt;- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+allGeneGR[1:2, ]
+```
+
+```
+## GRanges object with 2 ranges and 1 metadata column:
+##             seqnames            ranges strand |     gene_id
+##                &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+##   100009600     chr9 21062393-21073096      - |   100009600
+##   100009609     chr7 84935565-84964115      - |   100009609
+##   -------
+##   seqinfo: 66 sequences (1 circular) from mm10 genome
+```
+
+``` r
+allGeneIDs &lt;- allGeneGR$gene_id
+```
+
+---
+
 ## Analysis of promoter peaks 
 
 Once we have our gene list and the universe of genes in the same format, we can use them in the `enrichGO` function to perform gene ontology analysis
@@ -694,7 +718,7 @@ GO_result_plot &lt;- pairwise_termsim(GO_result)
 emapplot(GO_result_plot, showCategory = 20, cex.params = list(category_label = 0.6))
 ```
 
-![](Session5_Annotation_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
+![](Session5_Annotation_files/figure-html/unnamed-chunk-28-1.png)&lt;!-- --&gt;
 
 
 ---
@@ -828,11 +852,22 @@ A peak is then annotated by any gene regulatory region the peak overlaps. This m
 
 ## GREAT for GO and functional testing
 
+.pull-left[
 After defining regulatory regions for each individual gene, GREAT then compares the proportion of peaks mapping to an entire gene set's regulatory regions to the proportion of the genome occupied by gene set's regulatory regions.
 
 i.e. If a gene set's regulatory regions account for 1% of the genome then one might expect 1% of peaks to overlap these regions by chance.
 
 This will help reduce bias towards gene sets that have many genes with large regulatory domains (i.e. more distal, few surrounding genes)
+
+[(McClean, 2010)](https://pmc.ncbi.nlm.nih.gov/articles/PMC4840234/)
+]
+
+.pull-right[
+
+&lt;img src="imgs/great_explanation.png"height="500" width="325"&gt;
+
+]
+
 ---
 
 

@@ -19,6 +19,10 @@ if(params$isSlides != "yes"){
 
 
 
+## ----setwd_introtoR,eval=F----------------------------------------------------
+# setwd("~/Downloads/ATAC.Cut-Run.ChIP-master/r_course")
+
+
 ## ----results='asis',include=TRUE,echo=FALSE-----------------------------------
 if(params$isSlides == "yes"){
   cat("class: inverse, center, middle
@@ -84,11 +88,6 @@ plotAnnoBar(peakAnno)
 plotDistToTSS(peakAnno)
 
 
-## ----eval=T, echo=T, fig.height=5, fig.width=15, warning=FALSE, tidy=T--------
-library(ggupset)
-upsetplot(peakAnno, vennpie=F)
-
-
 ## ----results='asis',include=TRUE,echo=FALSE-----------------------------------
 if(params$isSlides == "yes"){
   cat("class: inverse, center, middle
@@ -132,7 +131,7 @@ W6MinusD0_gr[1:3, ]
 
 ## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE-----------------------------
 W6MinusD0_gr_main <- W6MinusD0_gr[as.vector(seqnames(W6MinusD0_gr)) %in% paste0("chr", c(1:19, "X", "Y", "M"))]
-W6MinusD0_gr_up <- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange > 1 & W6MinusD0_gr_main$padj < 0.05, ]
+W6MinusD0_gr_up <- W6MinusD0_gr_main[W6MinusD0_gr_main$log2FoldChange > 1 & W6MinusD0_gr_main$padj < 0.05]
 
 W6MinusD0_gr_up
 
@@ -159,12 +158,6 @@ if(params$isSlides == "yes"){
 
 
 
-## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, message = F---------
-allGeneGR <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
-allGeneGR[1:2,]
-allGeneIDs <- allGeneGR$gene_id
-
-
 ## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE, message = F, results='hide'----
 peakAnno_up <- annotatePeak(W6MinusD0_gr_up, 
                             tssRegion=c(-1000, 1000),
@@ -188,6 +181,12 @@ annotatedPeaksGR_up_prom <- annotatedPeaksGR_up[grepl("Promoter", annotatedPeaks
 up_promGenes_uniq <- unique(annotatedPeaksGR_up_prom$geneId)
 
 length(up_promGenes_uniq)
+
+
+## ----eval=T,echo=T, eval=T, echo=T, warning=FALSE,tidy=T, message = F---------
+allGeneGR <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+allGeneGR[1:2,]
+allGeneIDs <- allGeneGR$gene_id
 
 
 ## ----message = F, warning=F, results = 'hide'---------------------------------
