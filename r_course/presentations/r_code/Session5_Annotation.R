@@ -312,7 +312,7 @@ reac_gene_sets[1:2]
 
 ## ----eval=T,echo=T, message=F, warning=FALSE,tidy=T---------------------------
 
-great_reac <- great(W6MinusD0_gr_up, gene_sets = reac_gene_sets, tss_source = "TxDb.Mmusculus.UCSC.mm10.knownGene", mode = "oneClosest")
+great_reac <- great(W6MinusD0_gr_up, gene_sets = reac_gene_sets, tss_source = "TxDb.Mmusculus.UCSC.mm10.knownGene")
 
 great_reac_tab <- getEnrichmentTable(great_reac)
 great_reac_tab[1:2, ]

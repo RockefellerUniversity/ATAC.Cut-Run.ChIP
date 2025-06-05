@@ -124,16 +124,16 @@ peakAnno &lt;- annotatePeak(cnrPeaks_GR, tssRegion = c(-1000, 1000), TxDb = TxDb
 ```
 
 ```
-## &gt;&gt; preparing features information...		 2025-06-05 14:26:18 
-## &gt;&gt; identifying nearest features...		 2025-06-05 14:26:18 
-## &gt;&gt; calculating distance from peak to TSS...	 2025-06-05 14:26:19 
-## &gt;&gt; assigning genomic annotation...		 2025-06-05 14:26:19 
-## &gt;&gt; adding gene annotation...			 2025-06-05 14:26:30
+## &gt;&gt; preparing features information...		 2025-06-05 17:10:45 
+## &gt;&gt; identifying nearest features...		 2025-06-05 17:10:45 
+## &gt;&gt; calculating distance from peak to TSS...	 2025-06-05 17:10:46 
+## &gt;&gt; assigning genomic annotation...		 2025-06-05 17:10:46 
+## &gt;&gt; adding gene annotation...			 2025-06-05 17:10:57
 ```
 
 ```
-## &gt;&gt; assigning chromosome lengths			 2025-06-05 14:26:30 
-## &gt;&gt; done...					 2025-06-05 14:26:30
+## &gt;&gt; assigning chromosome lengths			 2025-06-05 17:10:57 
+## &gt;&gt; done...					 2025-06-05 17:10:57
 ```
 
 ``` r
@@ -1007,8 +1007,7 @@ This list is then used for the 'gene_sets' argument for the `great` function.
 
 
 ``` r
-great_reac &lt;- great(W6MinusD0_gr_up, gene_sets = reac_gene_sets, tss_source = "TxDb.Mmusculus.UCSC.mm10.knownGene",
-    mode = "oneClosest")
+great_reac &lt;- great(W6MinusD0_gr_up, gene_sets = reac_gene_sets, tss_source = "TxDb.Mmusculus.UCSC.mm10.knownGene")
 
 great_reac_tab &lt;- getEnrichmentTable(great_reac)
 great_reac_tab[1:2, ]
@@ -1016,17 +1015,17 @@ great_reac_tab[1:2, ]
 
 ```
 ##                                             id genome_fraction
-## 1                    REACTOME_SIGNALING_BY_ALK     0.002649347
-## 2 REACTOME_TRANSCRIPTIONAL_REGULATION_BY_RUNX3     0.004753272
+## 1 REACTOME_TRANSCRIPTIONAL_REGULATION_BY_RUNX3     0.008752716
+## 2                    REACTOME_SIGNALING_BY_ALK     0.004829087
 ##   observed_region_hits fold_enrichment p_value p_adjust mean_tss_dist
-## 1                   52        4.241945       0        0        207737
-## 2                   80        3.637456       0        0        145630
+## 1                  138        3.407507       0        0        232957
+## 2                   72        3.222315       0        0        252943
 ##   observed_gene_hits gene_set_size fold_enrichment_hyper p_value_hyper
-## 1                 12            30              3.074384  0.0002045707
-## 2                 25            96              2.001552  0.0004368082
+## 1                 34            96              1.717270  0.0005505350
+## 2                 15            30              2.424382  0.0003260066
 ##   p_adjust_hyper
-## 1    0.006010768
-## 2    0.010474828
+## 1     0.01333749
+## 2     0.01020957
 ```
 
 
@@ -1067,13 +1066,13 @@ great_genes[1:5]
 ##   [3]     chr7 114358259-114358706      * |        5.45989 9.14611e-31
 ##   [4]     chr4   97465816-97466559      * |        4.43453 7.28496e-29
 ##   [5]    chr13   38793431-38794003      * |        5.40520 1.40299e-28
-##       annotated_genes   dist_to_TSS
-##       &lt;CharacterList&gt; &lt;IntegerList&gt;
-##   [1]           Otol1        -52969
-##   [2]            Osr1        285437
-##   [3]           Pde3b        -56575
-##   [4]            Nfia       -306175
-##   [5]          Eef1e1       -134373
+##       annotated_genes     dist_to_TSS
+##       &lt;CharacterList&gt;   &lt;IntegerList&gt;
+##   [1]    Sptssb,Otol1   -94192,-52969
+##   [2]     Osr1,Nt5c1b  285437,-513404
+##   [3]     Psma1,Pde3b   -82141,-56575
+##   [4]    Gm12695,Nfia -680630,-306175
+##   [5]  Eef1e1,Slc35b3  -134373,166872
 ##   -------
 ##   seqinfo: 34 sequences from an unspecified genome; no seqlengths
 ```
