@@ -59,7 +59,8 @@ seqLogo::seqLogo(SMAD3Motifs[[1]])
 - Lets compare this to the motif from JASPAR2024. Are these equivalent motifs?
 
 ```{r,echo=toMessage, eval=T}
-ppm <-SMAD3mat/colSums(SMAD3mat)
+myMatrix <- Matrix(SMAD3mat)
+ppm <-myMatrix/colSums(myMatrix)
 seqLogo::seqLogo(ppm)
 ```
 
@@ -192,7 +193,7 @@ tomtom_results <- runTomTom(dreme_results[2:nrow(dreme_results),],
 
 ```
 
-```{r,echo=toMessage, eval=F}
+```{r,echo=toMessage, eval=T}
 load(file = "data/ATAC_tomtom_results.RData")
 view_motifs(tomtom_results$best_match_motif[1:3])
 
@@ -264,7 +265,7 @@ tomtom_results[3,] %>%
 
 - Check which peaks have a motif for the top hit from AME.
 
-```{r,echo=toMessage, eval=F}
+```{r,echo=toMessage, eval=T}
 library(motifmatchr)
 opts <- list()
 opts[["tax_group"]] <- "vertebrates"
