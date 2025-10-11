@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="author" content="http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/" />
     <meta name="author" content="brc@rockefeller.edu" />
-    <script src="libs/header-attrs-2.29/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.30/header-attrs.js"></script>
     <link rel="stylesheet" href="default.css" type="text/css" />
     <link rel="stylesheet" href="metropolisCustom.css" type="text/css" />
     <link rel="stylesheet" href="metropolis-fontsCustom.css" type="text/css" />
@@ -1389,6 +1389,10 @@ dreme_results[1:3, ] %&gt;%
     view_motifs()
 ```
 
+```
+## Warning: `label` cannot be a &lt;ggplot2::element_blank&gt; object.
+```
+
 ![](Session6_files/figure-html/unnamed-chunk-47-1.png)&lt;!-- --&gt;
 
 ---
@@ -1413,6 +1417,10 @@ The *best_match_motif* column contains all the top hits from TOMTOM for each de 
 ``` r
 load(file = "data/tomtom_results.RData")
 view_motifs(tomtom_results$best_match_motif[1:3])
+```
+
+```
+## Warning: `label` cannot be a &lt;ggplot2::element_blank&gt; object.
 ```
 
 ![](Session6_files/figure-html/unnamed-chunk-50-1.png)&lt;!-- --&gt;

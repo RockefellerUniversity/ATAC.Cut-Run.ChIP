@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="author" content="http://rockefelleruniversity.github.io/ATAC.Cut-Run.ChIP/" />
     <meta name="author" content="brc@rockefeller.edu" />
-    <script src="libs/header-attrs-2.29/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.30/header-attrs.js"></script>
     <link rel="stylesheet" href="default.css" type="text/css" />
     <link rel="stylesheet" href="metropolisCustom.css" type="text/css" />
     <link rel="stylesheet" href="metropolis-fontsCustom.css" type="text/css" />
@@ -1066,6 +1066,16 @@ library(EnhancedVolcano)
 
 EnhancedVolcano(as.data.frame(W6MinusD0.Filt), lab = paste0(seqnames(W6MinusD0.Filt),
     ranges(W6MinusD0.Filt)), x = "log2FoldChange", y = "padj", selectLab = "")
+```
+
+```
+## Warning: The `size` argument of `element_line()` is deprecated as of ggplot2 3.4.0.
+## i Please use the `linewidth` argument instead.
+## i The deprecated feature was likely used in the EnhancedVolcano package.
+##   Please report the issue to the authors.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.
 ```
 
 ![](Session4_files/figure-html/unnamed-chunk-39-1.png)&lt;!-- --&gt;
